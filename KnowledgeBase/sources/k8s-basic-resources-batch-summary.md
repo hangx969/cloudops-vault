@@ -3,7 +3,7 @@ title: K8s基础资源 来源批量摘要
 tags:
   - knowledgebase/source
   - docker-kubernetes/k8s-basic-resources
-date: 2026-09-12
+date: 2026-10-11
 sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理]]"
@@ -89,6 +89,10 @@ aliases:
   - 基于 Headless Service 为每个 Pod 分配固定 DNS：`pod-name.svc-name.ns.svc.cluster.local`
   - volumeClaimTemplates 自动为每个 Pod 创建独立 PVC
   - 生产环境推荐用 Operator/Helm 部署复杂有状态服务
+  - Recreate 在 Kubernetes 1.37 中为 Alpha、默认关闭，需在 API Server 和 Controller Manager 启用 StatefulSetRecreateStrategy
+  - rollingUpdate.partition 仅适用于 RollingUpdate，不能与 Recreate 组合；整体重建与分区灰度需要分开评估
+  - 区分 StatefulSet 删除/缩容时的 PVC 保留策略与 PVC 删除后的 PV 回收策略，正常 Pod 替换不因 StorageClass 为 Delete 自动删除 PVC
+  - [[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|Recreate 更新策略章节]]：保留原文 4 组代码和 11 个故障案例，并列明版本、配置、存储与案例指标的核验边界；补充来源为[[0raw/有状态也能原地重建：K8s 1.37 StatefulSet Recreate 策略实战|原始剪藏]]
 
 ### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-daemonset|K8s基础-DaemonSet]]
 - 核心内容：DaemonSet 确保集群每个节点运行一个相同的 Pod 副本，常用于日志收集、监控代理、存储守护进程等场景。

@@ -141,6 +141,8 @@ sources:
 9. [[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret|k8s基础-configMap-Secret]] — 配置管理
 10. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|k8s基础-storage]] — 存储
 
+补充阅读：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet Recreate 更新策略（1.37 Alpha）]] — 启用条件、整体重建与分区灰度的区别、PVC/PV 生命周期及原文 11 个案例的核验说明。
+
 ### 第三阶段：安装部署
 11. [[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤|安装k8s-1.35-基于rockylinux10-最新步骤]] — 最新版安装
 12. [[Docker-Kubernetes/k8s-installation-management/2025最新-企业级高可用集群-基于rockylinux|2025最新-企业级高可用集群-基于rockylinux]] — 企业级高可用

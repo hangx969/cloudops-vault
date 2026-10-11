@@ -53,6 +53,8 @@ date: 2026-10-11
 - [[KnowledgeBase/concepts/Terraform状态管理|Terraform状态管理]] — Terraform 状态管理维护配置地址与实际对象之间的绑定，以及运行所需的已知属性和元数据。状态用于变更计算与身份跟踪，不等于完整基础设施或业务数据备份。
 - [[KnowledgeBase/concepts/Terraform模块化|Terraform模块化]] — Terraform 模块化把一组相关配置组织成具有输入、输出和版本要求的复用单元。子模块资源仍属于调用它的根配置 State，因此代码复用边界与独立执行边界需要分别设计。
 
+- [[KnowledgeBase/concepts/自动扩缩容|自动扩缩容]] — HPA、VPA、KEDA 与节点容量协同，涵盖 requests、迁移保护和扩容延迟。
+
 ---
 
 ## 🔧 实体页（Entities）
@@ -104,6 +106,8 @@ date: 2026-10-11
 | [[KnowledgeBase/entities/Ollama|Ollama]] | 面向本地开发、Demo 与 PoC 的模型下载、管理和运行工具 |
 | [[KnowledgeBase/entities/vLLM|vLLM]] | 高吞吐 LLM Serving Runtime，覆盖 KV Cache、并行推理与 OpenAI 兼容 API |
 | [[KnowledgeBase/entities/ModelScope|ModelScope]] | 模型与数据集平台，可作为国内模型下载及离线资产准备入口 |
+
+- [[KnowledgeBase/entities/Cluster Autoscaler|Cluster Autoscaler]] — 基于 Pod 调度需求扩容节点组，并在满足迁移条件时安全缩容。
 
 ---
 
@@ -169,7 +173,7 @@ date: 2026-10-11
 | [Docker](sources/docker-batch-summary.md) | 13 | Docker 基础、镜像离线分发、GPU 配置与服务部署实战（GitLab/Prometheus/Loki 等） |
 | [[KnowledgeBase/sources/docker-image-download-summary|Docker 镜像无引擎下载]] | 1 | Registry 直接拉取、多架构选择、断点续传、重试与 tar 离线导入 |
 | [Docker 安全加固](sources/docker-security-capabilities-summary.md) | 1 | Capabilities 最小化、no-new-privileges 防提权、User Namespace/只读文件系统/资源限制纵深防御 |
-| [K8s 基础资源](sources/k8s-basic-resources-batch-summary.md) | 22 | Pod/Deployment/Service/Ingress/ConfigMap/Storage/RBAC/CRD/Operator/API Server 深度剖析/Finalizer |
+| [[KnowledgeBase/sources/k8s-basic-resources-batch-summary\|K8s 基础资源]] | 22 | Pod/Deployment/Service/Ingress/ConfigMap/Storage/RBAC/CRD/Operator/API Server 深度剖析/Finalizer；StatefulSet Recreate Alpha 与 PVC/PV 生命周期 |
 | [[KnowledgeBase/sources/kubectl-server-side-apply-summary|kubectl Server-side Apply]] | 1（整合） | CSA 三路合并、SSA 字段所有权、CRD schema 与 Helm 4 迁移边界 |
 | [[KnowledgeBase/sources/kubectx-kubens-multi-cluster-summary|kubectx 与 kubens 多集群切换]] | 1（整合） | context/namespace 快速切换、fzf、kube-ps1、多 kubeconfig 合并及生产防误操作 |
 | [[KnowledgeBase/sources/k8s-probe-restart-storm-summary|K8s 健康探针重启风暴]] | 1 | Liveness 误判外部依赖抖动引发 300+ Pod 连锁重启，覆盖探针分工、时间窗口、监控和治理 |
@@ -205,6 +209,8 @@ date: 2026-10-11
 - [[KnowledgeBase/sources/argocd-sync-troubleshooting-summary|ArgoCD 同步故障排查 来源摘要]] — 五类同步问题、三组原文案例、配置示例与官方资料校正。
 
 - [[KnowledgeBase/sources/kubectl-krew-plugins-summary|kubectl 插件指南 来源摘要]] — Krew 安装与离线分发、13 个插件、rolesum/RBAC 排查及命令校订。
+
+- [[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|Cluster Autoscaler 节点扩缩容来源摘要]] — 节点组选择、缩容保护、Helm 部署、参数、监控排障与上线回滚。
 
 ### Azure（已摄入 ✅）
 

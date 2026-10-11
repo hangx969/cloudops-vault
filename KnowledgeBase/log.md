@@ -2212,3 +2212,26 @@ date: 2026-04-17
 - 按官方文档与代码标注技术校正：三方模型范围、ignoreDifferences/RespectIgnoreDifferences、无效 all 字段与 CLI 参数、已有健康检查、replace/force、prune/delete 保护、Webhook 密钥位置、缓存和队列并发配置。案例数字、效果与归因保留为原文描述，未复现。
 - 新增 [[KnowledgeBase/sources/argocd-sync-troubleshooting-summary|来源摘要]]，同步 ArgoCD、CICD、Kubernetes、tool/domain/kubernetes map、CI/CD 批量摘要的增量入口与 INDEX；保留同期已有导航更新，按当前文件核对 ArgoCD 6 篇、CI/CD 25 篇。
 - MCP 写入后完整读回一致；10 页 frontmatter、13 个 YAML 与 7 个 Bash 代码块、15 处新页面内部链接/章节锚点及 Application/AppProject/ApplicationSet CRD 字段检查通过，Git diff 空白检查通过。Obsidian 阅读视图已检查开头、末尾 13 个复选项和速查表；清理历史错误缓冲后，本篇检查期间未捕获新错误。未执行 ArgoCD/kubectl 集群命令或部署验证。
+
+## [2026-10-11] restructure | Krew 与 kubectl 插件指南合并
+
+- 使用 humanizer-zh 优化表达，通过 Obsidian MCP 将公众号剪藏与现有 Krew/rolesum 笔记合并到 [[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum|kubectl 插件指南：Krew 安装、常用工具与 RBAC 排查]]；沿用原路径和别名，按技术用途组织 13 个插件，保留安装步骤、命令、输出示例、完整 Deployment 配置与 14 项检查清单。
+- 对照官方索引、文档和代码校订 PATH、离线安装、tree、images、outdated、resource-capacity、score 与 RBAC 语义；将来源输出、版本和未复现案例明确标为示例，记录原文差异与引用。
+- 创建 [[KnowledgeBase/sources/kubectl-krew-plugins-summary|来源摘要]]，同步 RBAC 概念页、Kubernetes 实体页与主题地图、UI 批次摘要、知识库入口和文档盘点中的标题。
+- 完整读回核对后删除重复剪藏 `0raw/kubectl 不够用？krew 装 10 插件.md`，保留其他文章；两篇来源均无图片，无需调用 PicGo 上传。
+- 8 个相关页面通过完整 MCP 读回核对；正文 41 个代码块闭合，39 段 Bash 通过语法检查，Deployment YAML 可解析且标签选择器一致；相关 wikilink 与任务范围差异检查通过。已在 Obsidian 阅读视图检查标题、清单和表格，并修正表格管道符显示。未执行集群命令。
+
+## [2026-10-11] ingest | Cluster Autoscaler 节点自动扩缩容
+
+- 使用 humanizer-zh 润色并新增 [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱|Cluster Autoscaler 节点自动扩缩容文章]]，保留原文元信息、章节标题、表格数据和 21 个代码块；清理剪藏列表、重复作者和页脚格式，原始剪藏保持原样。
+- 新增 [[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|来源摘要]]、[[KnowledgeBase/entities/Cluster Autoscaler|CA 实体页]] 与 [[KnowledgeBase/concepts/自动扩缩容|自动扩缩容概念页]]，同步 [[KnowledgeBase/entities/Kubernetes]]、[[KnowledgeBase/maps/kubernetes-map]] 和 INDEX；保留同期 Krew 摄入更新。
+- 核对调度依据、PDB/驱逐保护、版本匹配与 Helm 配置的官方资料；在摘要中记录旧 FinOps 文档“CA 仅缩容空节点”的不一致，旧文未修改。
+- 所有写入文件经 Obsidian MCP 完整读回一致；原始剪藏、正文元信息与代码块一致性、37 处新增页面链接、代码围栏和任务范围 Git diff 空白检查通过，日志仅追加。
+- 阅读视图检查未完成：界面工具未找到运行中的 Obsidian 应用；未执行 kubectl、Helm 部署、集群扩缩容或回滚。
+
+## [2026-10-11] ingest | StatefulSet Recreate 更新策略整合
+
+- 使用 humanizer-zh 将[[0raw/有状态也能原地重建：K8s 1.37 StatefulSet Recreate 策略实战|原始剪藏]]整理为[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet 基础笔记的新章节]]，保留原文 4 组代码块、11 个故障案例、分阶段检查、作者报告的案例数字与上线清单；原始剪藏和目标笔记旧正文未修改。
+- 单列官方资料核验说明：Recreate 在 1.37 中为 Alpha、默认关闭，需启用两个控制面组件的 StatefulSetRecreateStrategy；rollingUpdate.partition 不可与 Recreate 组合；区分 PVC 保留和 PV 回收策略，并标明启动顺序、init 容器、EndpointSlice 与 Redis 槽位接管案例的适用边界。
+- 同步[[KnowledgeBase/sources/k8s-basic-resources-batch-summary|基础资源来源摘要]]、[[KnowledgeBase/maps/kubernetes-map|Kubernetes 专题地图]]和[[KnowledgeBase/INDEX|目录]]；基于各页最新内容更新，保留同期其他摄入改动。
+- 正文与三页导航经 Obsidian MCP 完整读回一致，原文代码保留、11 个案例编号、7 个新增章节代码块、5 处新增 wikilink/章节锚点及任务范围 git diff 空白检查通过；日志仅追加。未执行 Kubernetes/Redis 命令或复现作者案例。阅读视图检查未完成：界面工具未能找到运行中的 Obsidian。

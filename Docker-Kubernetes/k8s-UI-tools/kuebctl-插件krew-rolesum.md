@@ -693,7 +693,7 @@ kubectl krew upgrade resource-capacity
 | 插件 | 用途 | 高频命令 |
 | --- | --- | --- |
 | ctx / ns | 切换 context 与默认 namespace | `kubectl ctx`；`kubectl ns payment`；`kubectl ns -` |
-| neat | 清理资源 YAML/JSON | `kubectl get deploy x -o yaml \| kubectl neat` |
+| neat | 清理资源 YAML/JSON | <code>kubectl get deploy x -o yaml &#124; kubectl neat</code> |
 | tree | 按 ownerReferences 展示子资源 | `kubectl tree deploy payment-api -n payment` |
 | get-all | 盘点可读取的 API 资源 | `kubectl get-all -n payment --since 1h` |
 | images | 查看 Pod 引用的镜像 | `kubectl images -n payment` |
@@ -723,7 +723,7 @@ kubectl krew upgrade resource-capacity
 | resource-capacity 示例的汇总百分比 | 与所列节点的容量推算不一致，仅保留为原文字段示例 |
 | `who-can --as=<主体>` 用于判断该主体能否操作 | `--as` 改变查询身份；目标主体的授权结果用 `auth can-i --as=... ` |
 | `kubectl rolesum <svc name>` | 默认参数是 ServiceAccount 名称，也可通过 `-k` 查询 User/Group |
-| `score -f ... --exit-code-on-warning`；`jq '.[] \| select(.grade < 5)'` | 使用位置文件参数与 `--exit-one-on-warning`；JSON v2 的 grade 在 `checks[]` 中 |
+| `score -f ... --exit-code-on-warning`；<code>jq '.[] &#124; select(.grade &lt; 5)'</code> | 使用位置文件参数与 `--exit-one-on-warning`；JSON v2 的 grade 在 `checks[]` 中 |
 | 同名且字段不完整的第二份 Deployment；探针和镜像检查输出 | 合并为一份完整示例；相同探针仍可能告警；镜像 tag 与 pull policy 是不同检查 |
 | `--since` 可以限制日志跟踪速率；get-all 能查最近修改者 | `--since` 只限定日志回看时间或资源创建时间，不提供限速或审计结论 |
 
