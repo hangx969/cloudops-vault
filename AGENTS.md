@@ -15,11 +15,11 @@ date: 2026-10-04
 
 ## 三层架构
 
-| 层级 | 说明 | 所有权 | 规则 |
-|------|------|--------|------|
-| **Raw Sources（原始来源）** | 顶层主题目录中的 markdown 文件（AI/、Azure/、Docker-Kubernetes/ 等） | 人类策划 | **只读不改**。LLM 永远不修改、不移动、不删除这些文件 |
-| **Wiki（编译知识层）** | `KnowledgeBase/` 目录下的所有内容 | LLM 拥有 | LLM 创建、更新、维护所有页面和交叉引用 |
-| **Schema（规约文件）** | 本文件 `AGENTS.md` | 人类与 LLM 共同演进 | 定义结构约定和工作流程 |
+| 层级                    | 说明                        | 所有权          | 规则                    |
+| --------------------- | ------------------------- | ------------ | --------------------- |
+| **Raw Sources（原始来源）** | 顶层主题目录中的 markdown 文件      | 人类策划         | LLM可以将文章摄入，也可以修改      |
+| **Wiki（编译知识层）**       | `KnowledgeBase/` 目录下的所有内容 | LLM 拥有       | LLM 创建、更新、维护所有页面和交叉引用 |
+| **Schema（规约文件）**      | 本文件 `AGENTS.md`           | 人类与 LLM 共同演进 | 定义结构约定和工作流程           |
 
 ---
 
@@ -30,24 +30,24 @@ cloudops-vault/                    ← Obsidian vault, git 仓库
 ├── AGENTS.md                      ← 本文件（Schema 层）
 ├── CLAUDE.md                      ← Claude Code 入口（仅导入 @AGENTS.md）
 │
-├── AI/                            ← Raw Source（只读）
-├── Aliyun/                        ← Raw Source（只读）
-├── Azure/                         ← Raw Source（只读）
-├── C++/                           ← Raw Source（只读）
-├── CloudComputing/                ← Raw Source（只读）
-├── Database/                      ← Raw Source（只读）
-├── Docker-Kubernetes/             ← Raw Source（只读）
-├── Git/                           ← Raw Source（只读）
-├── Go/                            ← Raw Source（只读）
-├── GPU-DeepLearning/              ← Raw Source（只读）
-├── HPC/                           ← Raw Source（只读）
-├── IaC/                           ← Raw Source（只读）
-├── Linux-Shell/                   ← Raw Source（只读）
-├── Middlewares/                   ← Raw Source（只读）
-├── Networking/                    ← Raw Source（只读）
-├── OS/                            ← Raw Source（只读）
-├── Python/                        ← Raw Source（只读）
-├── SoftwareTesting/               ← Raw Source（只读）
+├── AI/                            ← Raw Source
+├── Aliyun/                        ← Raw Source
+├── Azure/                         ← Raw Source
+├── C++/                           ← Raw Source
+├── CloudComputing/                ← Raw Source
+├── Database/                      ← Raw Source
+├── Docker-Kubernetes/             ← Raw Source
+├── Git/                           ← Raw Source
+├── Go/                            ← Raw Source
+├── GPU-DeepLearning/              ← Raw Source
+├── HPC/                           ← Raw Source
+├── IaC/                           ← Raw Source
+├── Linux-Shell/                   ← Raw Source
+├── Middlewares/                   ← Raw Source
+├── Networking/                    ← Raw Source
+├── OS/                            ← Raw Source
+├── Python/                        ← Raw Source
+├── SoftwareTesting/               ← Raw Source
 │
 └── KnowledgeBase/                 ← Wiki 编译层（LLM 维护）
     ├── index.md                   ← 全 wiki 内容目录（面向内容）

@@ -2218,7 +2218,7 @@ date: 2026-04-17
 - 使用 humanizer-zh 优化表达，通过 Obsidian MCP 将公众号剪藏与现有 Krew/rolesum 笔记合并到 [[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum|kubectl 插件指南：Krew 安装、常用工具与 RBAC 排查]]；沿用原路径和别名，按技术用途组织 13 个插件，保留安装步骤、命令、输出示例、完整 Deployment 配置与 14 项检查清单。
 - 对照官方索引、文档和代码校订 PATH、离线安装、tree、images、outdated、resource-capacity、score 与 RBAC 语义；将来源输出、版本和未复现案例明确标为示例，记录原文差异与引用。
 - 创建 [[KnowledgeBase/sources/kubectl-krew-plugins-summary|来源摘要]]，同步 RBAC 概念页、Kubernetes 实体页与主题地图、UI 批次摘要、知识库入口和文档盘点中的标题。
-- 完整读回核对后删除重复剪藏 `0raw/kubectl 不够用？krew 装 10 插件.md`，保留其他文章；两篇来源均无图片，无需调用 PicGo 上传。
+- 完整读回核对后删除重复剪藏 `kubectl 不够用？krew 装 10 插件.md`，保留其他文章；两篇来源均无图片，无需调用 PicGo 上传。
 - 8 个相关页面通过完整 MCP 读回核对；正文 41 个代码块闭合，39 段 Bash 通过语法检查，Deployment YAML 可解析且标签选择器一致；相关 wikilink 与任务范围差异检查通过。已在 Obsidian 阅读视图检查标题、清单和表格，并修正表格管道符显示。未执行集群命令。
 
 ## [2026-10-11] ingest | Cluster Autoscaler 节点自动扩缩容
@@ -2231,7 +2231,7 @@ date: 2026-04-17
 
 ## [2026-10-11] ingest | StatefulSet Recreate 更新策略整合
 
-- 使用 humanizer-zh 将[[0raw/有状态也能原地重建：K8s 1.37 StatefulSet Recreate 策略实战|原始剪藏]]整理为[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet 基础笔记的新章节]]，保留原文 4 组代码块、11 个故障案例、分阶段检查、作者报告的案例数字与上线清单；原始剪藏和目标笔记旧正文未修改。
+- 使用 humanizer-zh 将原始剪藏整理为[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet 基础笔记的新章节]]，保留原文 4 组代码块、11 个故障案例、分阶段检查、作者报告的案例数字与上线清单；原始剪藏和目标笔记旧正文未修改。
 - 单列官方资料核验说明：Recreate 在 1.37 中为 Alpha、默认关闭，需启用两个控制面组件的 StatefulSetRecreateStrategy；rollingUpdate.partition 不可与 Recreate 组合；区分 PVC 保留和 PV 回收策略，并标明启动顺序、init 容器、EndpointSlice 与 Redis 槽位接管案例的适用边界。
 - 同步[[KnowledgeBase/sources/k8s-basic-resources-batch-summary|基础资源来源摘要]]、[[KnowledgeBase/maps/kubernetes-map|Kubernetes 专题地图]]和[[KnowledgeBase/INDEX|目录]]；基于各页最新内容更新，保留同期其他摄入改动。
 - 正文与三页导航经 Obsidian MCP 完整读回一致，原文代码保留、11 个案例编号、7 个新增章节代码块、5 处新增 wikilink/章节锚点及任务范围 git diff 空白检查通过；日志仅追加。未执行 Kubernetes/Redis 命令或复现作者案例。阅读视图检查未完成：界面工具未能找到运行中的 Obsidian。
@@ -2245,3 +2245,9 @@ date: 2026-04-17
 
 - 按用户要求移除 StatefulSet 正文和基础资源来源摘要中两处指向临时剪藏的链接；保留作者、日期、技术内容、代码和案例。
 - 全 vault 搜索及完整 MCP 读回确认，其他文章未发现此类引用。历史日志中的一个来源链接和一个目录前缀暂未修改：整文件写入与按章节修改均被自动审批拒绝，因日志按规约仅允许追加，待用户明确授权例外后清理。
+
+
+## [2026-10-11] update | 清理临时剪藏历史引用
+
+- 按用户本次明确授权，清理历史日志中的一个临时剪藏来源链接和一个目录前缀，保留事件文字、文件名及其余历史记录。
+- 此前被自动审批拒绝的两处日志修改已通过 Obsidian MCP 完成。
