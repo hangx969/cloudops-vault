@@ -9,15 +9,15 @@ sources:
   - "[[Docker-Kubernetes/k8s-scaling/helm部署goldilocks]]"
   - "[[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力]]"
   - "[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA]]"
-  - "[[Docker-Kubernetes/k8s-storage/k8s-分布式存储CubeFS]]"
+  - "[[开源存储CubeFS，分布式存储]]"
   - "[[Docker-Kubernetes/k8s-storage/helm部署nfs-subdir-external-provisioner]]"
-  - "[[Docker-Kubernetes/k8s-storage/k8s-ceph部署与集成]]"
+  - "[[开源存储Ceph]]"
   - "[[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战]]"
   - "[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑]]"
   - "[[Docker-Kubernetes/k8s-storage/让存储故障现形：Kubernetes Volume Health Monitor 原理与生产接入]]"
 aliases:
-  - "k8s-scaling-storage 批量摘要"
-  - "K8s 扩缩容与存储批量摘要"
+  - k8s-scaling-storage 批量摘要
+  - K8s 扩缩容与存储批量摘要
 ---
 
 ## 元信息
@@ -78,7 +78,7 @@ aliases:
 - HPA 与 VPA 可以在不同资源或不同指标维度共存；禁止同时控制同一 CPU/内存维度
 - 生产治理：PDB、minAllowed/maxAllowed、OOM/JVM/监控空洞、自定义 Recommender 与渐进式落地
 
-### [[Docker-Kubernetes/k8s-storage/k8s-分布式存储CubeFS|K8s 分布式存储 CubeFS]]
+### [[开源存储CubeFS，分布式存储|K8s 分布式存储 CubeFS]]
 
 **核心内容**: 对比单节点存储 vs 分布式存储的优劣，详细比较 Ceph 与 CubeFS 两大平台，阐述在 K8s 上落地分布式存储的优势。
 
@@ -96,7 +96,7 @@ aliases:
 - 支持通过 StorageClass 动态创建 PV，无需手动创建 PV 资源
 - 注意 exports 配置需写宿主机网段（非 Pod 网段），因 PV 先挂载到宿主机再挂载到 Pod
 
-### [[Docker-Kubernetes/k8s-storage/k8s-ceph部署与集成|K8s Ceph 部署与集成]]
+### [[开源存储Ceph|K8s Ceph 部署与集成]]
 
 **核心内容**: Ceph 分布式存储系统的完整介绍，包含三种存储类型（块/文件系统/对象）、核心组件和集群搭建。
 

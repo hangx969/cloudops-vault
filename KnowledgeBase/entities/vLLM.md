@@ -5,7 +5,7 @@ tags:
   - ai/inference-serving
 date: 2026-10-04
 sources:
-  - "[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统]]"
+  - "[[开源存储DeepSeek 3FS，AI原生的并行文件系统]]"
   - "[[基于docker部署vLLM和LiteLLM私有化大模型]]"
   - "[[AI/企业级私有化大模型/基于K8s部署vLLM和LiteLLM]]"
   - "[[AI/企业级私有化大模型/一个 Deployment 就能跑 vLLM，为什么还需要 KServe？]]"
@@ -58,7 +58,7 @@ vLLM 是面向大语言模型的高吞吐推理与服务引擎，提供高效 KV
 - [[AI/企业级私有化大模型/一个 Deployment 就能跑 vLLM，为什么还需要 KServe？|为何用 KServe 管理 vLLM 推理服务？]]：InferenceService、Gateway API、PVC 与自动扩缩容。
 - [[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni]]：与 Ollama、SGLang、vLLM-Omni 的选型及离线交付。
 
-- [[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS 并行文件系统]]：原文据公开报道介绍通过 Mooncake 等多级缓存组件间接接入 3FS 的路径，未提供本仓库的接入配置或实测结果。
+- [[开源存储DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS 并行文件系统]]：原文据公开报道介绍通过 Mooncake 等多级缓存组件间接接入 3FS 的路径，未提供本仓库的接入配置或实测结果。
 
 ## 知识空白
 

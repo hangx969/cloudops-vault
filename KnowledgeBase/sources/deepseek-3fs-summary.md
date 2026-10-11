@@ -6,7 +6,7 @@ tags:
   - ai/infrastructure
 date: 2026-10-04
 sources:
-  - "[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统]]"
+  - "[[开源存储DeepSeek 3FS，AI原生的并行文件系统]]"
 aliases:
   - DeepSeek 3FS 来源摘要
   - Fire-Flyer File System 来源摘要
@@ -16,7 +16,7 @@ aliases:
 
 ## 元信息
 
-- **原始文档**：[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS，AI原生的并行文件系统]]
+- **原始文档**：[[开源存储DeepSeek 3FS，AI原生的并行文件系统|开源存储DeepSeek 3FS，AI原生的并行文件系统]]
 - **作者与原文日期**：Aspirer2004，2026-09-25
 - **领域**：并行文件系统、AI 集群存储、KV Cache 外置
 - **摄入日期**：2026-10-04

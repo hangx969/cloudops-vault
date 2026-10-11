@@ -459,8 +459,8 @@ date: 2026-10-03
 |------|------|:-----------:|:----:|
 | [[Docker-Kubernetes/k8s-storage/emptyDir监控与驱逐机制实战\|emptyDir监控与驱逐机制实战]] | emptyDir 监控与驱逐机制实战 | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-storage/helm部署nfs-subdir-external-provisioner\|helm部署nfs-subdir-external-provisioner]] | Helm部署NFS Subdir External Provisioner | ✅ | ❌ |
-| [[Docker-Kubernetes/k8s-storage/k8s-ceph部署与集成\|k8s-ceph部署与集成]] | K8s Ceph部署与集成 | ✅ | ❌ |
-| [[Docker-Kubernetes/k8s-storage/k8s-分布式存储CubeFS\|k8s-分布式存储CubeFS]] | K8s分布式存储CubeFS | ✅ | ❌ |
+| [[开源存储Ceph\|k8s-ceph部署与集成]] | K8s Ceph部署与集成 | ✅ | ❌ |
+| [[开源存储CubeFS，分布式存储\|k8s-分布式存储CubeFS]] | K8s分布式存储CubeFS | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑\|k8s删除PVC后PV数据保护与复用避坑]] | 删除 PVC 后 PV 数据保护与复用避坑 | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-storage/让存储故障现形：Kubernetes Volume Health Monitor 原理与生产接入\|K8s Volume Health Monitor：原理与生产接入]] | 让存储故障现形：Kubernetes Volume Health Monitor 原理与生产接入 | ✅ | ❌ |
 

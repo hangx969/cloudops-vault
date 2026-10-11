@@ -5,7 +5,7 @@ tags:
   - AI/企业级私有化大模型
 date: 2026-10-04
 sources:
-  - "[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统]]"
+  - "[[开源存储DeepSeek 3FS，AI原生的并行文件系统]]"
   - "[[基于docker部署vLLM和LiteLLM私有化大模型]]"
   - "[[AI/企业级私有化大模型/KV Cache-从原理到集群调度]]"
   - "[[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni]]"
@@ -44,7 +44,7 @@ KV Cache 是 Transformer Attention 在处理上下文时保存的 Key 和 Value 
 - [[基于docker部署vLLM和LiteLLM私有化大模型]]：覆盖 PagedAttention、KV Cache 显存估算和 vLLM 服务部署。
 - [[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni]]：把 KV Cache 放入 vLLM/SGLang 选型、上下文长度、显存比例、并发和 PD 分离的工程权衡中。
 
-- [[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS 并行文件系统]]：介绍 GPU 显存、CPU 内存、磁盘的多级缓存，以及原文据公开报道提及的实验性适配路径。
+- [[开源存储DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS 并行文件系统]]：介绍 GPU 显存、CPU 内存、磁盘的多级缓存，以及原文据公开报道提及的实验性适配路径。
 
 ## 知识空白
 

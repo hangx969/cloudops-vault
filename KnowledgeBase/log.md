@@ -2190,7 +2190,7 @@ date: 2026-04-17
 
 ## [2026-10-04] ingest | Longhorn 轻量块存储文章
 
-- 按用户要求新增 [[Docker-Kubernetes/k8s-storage/开源存储列传第 18 篇 — Longhorn，K8s的轻量块存储|开源存储列传第 18 篇 — Longhorn，K8s的轻量块存储]]；用 humanizer-zh 优化正文表达，清理剪藏编号和系列导航，保留 8 个章节、原始元信息、完整对比表、技术背景、数字、版本与作者判断，原稿保持原样。
+- 按用户要求新增 [[开源存储Longhorn，K8s的轻量块存储|开源存储Longhorn，K8s的轻量块存储]]；用 humanizer-zh 优化正文表达，清理剪藏编号和系列导航，保留 8 个章节、原始元信息、完整对比表、技术背景、数字、版本与作者判断，原稿保持原样。
 - 原文 10 幅 SVG 保留为 6 幅 Mermaid 和 4 幅 PNG；PNG 通过 PicGo CLI 的 GitHub Plus 上传到既有图床，流程图保留原图文字与关系。
 - 新增 [[KnowledgeBase/sources/longhorn-block-storage-summary|Longhorn 来源摘要]]，补充 [[KnowledgeBase/concepts/StorageClass]]、[[KnowledgeBase/entities/Rancher]]、[[KnowledgeBase/maps/kubernetes-map]] 与 [[KnowledgeBase/INDEX]] 的来源和入口；保留索引及地图中的同期摄入内容。
 - 对原文的每卷 Pod 数量、串行复制链、重建方式、快照空间和故障后果、部署与性能概括，另加带官方引用的折叠校核注释。未执行 Longhorn 部署、迁移、压测或故障演练。
@@ -2199,7 +2199,7 @@ date: 2026-04-17
 
 ## [2026-10-04] ingest | DeepSeek 3FS 并行文件系统
 
-- 新增 [[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS，AI原生的并行文件系统]]，用 humanizer-zh 优化正文表达，保留 7 个主章节、4 个技术小节、两张对比表和正文数字；清除剪藏段落序号与系列页脚导航，原始剪藏未修改。
+- 新增 [[开源存储DeepSeek 3FS，AI原生的并行文件系统|开源存储DeepSeek 3FS，AI原生的并行文件系统]]，用 humanizer-zh 优化正文表达，保留 7 个主章节、4 个技术小节、两张对比表和正文数字；清除剪藏段落序号与系列页脚导航，原始剪藏未修改。
 - 原文 9 张内嵌 SVG 导出为 2100 px 宽 PNG，经 PicGo CLI 的 GitHub Plus 上传至图床；9/9 远端图片返回 HTTP 200，内容 SHA-256 与本地一致。独立 SVG 保存在文章的 assets 目录并提供正文链接，仅增加独立文件所需的 XML namespace，原图文字与图形保持一致。
 - 正文另列官方资料核对说明，标明 USRBIO/FUSE 与内核参与、CRAQ 读路径、权限与轻量数据集快照、MIT 条件的表述边界；原文观点与核对说明分别标注。
 - 新增 [[KnowledgeBase/sources/deepseek-3fs-summary|来源摘要]]，更新 [[KnowledgeBase/concepts/KV Cache]]、[[KnowledgeBase/entities/vLLM]]、[[KnowledgeBase/maps/kubernetes-map|Kubernetes 专题地图]] 与 INDEX；保留同期 Longhorn 等摄入改动，相关导航按当前文件数统计（Docker-Kubernetes 171 篇，k8s-storage 8 篇）。
@@ -2255,7 +2255,7 @@ date: 2026-04-17
 ## [2026-10-11] update | 清理文章合并与编辑过程说明
 
 - 扫描 848 个文章与导航页面，按 humanizer-zh 清理 43 个页面中的历史合并、重复剪藏和编辑过程说明，正文直接说明技术用途、步骤、版本差异与使用边界。
-- 更新 12 篇技术正文：[[kuebctl-插件krew|kubectl 插件指南：Krew 安装、常用工具与 RBAC 排查]]、[[Docker-Kubernetes/k8s-monitoring-logging/Kubernetes原生部署Prometheus与Grafana|Kubernetes 原生部署 Prometheus 与 Grafana]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply|K8s基础-YAML]]、[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查|ArgoCD 同步故障排查]]、[[Linux-Shell/Ubuntu基础操作|Ubuntu 基础操作]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset|K8s基础-StatefulSet]]、[[AI/Codex/Codex-使用技巧和最佳实践|Codex 使用技巧和最佳实践]]、[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]、[[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]、[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS，AI原生的并行文件系统]]、[[Docker-Kubernetes/k8s-storage/开源存储列传第 18 篇 — Longhorn，K8s的轻量块存储|Longhorn，K8s的轻量块存储]]、[[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni|大模型本地部署选型：Ollama、vLLM、SGLang 与 vLLM-Omni]]。
+- 更新 12 篇技术正文：[[kuebctl-插件krew|kubectl 插件指南：Krew 安装、常用工具与 RBAC 排查]]、[[Docker-Kubernetes/k8s-monitoring-logging/Kubernetes原生部署Prometheus与Grafana|Kubernetes 原生部署 Prometheus 与 Grafana]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply|K8s基础-YAML]]、[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查|ArgoCD 同步故障排查]]、[[Linux-Shell/Ubuntu基础操作|Ubuntu 基础操作]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset|K8s基础-StatefulSet]]、[[AI/Codex/Codex-使用技巧和最佳实践|Codex 使用技巧和最佳实践]]、[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]、[[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]、[[开源存储DeepSeek 3FS，AI原生的并行文件系统|开源存储DeepSeek 3FS，AI原生的并行文件系统]]、[[开源存储Longhorn，K8s的轻量块存储|Longhorn，K8s的轻量块存储]]、[[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni|大模型本地部署选型：Ollama、vLLM、SGLang 与 vLLM-Omni]]。
 - 同步更新 25 个来源摘要、[[KnowledgeBase/entities/Hermes-Agent|Hermes Agent]]、[[KnowledgeBase/concepts/KV Cache|KV Cache]]、[[KnowledgeBase/INDEX|知识库入口]]、[[AI/index|AI 索引]]、[[KnowledgeBase/maps/ai-workflow-map|AI 工作流地图]]和[[KnowledgeBase/maps/tool-map|工具地图]]；容器设计模式导航按实际一篇正文计数，四种模式仍完整覆盖。
 - 保留来源归属、版本和案例验证边界；43 个页面均经 Obsidian MCP 写入并完整读回，310 个代码块、YAML frontmatter 和链接目标与更新前一致，git diff --check 通过。复扫剩余 20 处命中均属于 Git、kubeconfig、RAG 或工具实现等技术内容。
 - Obsidian 阅读预览因 Mac 锁定未完成；文本核对与结构检查已完成。操作日志仅追加，维护报告和盘点记录继续保留历史信息。

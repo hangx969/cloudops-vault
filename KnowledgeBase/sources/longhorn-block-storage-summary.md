@@ -12,7 +12,7 @@ aliases:
 
 ## 元信息
 
-- **原始文档**：[[Docker-Kubernetes/k8s-storage/开源存储列传第 18 篇 — Longhorn，K8s的轻量块存储|开源存储列传第 18 篇 — Longhorn，K8s的轻量块存储]]
+- **原始文档**：[[开源存储Longhorn，K8s的轻量块存储|开源存储Longhorn，K8s的轻量块存储]]
 - **外部来源**：[Aspirer2004 原文](https://mp.weixin.qq.com/s/LZX1go03KjwCv_XC3oiqJQ)，发布于 2026-09-19
 - **领域**：Kubernetes 存储
 - **摄入日期**：2026-10-04
