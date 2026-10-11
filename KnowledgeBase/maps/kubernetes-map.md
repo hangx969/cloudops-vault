@@ -6,8 +6,10 @@ tags:
   - "[[Docker-Kubernetes/k8s-storage/开源存储列传第 18 篇 — Longhorn，K8s的轻量块存储]]"
 aliases:
   - K8s Map
-date: 2026-10-04
+date: 2026-10-11
 sources:
+  - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱]]"
+  - "[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum]]"
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查]]"
   - "[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统]]"
   - "[[Docker-Kubernetes/docker/docker基础]]"
@@ -103,12 +105,14 @@ sources:
 # ☸️ Kubernetes 专题地图
 
 > [!info] 专题范围
-> 覆盖 Docker-Kubernetes 目录下 ==171 篇文档==（不含目录 index.md，统计日期 2026-10-04），从容器基础到企业级 K8s 全生命周期管理。
+> 覆盖 Docker-Kubernetes 目录下 ==171 篇文档==（不含目录 index.md，统计日期 2026-10-11），从容器基础到企业级 K8s 全生命周期管理。
 
 ---
 
 ## 核心概念
 - [[KnowledgeBase/entities/Kubernetes|Kubernetes]] — K8s 概念页
+- [[KnowledgeBase/concepts/自动扩缩容|自动扩缩容]] — Pod 副本、资源规格与节点容量协同
+- [[KnowledgeBase/entities/Cluster Autoscaler|Cluster Autoscaler]] — 节点扩缩容与安全迁移
 - [[KnowledgeBase/entities/Docker|Docker]] — 容器基础
 - [[KnowledgeBase/entities/Helm|Helm]] — 包管理
 - [[KnowledgeBase/entities/Kustomize|Kustomize]] — Base/Overlay 配置定制
@@ -224,8 +228,10 @@ sources:
 ### 安全与认证（9 篇）
 [[KnowledgeBase/entities/Cert-Manager|Cert-Manager]]（Helm、自签名、HTTP01/DNS01、Cloudflare/Azure DNS、自动续期）、External-Secrets、Kyverno+Policy-Reporter（含 1.18 新特性）、OAuth2-Proxy、Capsule、SonarQube、Trivy-Operator、[[k8s容器安全上下文-SecurityContext|K8s 容器安全上下文：从入门到生产避坑]]、[[Docker-Kubernetes/k8s-security-auth/k8s-Admission-Webhook链冲突排查-Istio-Kyverno-Gatekeeper|Admission Webhook 链冲突排查]]
 
-### 扩缩容（4 篇）
+### 扩缩容（5 篇）
 [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]、[[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]、Goldilocks、[[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战|K8s 集群成本优化]]
+
+- [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱|Cluster Autoscaler：节点自动扩缩容实践]] — 调度模拟、Node Group、PDB、调优、排障与回滚；[[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|来源摘要]]。
 
 ### 存储（8 篇）
 NFS Provisioner、Ceph、CubeFS、[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑|PV/PVC 数据保护与复用避坑]]、[[Docker-Kubernetes/k8s-storage/让存储故障现形：Kubernetes Volume Health Monitor 原理与生产接入|K8s Volume Health Monitor：原理与生产接入]]、[[Docker-Kubernetes/k8s-storage/emptyDir监控与驱逐机制实战|emptyDir 监控与驱逐]]
@@ -243,7 +249,7 @@ MySQL(3)、Redis(2)、PostgreSQL、Kafka(Strimzi)、RabbitMQ HA、MongoDB、http
 |--------|------|------|
 | Docker | 14 | [[Docker-Kubernetes/docker/docker基础|docker基础]] |
 | Helm | 1 | [[Docker-Kubernetes/helm/helmv3-安装与使用|helmv3-安装与使用]] |
-| UI 工具 | 8 | k9s、Lens、Dashboard、Kuboard、Rancher |
+| UI 工具 | 8 | k9s、Lens、Dashboard、Kuboard、Rancher、[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum\|Krew 与 kubectl 插件指南]] |
 | 镜像管理 | 3 | [[Docker-Kubernetes/k8s-image-management/Harbor 部署与使用指南|Harbor 部署与使用指南]]、[[Docker-Kubernetes/k8s-image-management/Dragonfly与Harbor-P2P镜像分发\|Dragonfly + Harbor：P2P 分发]]、Dragonfly Helm 部署 |
 | CKA/CKS | 3 | [[Docker-Kubernetes/CKA-CKS/CKA-备考|CKA-备考]] |
 | KubeBlocks | 2 | WordPress、Harbor 高可用 |

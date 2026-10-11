@@ -4,7 +4,7 @@ tags:
   - knowledgebase/source
   - docker-kubernetes/k8s-db-middleware
   - docker-kubernetes/k8s-UI-tools
-date: 2026-04-17
+date: 2026-10-11
 sources:
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署Redis集群]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署mysql集群]]"
@@ -193,13 +193,15 @@ aliases:
   - 支持上下文切换、标签过滤、正则过滤、模糊查找
   - 多种安装方式：webi、deb 包、snap
 
-### [[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum|kubectl插件krew和rolesum]]
+### [[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum|kubectl 插件指南：Krew 与 RBAC 排查]]
 
-- **核心内容**: 使用 krew 插件管理器安装 rolesum 插件，可视化查看 K8s RBAC 角色。
-- **关键知识点**:
-  - krew 是 kubectl 的插件管理工具
-  - rolesum 用于可视化查看 RBAC Role 绑定
-  - Windows 环境下可通过 scoop 安装
+- **核心内容**：Krew 安装、内网与离线分发、13 个常用插件，以及 whoami/rolesum/who-can/auth can-i 的权限排查分工。
+- **关键知识点**：
+  - PATH 需要手动配置；插件平台支持与客户端 API 兼容性分别核对
+  - rolesum 默认查询 ServiceAccount，也可查询 User/Group；who-can 静态分析需要读取角色和绑定
+  - 资源清单快照不能代替完整灾备；outdated 检查镜像，废弃 API 检查使用相应工具
+  - Windows 可参考现有 Scoop 笔记；无效参数和示例数据的校订见正文
+- **独立摘要**：[[KnowledgeBase/sources/kubectl-krew-plugins-summary|kubectl 插件指南 来源摘要]]。
 
 ### [[Docker-Kubernetes/k8s-UI-tools/rancher(v2.6.4)管理k8s集群|Rancher管理K8s集群]]
 

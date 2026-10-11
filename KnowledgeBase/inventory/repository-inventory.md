@@ -438,7 +438,7 @@ date: 2026-10-03
 | [[Docker-Kubernetes/k8s-UI-tools/k8s部署可视化ui界面kuboard\|k8s部署可视化ui界面kuboard]] | K8s 部署 Kuboard | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-UI-tools/kubectl-UI工具Lens\|kubectl-UI工具Lens]] | kubectl UI 工具 Lens | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-UI-tools/kubectl-可视化插件k9s-stern\|kubectl-可视化插件k9s-stern]] | kubectl 可视化插件 k9s 和 stern | ✅ | ❌ |
-| [[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum\|kuebctl-插件krew-rolesum]] | kubectl 插件 krew 和 rolesum | ✅ | ❌ |
+| [[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum\|kuebctl-插件krew-rolesum]] | kubectl 插件指南：Krew 安装、常用工具与 RBAC 排查 | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-UI-tools/rancher(v2.6.4)管理k8s集群\|rancher(v2.6.4)管理k8s集群]] | Rancher (v2.6.4) 管理 K8s 集群 | ✅ | ❌ |
 
 ### k8s-networking-service-mesh/（7 篇）

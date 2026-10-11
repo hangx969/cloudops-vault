@@ -6,7 +6,7 @@ tags:
 aliases:
   - 知识库首页
   - KB Index
-date: 2026-10-04
+date: 2026-10-11
 ---
 
 # 📚 Learning Notes 知识库
@@ -203,6 +203,8 @@ date: 2026-10-04
 - [[KnowledgeBase/sources/deepseek-3fs-summary|DeepSeek 3FS 来源摘要]] — AI 集群存储负载、四组件架构、USRBIO/RDMA、CRAQ、性能口径与社区缓存集成。
 
 - [[KnowledgeBase/sources/argocd-sync-troubleshooting-summary|ArgoCD 同步故障排查 来源摘要]] — 五类同步问题、三组原文案例、配置示例与官方资料校正。
+
+- [[KnowledgeBase/sources/kubectl-krew-plugins-summary|kubectl 插件指南 来源摘要]] — Krew 安装与离线分发、13 个插件、rolesum/RBAC 排查及命令校订。
 
 ### Azure（已摄入 ✅）
 

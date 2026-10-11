@@ -3,8 +3,9 @@ title: Kubernetes
 tags:
   - knowledgebase/entity
   - docker-kubernetes
-date: 2026-10-04
+date: 2026-10-11
 sources:
+  - "[[KnowledgeBase/sources/k8s-cluster-autoscaler-summary]]"
   - "[[KnowledgeBase/sources/argocd-sync-troubleshooting-summary]]"
   - "[[KnowledgeBase/sources/k8s-basic-resources-batch-summary]]"
   - "[[KnowledgeBase/sources/kubectl-server-side-apply-summary]]"
@@ -18,6 +19,7 @@ sources:
   - "[[KnowledgeBase/sources/k8s-scaling-storage-batch-summary]]"
   - "[[KnowledgeBase/sources/k8s-volume-health-monitor-summary]]"
   - "[[KnowledgeBase/sources/k8s-db-middleware-UI-batch-summary]]"
+  - "[[KnowledgeBase/sources/kubectl-krew-plugins-summary]]"
   - "[[KnowledgeBase/sources/k8s-misc-batch-summary]]"
   - "[[KnowledgeBase/sources/dragonfly-harbor-p2p-distribution-summary]]"
   - "[[KnowledgeBase/sources/k8s-cgroup-v2-summary]]"
@@ -153,8 +155,8 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 - Capsule Tenant：一组 Namespace 的逻辑分组，RBAC + ResourceQuota + NetworkPolicy 策略隔离
 - Security Context：UID/GID 管理 + Capabilities（drop ALL + 按需 add）+ 特权模式禁止 + sysctl + seccomp + Pod 安全标准三级策略
 
-### 扩缩容与存储（10 篇）
-详见 [[KnowledgeBase/sources/k8s-scaling-storage-batch-summary|k8s-scaling-storage 批量摘要]]
+### 扩缩容与存储（13 篇）
+详见 [[KnowledgeBase/sources/k8s-scaling-storage-batch-summary|k8s-scaling-storage 批量摘要]] 与 [[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|Cluster Autoscaler 节点扩缩容摘要]]
 
 **扩缩容四层体系**：HPA（Pod 水平，基于 CPU/内存）-> VPA（Pod 垂直，调整 request/limit）-> KEDA（事件驱动，支持缩容到 0）-> Cluster Autoscaler（节点级别弹性）。Goldilocks 提供 VPA 推荐值可视化。
 
@@ -174,12 +176,16 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 - Volume Health Monitor 通过 4 个 CSI RPC 将卷健康写入 `PVC.status.healthStatus`、`Pod.status.volumeHealth` 和 `CSINode.status.storageHealth`，补足 PVC 长期 `Bound` 但底层已降级的可观测性盲区
 - 该特性以 Kubernetes 1.37 Alpha 为前提，必须同时验证 feature gate 与 CSI 驱动版本，并把 `Degraded`/`Inaccessible` 分级接入告警和 remediation
 
+- [[KnowledgeBase/entities/Cluster Autoscaler|Cluster Autoscaler]] 基于 requests 和调度约束判断新增节点能否解决 Pending；回收节点前检查 PDB、本地存储和迁移条件。部署、排障与上线回滚见 [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱|节点自动扩缩容实践]]。
+
 ### 数据库中间件与 UI 工具（19 篇）
 详见 [[KnowledgeBase/sources/k8s-db-middleware-UI-batch-summary|k8s-db-middleware-UI 批量摘要]]
 
 **数据库部署**（三种范式对比）：原生 YAML（学习底层）、Helm Chart（标准化配置）、Operator（自动化运维）。覆盖 MySQL（NDB Operator/Helm/YAML 主从）、PostgreSQL HA（Pgpool+repmgr）、Redis（Cluster 模式 3主3从）、MongoDB（副本集/分片）、Kafka（Strimzi Operator）。
 
-**UI 工具链**：Dashboard（Web 原生）、Kuboard（国产增强）、Lens（桌面 IDE，内置 Prometheus）、k9s（终端 TUI，Vim 风格）、Rancher（企业级多集群管理平台）、krew 插件管理器。
+**UI 工具链**：Dashboard（Web 原生）、Kuboard（国产增强）、Lens（桌面 IDE，内置 Prometheus）、k9s（终端 TUI，Vim 风格）、Rancher（企业级多集群管理平台）、Krew 插件管理器。
+
+**kubectl 插件排查**：[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum|Krew 与 kubectl 插件指南]] 按上下文、资源、镜像、日志、容量与 CI 组织 13 个插件；whoami、rolesum、who-can 和 auth can-i 分别处理身份、角色来源、主体反查与授权查询。详见 [[KnowledgeBase/sources/kubectl-krew-plugins-summary|来源摘要]]。
 
 ### 杂项专题（18 篇）
 详见 [[KnowledgeBase/sources/k8s-misc-batch-summary|k8s-misc 批量摘要]]
