@@ -31,7 +31,7 @@ ArgoCD 同步时，需要对比 Git 中渲染出的期望状态与集群实际�
 先区分三种状态：`OutOfSync` 表示期望状态与 live 状态有差异；同步操作的 `Failed` 表示某次执行失败；`Progressing` 是资源健康状态，表示尚未达到健康检查的条件。应用可以已经 `Synced`，健康状态仍是 `Progressing`。
 
 > [!note] 技术校正：三方模型的适用范围
-> 原文把所有同步问题归于 Git、live 和 last-applied 的三方合并。三方模型适用于传统 diff 和 Client-side Apply：Git 提供期望状态，live 是当前对象，`kubectl.kubernetes.io/last-applied-configuration` 保存上次应用的配置。ArgoCD 还支持其他 [diff 策略](https://argo-cd.readthedocs.io/en/stable/user-guide/diff-strategies/)，SSA 也使用字段所有权；健康检查、prune 和渲染性能各有机制，不能都归为三方合并失败。
+> 三方模型适用于传统 diff 和 Client-side Apply：Git 提供期望状态，live 是当前对象，`kubectl.kubernetes.io/last-applied-configuration` 保存上次应用的配置。ArgoCD 还支持其他 [diff 策略](https://argo-cd.readthedocs.io/en/stable/user-guide/diff-strategies/)，SSA 也使用字段所有权；健康检查、prune 和渲染性能各有机制，不能都归为三方合并失败。
 
 ## 一、OutOfSync 反复出现
 
@@ -273,7 +273,7 @@ argocd app sync my-app --force
 > [!warning] 技术校正：replace 与删除重建不同
 > `Replace=true` 使用 replace/create；明确删除再创建资源的选项是 `Force=true,Replace=true`，通常应限制到已确认可重建的资源。`argocd app sync --force` 也不是普通重试。重建 Service 可能改变 ClusterIP 并造成断连，有状态资源还涉及 PVC 与数据恢复。见 [同步选项](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/)。
 
-`resourceVersion` 报错要结合完整消息判断。版本过旧导致的并发更新通常返回 `409 Conflict`；`Invalid value` 不足以证明只是并发。先检查 Git 或渲染清单是否带入服务端管理的元数据、当前 live 对象和更新请求，再处理重试或字段归属。原文把 `--force` 解释为重新 GET 并解除“三方合并锁”，这个解释不准确，也不应因此直接删除 last-applied 注解。见 [Kubernetes 更新机制](https://kubernetes.io/docs/reference/using-api/api-concepts/#updates-to-existing-resources)。
+`resourceVersion` 报错要结合完整消息判断。版本过旧导致的并发更新通常返回 `409 Conflict`；`Invalid value` 不足以证明只是并发。先检查 Git 或渲染清单是否带入服务端管理的元数据、当前 live 对象和更新请求，再处理重试或字段归属。`--force` 不能被理解为重新 GET 并解除“三方合并锁”，也不应因此直接删除 last-applied 注解。见 [Kubernetes 更新机制](https://kubernetes.io/docs/reference/using-api/api-concepts/#updates-to-existing-resources)。
 
 修改 StatefulSet 的 `volumeClaimTemplates`，例如 `storageClassName` 或 `accessModes`，可能需要重新创建 StatefulSet，并单独规划存储迁移。原文提出“缩容到 0、删除 StatefulSet 时保留 PVC、再用新模板重建”的维护思路；它需要确认 PVC 保留策略和备份，且保留的 PVC 不会因为新模板就自动改变存储类或访问模式。`Replace=true` 不等于直接删除 StatefulSet。
 

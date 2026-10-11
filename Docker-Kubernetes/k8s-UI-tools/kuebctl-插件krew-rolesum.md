@@ -17,10 +17,10 @@ source: "https://mp.weixin.qq.com/s/H0PCEn6yVjbskCUB7hl94g"
 
 排查 Kubernetes 问题时，常见的任务包括查看资源创建关系、盘点镜像、检查权限和跟踪多个 Pod 的日志。kubectl 插件把这些操作封装成独立命令，Krew 则负责插件的发现、安装、升级和卸载。
 
-本文整合现有 Krew/rolesum 笔记与 WAKEUP技术于 2026-10-09 发布的《kubectl 不够用？krew 装 10 插件》。原文按十组场景介绍工具，其中 `ctx/ns`、`whoami/who-can` 各包含两个插件；这里按技术用途组织，并加入 rolesum 的使用说明。
+常用插件覆盖上下文切换、配置整理、资源关系、镜像检查、RBAC 排查、日志聚合、资源分配和 CI 清单检查。
 
-> [!note] 示例与校订范围
-> 文中的命令按官方索引、文档和代码核对；输出节选来自来源文章，仅用于说明字段和场景，未在实际集群执行。原文中不成立的功能、参数和输出已在文末的“原文校订说明”中列出。
+> [!note] 示例与使用范围
+> 命令与输出用于说明插件的字段和使用场景，未在实际集群执行。参数和平台支持请以所用版本的帮助信息为准。
 
 ## 插件机制与 Krew 的职责
 
@@ -57,7 +57,7 @@ kubectl krew info tree
 #   Show sub-resources of a Kubernetes API object with ownerReferences.
 ~~~
 
-上面是原文的版本与输出节选；`SHA256` 已截断，不能用于校验。实际下载时应以当前 manifest 中对应平台的 `URI` 和完整 `SHA256` 为准。
+上例的版本与输出仅用于说明格式；`SHA256` 已截断，不能用于校验。实际下载时应以当前 manifest 中对应平台的 `URI` 和完整 `SHA256` 为准。
 
 ### 凭据与执行边界
 
@@ -113,7 +113,7 @@ kubectl krew search ctx    # 按关键字搜
 kubectl krew info tree     # 看某个插件的说明
 ~~~
 
-这里的 `v0.4.4`、提交号与 `/root/.krew` 是原文示例，不是版本要求或固定安装路径。安装步骤以 [Krew 官方安装文档](https://krew.sigs.k8s.io/docs/user-guide/setup/install/) 为准。
+这里的 `v0.4.4`、提交号与 `/root/.krew` 是示例值，不是版本要求或固定安装路径。安装步骤以 [Krew 官方安装文档](https://krew.sigs.k8s.io/docs/user-guide/setup/install/) 为准。
 
 ### Windows 安装
 
@@ -140,7 +140,7 @@ Krew 安装插件通常涉及两个独立来源：Git 索引仓库和 manifest �
 3. **使用本地 manifest 与安装包。** 预先下载匹配操作系统和架构的 manifest、归档文件，在目标机器上从本地安装。
 4. **直接分发可执行文件。** 下载插件 Release，解压并校验后，将入口命名为 `kubectl-<插件名>`，放入 `PATH` 中。这种安装不由 Krew 记录和升级。
 
-原文演示了手动放置 Krew 二进制的流程，以 Linux amd64 为例：
+手动放置 Krew 二进制时，以 Linux amd64 为例：
 
 ~~~bash
 # 1. 从可信 Release 下载对应平台的安装包后解压
@@ -300,9 +300,9 @@ kubectl tree helmrelease redis -n default
 kubectl tree pod payment-api-7d9f8b6c4-x2mnp -n payment
 ~~~
 
-tree 只识别 `ownerReferences`。仅通过 label、Helm 注解或外部流程关联的资源，不一定能组成树；跨集群关系也不会自动连接。原文中的 `HelmRelease → StatefulSet/ConfigMap` 仅在相应控制器设置了 ownerReferences 时才成立，不能理解为所有 Helm 安装都会产生这棵树。
+tree 只识别 `ownerReferences`。仅通过 label、Helm 注解或外部流程关联的资源，不一定能组成树；跨集群关系也不会自动连接。示例中的 `HelmRelease → StatefulSet/ConfigMap` 仅在相应控制器设置了 ownerReferences 时才成立，不能理解为所有 Helm 安装都会产生这棵树。
 
-查询自定义资源及其子资源还需要相应读取权限。tree 展示的是指定对象的子资源，不会运行控制器，也不支持原文写出的 `--run-workload-controllers` 参数。支持的参数见 [kubectl-tree](https://github.com/ahmetb/kubectl-tree/blob/v0.6.0/README.md)。
+查询自定义资源及其子资源还需要相应读取权限。tree 展示的是指定对象的子资源，不会运行控制器，也不支持 `--run-workload-controllers` 参数。支持的参数见 [kubectl-tree](https://github.com/ahmetb/kubectl-tree/blob/v0.6.0/README.md)。
 
 ### get-all：盘点可读取的 API 资源
 
@@ -336,7 +336,7 @@ wc -l payment-backup.yaml
 # 1842 payment-backup.yaml
 ~~~
 
-原文的 `1842` 行只是示例。这样的清单快照不包含完整应用数据，不保证资源读取的一致时间点、依赖恢复顺序或恢复成功，不能作为完整灾备方案。导出内容还可能含 Secret，需要控制保存和访问范围。
+快照中的 `1842` 行只是示例值。这样的清单快照不包含完整应用数据，不保证资源读取的一致时间点、依赖恢复顺序或恢复成功，不能作为完整灾备方案。导出内容还可能含 Secret，需要控制保存和访问范围。
 
 工具选项见 [get-all 使用说明](https://github.com/stackitcloud/kubectl-get-all/blob/v1.4.3/docs/USAGE.md)。
 
@@ -380,7 +380,7 @@ kubectl outdated --context='<上下文名称>'
 
 查询还受镜像仓库网络、认证与 tag 命名方式影响。内网仓库不可达时，可能无法得到完整结果；发现更新也不意味着可以直接升级，仍要由业务方评估兼容性和发布计划。见 [outdated 使用说明](https://github.com/replicatedhq/outdated/blob/v0.4.1/doc/USAGE.md)。
 
-**集群升级前的 API 检查单独处理。** 原文希望检查 `extensions/v1beta1` Ingress、`batch/v1beta1` CronJob 等旧 API，这项工作应使用相应的废弃 API 检查工具，参见 [[Docker-Kubernetes/k8s-UI-tools/k8s-API检查工具kubent|kubent：废弃 API 检查]]。需要保留现有 Ingress 配置时，可先导出整理：
+**集群升级前的 API 检查单独处理。** 检查 `extensions/v1beta1` Ingress、`batch/v1beta1` CronJob 等旧 API 时，应使用相应的废弃 API 检查工具，参见 [[Docker-Kubernetes/k8s-UI-tools/k8s-API检查工具kubent|kubent：废弃 API 检查]]。需要保留现有 Ingress 配置时，可先导出整理：
 
 ~~~bash
 kubectl get ingress shop-web -o yaml | kubectl neat > ingress-old.yaml
@@ -454,7 +454,7 @@ kubectl who-can get secrets -n kube-system
 
 who-can 需要列出 Role、ClusterRole 及其绑定。权限不足时，看到的角色数据和分析结果可能不完整。它通过 RBAC 规则推导主体，不代表已经验证了其他授权器、准入策略或操作执行结果。
 
-`--as` 改变的是查询请求的身份，不会把 who-can 的输出变成“仅判断这个主体是否有权限”。这项区别尤其影响 ServiceAccount 排查。RBAC 本身是累加授权，不存在原文所说的 RBAC 显式 deny 规则。工具说明见 [kubectl-who-can](https://github.com/aquasecurity/kubectl-who-can/blob/v0.4.0/README.md)。
+`--as` 改变的是查询请求的身份，不会把 who-can 的输出变成“仅判断这个主体是否有权限”。这项区别尤其影响 ServiceAccount 排查。RBAC 本身是累加授权，不存在 RBAC 显式 deny 规则。工具说明见 [kubectl-who-can](https://github.com/aquasecurity/kubectl-who-can/blob/v0.4.0/README.md)。
 
 ### CI 报 Forbidden 时的排查顺序
 
@@ -528,7 +528,7 @@ kubectl resource-capacity --pods --util -n payment
 - **limits 分配量**：配置的使用上限；总和超过节点容量表示存在超售，不表示此刻已经达到该负载。
 - **util 使用量**：通过 metrics 获取的现场用量，应结合 `kubectl top` 或监控数据判断。
 
-原文表格中三节点的绝对数可以相加，但汇总百分比与节点百分比推算出的总容量不一致，不能用于实际容量结论。原文的 `Allocations for pod template ...: 14` 也不是该插件的输出：当前版本没有 `--pod-template` 参数，不能直接计算某份 Deployment 还能调度多少副本。
+示例表格中三节点的绝对数可以相加，但汇总百分比与节点百分比推算出的总容量不一致，不能用于实际容量结论。当前版本没有 `--pod-template` 参数，也不会输出 `Allocations for pod template ...: 14`；不能直接计算某份 Deployment 还能调度多少副本。
 
 容量规划仍需要结合工作负载资源需求、节点可分配资源和调度条件。CPU 或内存 limits 超售会增加资源竞争风险，但不能据此认定所有 Pod 一定同时发生 throttle 或 OOM。功能与参数见 [kube-capacity v0.8.0](https://github.com/robscott/kube-capacity/blob/v0.8.0/README.md)。
 
@@ -542,7 +542,7 @@ score 对应 kube-score，检查资源 requests/limits、安全上下文、探�
 kubectl krew install score
 ~~~
 
-下面保留来源文章中的诊断示意；实际检查项、级别与文案以所用版本为准。
+诊断示意如下；实际检查项、级别与文案以所用版本为准。
 
 ~~~bash
 kubectl score ./deploy.yaml
@@ -558,7 +558,7 @@ kubectl score ./deploy.yaml
 kubectl score --exit-one-on-warning ./manifests/*.yaml
 ~~~
 
-镜像 tag 与 pull policy 是不同的检查。kube-score 的显式、非 latest tag 检查不能证明该 tag 不可变；原文把 pull policy 的诊断写成不可变 tag 要求，已去掉这条不准确的输出。
+镜像 tag 与 pull policy 是不同的检查。kube-score 的显式、非 latest tag 检查不能证明该 tag 不可变，pull policy 的诊断也不能用于判断 tag 是否不可变。
 
 JSON v2 的 grade 在每个对象的 `checks` 数组中。筛选低于 5 分的检查项，需要进入该数组；与来源文章的阈值一样，这会筛出 critical，不包含 grade 为 5 的 warning：
 
@@ -575,7 +575,7 @@ kubectl score -o json ./deploy.yaml |
 
 ### 用注解记录例外规则
 
-`kube-score/ignore` 在对象上忽略指定检查，值是以逗号分隔的规则 ID。下面保留原文的完整 Deployment 示例；原文后续重复且字段不全的同名 Deployment 已合并删除。
+`kube-score/ignore` 在对象上忽略指定检查，值是以逗号分隔的规则 ID。以下 Deployment 示例通过注解指定例外规则。
 
 ~~~yaml
 apiVersion: apps/v1
@@ -617,7 +617,7 @@ spec:
 
 ### 来源、安装位置和版本
 
-- **检查来源。** 优先使用可追溯的索引、源码和 Release，核对近期提交、发布记录与审查情况。原文建议查看近半年是否有提交和 release，这可作为维护状况线索，但不是安全保证。
+- **检查来源。** 优先使用可追溯的索引、源码和 Release，核对近期提交、发布记录与审查情况。近半年是否有提交和 release 可作为维护状况线索，但不是安全保证。
 - **限定安装位置。** 将插件放在运维机、跳板机或 CI 镜像中，生产控制面和工作节点保持最小安装。
 - **分别核对版本。** kubectl 的支持范围通常是相对 kube-apiserver 前后一个 minor；插件的客户端库和 API 支持范围独立于 kubectl，不能假设都会使用 kubectl 本身的 client-go。
 - **更新后验证。** 升级 kubectl 时也应检查插件版本和兼容性；`kubectl krew upgrade` 是升级入口，不能代替验证。
@@ -627,7 +627,7 @@ kubectl 版本范围依据见 [Kubernetes 版本偏差策略](https://kubernetes
 
 ### 多用户共享 KREW_ROOT
 
-默认 `$HOME/.krew` 属于单用户安装。原文给出了共享目录的配置：
+默认 `$HOME/.krew` 属于单用户安装。共享目录可按以下方式配置：
 
 ~~~bash
 export KREW_ROOT=/opt/krew
@@ -646,7 +646,7 @@ echo 'export KREW_ROOT=/opt/krew; export PATH=$KREW_ROOT/bin:$PATH' > /etc/profi
 3. 确认安装和运行使用同一用户、同一 Krew 根目录；使用 sudo 安装可能将文件写入 root 的 HOME。
 4. 检查可执行文件入口和插件支持的平台。
 
-原文的 Bash PATH 修复命令：
+Bash 中的 PATH 修复命令：
 
 ~~~bash
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
@@ -659,17 +659,17 @@ echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> ~/.bashrc
 
 若卡在 `Updating the local copy of plugin index`，先区分索引 Git 访问失败还是 Release 下载失败。代理、内网索引、内网制品库和手工二进制分发的选择见本篇“GitHub 访问受限与离线安装”。
 
-原文的 `kubectl krew --index-uri=... ` 不属于当前自定义索引用法，应改用 `kubectl krew index add`；镜像索引时也要处理插件包的下载地址。
+`kubectl krew --index-uri=... ` 不属于当前自定义索引用法，应使用 `kubectl krew index add`；镜像索引时也要处理插件包的下载地址。
 
 ### metrics 查询失败
 
-原文记录了一个 Kubernetes 1.29 场景：旧版 resource-capacity 报 `failed to get node metrics: the server could not find the requested resource`，作者将其归因为 metrics API 版本不匹配，并通过升级插件处理：
+WAKEUP技术记录了一个 Kubernetes 1.29 场景：旧版 resource-capacity 报 `failed to get node metrics: the server could not find the requested resource`，作者将其归因为 metrics API 版本不匹配，并通过升级插件处理：
 
 ~~~bash
 kubectl krew upgrade resource-capacity
 ~~~
 
-这是来源文章的案例，未复现，不能据此认定所有同类错误都由插件版本导致。使用 `--util` 时也要检查 metrics-server、API 可用性和访问权限，再决定是否升级插件。
+该案例尚未复现，不能据此认定所有同类错误都由插件版本导致。使用 `--util` 时也要检查 metrics-server、API 可用性和访问权限，再决定是否升级插件。
 
 ## 使用检查清单
 
@@ -707,29 +707,29 @@ kubectl krew upgrade resource-capacity
 
 日常切换与阅读配置可先选 ctx/ns、neat、tree；镜像、日志、权限和资源分配工具按排查任务选择。CI 可以从 score 的默认检查开始，逐步收紧已确认适用的规则。
 
-## 原文校订说明与来源
+## 使用边界与参考资料
 
-以下差异按 2026-10-11 查询到的官方资料处理：
+以下能力与参数以 2026-10-11 查询到的官方资料为准：
 
-| 原文表述或示例 | 校订后的用法与边界 |
+| 常见误用或示例 | 正确用法与边界 |
 | --- | --- |
 | Krew 自动把目录加入 PATH；插件本体都是二进制 | PATH 要手动配置；插件也可以是脚本 |
 | `--no-update-index` 可解决离线安装 | 只跳过索引更新；本地安装还需要 manifest、归档及校验信息 |
 | `kubectl krew --index-uri=... ` | 自定义索引使用 `index add` 和 `<索引名>/<插件名>` |
 | `tree --run-workload-controllers` | tree 不支持此参数，也不会运行工作负载控制器 |
-| `images --filter/--exclude`；单命名空间输出却统计“3 namespaces” | 当前插件不提供这些过滤参数；改为文本筛选并移除不一致的统计行 |
+| `images --filter/--exclude`；单命名空间输出却统计“3 namespaces” | 当前插件不提供这些过滤参数；使用文本筛选，并核对命名空间范围与汇总统计是否一致 |
 | `outdated --include-unsupported` 与废弃 API 表 | outdated 检查镜像更新；废弃 API 检查另用 kubent 等工具 |
 | `resource-capacity --pod-template` 和“可调度 14 个” | 当前插件没有该参数或输出；保留资源分配与用量检查用途 |
-| resource-capacity 示例的汇总百分比 | 与所列节点的容量推算不一致，仅保留为原文字段示例 |
+| resource-capacity 示例的汇总百分比 | 与所列节点的容量推算不一致，只能用于识别输出字段 |
 | `who-can --as=<主体>` 用于判断该主体能否操作 | `--as` 改变查询身份；目标主体的授权结果用 `auth can-i --as=... ` |
 | `kubectl rolesum <svc name>` | 默认参数是 ServiceAccount 名称，也可通过 `-k` 查询 User/Group |
 | `score -f ... --exit-code-on-warning`；<code>jq '.[] &#124; select(.grade &lt; 5)'</code> | 使用位置文件参数与 `--exit-one-on-warning`；JSON v2 的 grade 在 `checks[]` 中 |
-| 同名且字段不完整的第二份 Deployment；探针和镜像检查输出 | 合并为一份完整示例；相同探针仍可能告警；镜像 tag 与 pull policy 是不同检查 |
+| 相同的 Readiness/Liveness 探针；镜像检查 | 相同探针仍可能告警；镜像 tag 与 pull policy 是不同检查 |
 | `--since` 可以限制日志跟踪速率；get-all 能查最近修改者 | `--since` 只限定日志回看时间或资源创建时间，不提供限速或审计结论 |
 
 主要来源：
 
-- [WAKEUP技术：kubectl 不够用？krew 装 10 插件](https://mp.weixin.qq.com/s/H0PCEn6yVjbskCUB7hl94g)，发布于 2026-10-09；与本仓库原有 Krew/rolesum 笔记合并。
+- [WAKEUP技术：kubectl 不够用？krew 装 10 插件](https://mp.weixin.qq.com/s/H0PCEn6yVjbskCUB7hl94g)，发布于 2026-10-09。
 - [Krew GitHub](https://github.com/kubernetes-sigs/krew) 与 [Krew 快速入门](https://krew.sigs.k8s.io/docs/user-guide/quickstart/)。
 - [Krew 官方插件索引](https://github.com/kubernetes-sigs/krew-index/tree/master/plugins)：用于核对各插件的仓库、平台和版本。
 - 各插件的官方文档与相关实现已在对应章节链接。

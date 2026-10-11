@@ -17,7 +17,7 @@ aliases:
 
 ## 元信息
 
-- **原始文档**：[[AI/AI-视觉/Effective-HTML-Agent页面工作流]]（已整合原 effective-html 工具实测）
+- **原始文档**：[[AI/AI-视觉/Effective-HTML-Agent页面工作流]]
 - **原始来源**：[Effective HTML 页面工作流](https://mp.weixin.qq.com/s/EWFsQChEmC4aGfuQ1lcpgA)、[effective-html 工具实测](https://mp.weixin.qq.com/s/UpwCCgiK8BkT9P8U74x_Vw)
 - **领域**：AI / AI 视觉 / Agent Skills / HTML 交付
 - **摄入日期**：2026-09-07
@@ -26,7 +26,7 @@ aliases:
 
 Effective HTML 是面向 Coding Agent 的 HTML Skills 集合，目标不是让 Agent 更快堆出一份页面，而是让它先判断任务类型、分阶段完成页面，并在交付前检查结构、交互状态和视觉一致性。它还改变了 AI 的默认输出形态：在报告、架构图和演示文档等需要“看”的场景中，直接生成浏览器可打开的自包含 HTML，而不是只输出 Markdown 或等待额外渲染的 Mermaid 代码。
 
-两篇文章合并后形成一条完整链路：先决定 HTML 是否适合作为交付格式，再用设计范本和任务路由确定产物类型，最后按线框、原型、图表和视觉检查逐步完成。
+HTML 交付按以下顺序展开：先决定 HTML 是否适合作为交付格式，再用设计范本和任务路由确定产物类型，最后按线框、原型、图表和视觉检查逐步完成。
 
 ## 关键知识点
 
@@ -55,6 +55,6 @@ Effective HTML 是面向 Coding Agent 的 HTML Skills 集合，目标不是让 A
 
 ## 值得注意
 
-- 两篇文章对 Skill 的数量采用不同口径：第二篇突出三个核心交付入口，第一篇按页面制作过程展开为六个 Skill。合并时将前者作为入口层、后者作为阶段层，避免把两种划分误解为互相矛盾的版本说明。
+- Skill 的数量有两种口径：三个核心交付入口用于选择产物类型，六个阶段化 Skill 用于组织页面制作过程。入口层与阶段层承担不同职责，数量差异不代表版本冲突。
 - HTML 适合作为面向读者的展示和交互层，但不一定适合作为知识库的唯一存储格式。对于需要持续 diff、搜索和编辑的知识内容，Markdown 仍然更合适。
 - 架构图“能运行”不等于信息表达正确；应先决定图表要表达的关系和阅读顺序，再选择 SVG、Canvas 或其他实现方式。

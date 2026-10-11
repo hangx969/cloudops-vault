@@ -120,11 +120,11 @@ date: 2026-10-11
 | 页面 | 原始来源 | 摘要 |
 |------|---------|------|
 | [ClaudeCode基础指南](sources/ClaudeCode基础指南-summary.md) | [AI/ClaudeCode/Claude Code 基础指南](../AI/ClaudeCode/Claude%20Code%20基础指南.md) | 3 种模式、Extended Thinking、Claude.md、Spec 工作流、5 大实战场景 |
-| [AI知识库完整指南](sources/obsidian-claude-AI知识库完整指南-summary.md) | [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南\|Obsidian + Claude Code：AI 知识库指南]] | Markdown 母语论证、Karpathy Wiki 三层架构、30 分钟四步上手、六大操作谱系、三个集成工具、改造计划（三篇合并） |
+| [AI知识库完整指南](sources/obsidian-claude-AI知识库完整指南-summary.md) | [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南\|Obsidian + Claude Code：AI 知识库指南]] | Markdown 母语论证、Karpathy Wiki 三层架构、30 分钟四步上手、六大操作谱系、三个集成工具、改造计划 |
 | [Obsidian可视化Skills](sources/obsidian-visual-skills-summary.md) | [[AI/Obsidian/Obsidian可视化Skills-Excalidraw-Mermaid-Canvas\|Obsidian 可视化 Skills]] | AI Skills 生成可编辑图表：Excalidraw/Mermaid/Canvas 三种格式 |
 | [Skill Craft](sources/skill-craft-summary.md) | [AI/ClaudeCode/Claude-Skill质检工具-SkillCraft](../AI/ClaudeCode/Claude-Skill质检工具-SkillCraft.md) | Skill 质量工程：7 类失效模式、三层评估体系、check/fix/create/audit 四模式 |
 | [Harness 实战](sources/harness-system-summary.md) | [[AI/ClaudeCode/Claude-Code-Harness实战-最小可用系统\|Harness 实战：从零搭建最小可用系统]] | Harness 四层安全约束：约束层/工具层/中间件层/编排层 + Hooks 拦截器 + Git 门禁 |
-| [CLAUDE.md 完全指南](sources/claude-md-complete-guide-summary.md) | [[CLAUDE.md最佳实践-12条规则模板\|Mnilax 的 CLAUDE.md：12 条规则]] / [[CLAUDE.md最佳实践-21条指令清单\|Mayank Agarwal：21 条 CLAUDE.md 指令]] / [[CLAUDE.md维护工程-四层加载与指令预算]] | 三篇合并：12 条行为规则（错误率 41%→3%）+ 21 条指令清单（五维度）+ 四层加载/指令预算/rules/ 精准投放/配置体系四角色 |
+| [CLAUDE.md 完全指南](sources/claude-md-complete-guide-summary.md) | [[CLAUDE.md最佳实践-12条规则模板\|Mnilax 的 CLAUDE.md：12 条规则]] / [[CLAUDE.md最佳实践-21条指令清单\|Mayank Agarwal：21 条 CLAUDE.md 指令]] / [[CLAUDE.md维护工程-四层加载与指令预算]] | 12 条行为规则（错误率 41%→3%）+ 21 条指令清单（五维度）+ 四层加载/指令预算/rules/ 精准投放/配置体系四角色 |
 | [CLAUDE.md 维护工程](sources/claude-md-maintenance-summary.md) | [[CLAUDE.md维护工程-四层加载与指令预算]] | 四层加载体系、LLM 指令预算（arXiv 论文）、rules/ 精准投放、配置体系四角色分工 |
 | [CodeGraph](sources/codegraph-summary.md) | [[CodeGraph-代码语义知识图谱\|CodeGraph：Claude Code 代码知识图谱]] | 代码语义图谱，工具调用减少 92%、探索速度提升 71%，19 种语言 + 框架路由映射，本地 AST 不依赖外部 |
 | [Fable 5 System Prompt](sources/claude-fable5-system-prompt-summary.md) | [[AI/ClaudeCode/Claude-Fable-5-system-prompt]] | Claude Fable 5 完整系统提示词（~125K 字符）：Mythos-class 新层级、行为规约体系、~15 个内置工具、沙箱架构、Artifact/Claudeception、版权硬限制 |
@@ -208,7 +208,7 @@ date: 2026-10-11
 
 - [[KnowledgeBase/sources/argocd-sync-troubleshooting-summary|ArgoCD 同步故障排查 来源摘要]] — 五类同步问题、三组原文案例、配置示例与官方资料校正。
 
-- [[KnowledgeBase/sources/kubectl-krew-plugins-summary|kubectl 插件指南 来源摘要]] — Krew 安装与离线分发、13 个插件、rolesum/RBAC 排查及命令校订。
+- [[KnowledgeBase/sources/kubectl-krew-plugins-summary|kubectl 插件指南 来源摘要]] — Krew 安装与离线分发、13 个插件、rolesum/RBAC 排查及参数边界。
 
 - [[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|Cluster Autoscaler 节点扩缩容来源摘要]] — 节点组选择、缩容保护、Helm 部署、参数、监控排障与上线回滚。
 
@@ -264,7 +264,7 @@ date: 2026-10-11
 
 | 页面 | 覆盖文档数 | 摘要 |
 |------|:---------:|------|
-| [Hermes-agent](sources/hermes-agent-batch-summary.md) | 4 | 满配指南与生态资源（两篇合并）、Ubuntu 安装、架构解析与 OpenClaw 对比、Curator Skill 膨胀治理 |
+| [Hermes-agent](sources/hermes-agent-batch-summary.md) | 4 | 满配指南与生态资源、Ubuntu 安装、架构解析与 OpenClaw 对比、Curator Skill 膨胀治理 |
 
 ### AI/行业动态（已摄入 ✅）
 
@@ -339,7 +339,7 @@ date: 2026-10-11
 | [杂项](sources/misc-domains-batch-summary.md) | 18 | Database(MySQL/Redis/MongoDB) + Middlewares(Kafka/RabbitMQ/RocketMQ) + OS + Networking + IaC(Terraform) + Git + C++ + SoftwareTesting |
 
 > [!info] 摄入覆盖
-> 2026-10-03 统计为 18 个领域、377 篇学习笔记（本次整理的 Markdown 清单，已包含迁移文章，不含各目录 index.md 导航页和 280 篇引用/嵌入内容），详见 [[KnowledgeBase/inventory/repository-inventory|全库文档盘点]]。2026-09-29 检查时有 33 篇尚无来源摘要，历史清单见 [[KnowledgeBase/maintenance/wiki-lint-2026-09-29|Wiki 健康检查 2026-09-29]]。
+> 2026-10-03 统计为 18 个领域、377 篇学习笔记（Markdown 清单含迁移文章，不含各目录 index.md 导航页和 280 篇引用/嵌入内容），详见 [[KnowledgeBase/inventory/repository-inventory|全库文档盘点]]。2026-09-29 检查时有 33 篇尚无来源摘要，历史清单见 [[KnowledgeBase/maintenance/wiki-lint-2026-09-29|Wiki 健康检查 2026-09-29]]。
 
 > Terraform 系列于 2026-10-02 新增 12 篇正文和 1 个学习路线入口；上面的全库篇数保留为 2026-09-29 盘点快照，本次系列以 [[KnowledgeBase/maps/terraform-map|Terraform 学习地图]] 为当前导航。
 

@@ -410,7 +410,7 @@ submenu 'Advanced options for Ubuntu' $menuentry_id_option 'gnulinux-advanced-68
 
 ### 指定默认启动项
 
-以下示例沿用原记录的 `5.15.0-88-generic`。先核对本机实际菜单项，再编辑 `/etc/default/grub`：
+以下示例使用 `5.15.0-88-generic`。先核对本机实际菜单项，再编辑 `/etc/default/grub`：
 
 ```sh
 sudo vim /etc/default/grub
@@ -430,7 +430,7 @@ sudo update-grub
 
 ### 可选：暂缓内核包升级
 
-原笔记使用 `apt-mark hold` 固定内核包；这会阻止相关内核更新，只有确实需要暂缓升级时才执行，并安排解除时间：
+`apt-mark hold` 可固定内核包；这会阻止相关内核更新，只有确实需要暂缓升级时才执行，并安排解除时间：
 
 ```sh
 sudo apt-mark hold linux-headers-generic linux-image-generic linux-generic
@@ -439,7 +439,7 @@ apt-mark showhold
 sudo apt-mark unhold linux-headers-generic linux-image-generic linux-generic
 ```
 
-选择旧内核启动本身不要求执行 `hold`。原文的“卸载旧版本内核”只有标题，没有卸载命令，因此这里不补入未经验证的删除步骤。
+选择旧内核启动本身不要求执行 `hold`。
 
 ## NVIDIA 显卡驱动
 
@@ -467,7 +467,7 @@ sudo ubuntu-drivers list --gpgpu
 sudo ubuntu-drivers install --gpgpu
 ```
 
-原笔记固定版本的示例可在该包仍列于本机候选驱动、且明确需要 535 版本时使用：
+固定版本的示例可在该包仍列于本机候选驱动、且明确需要 535 版本时使用：
 
 ```sh
 sudo apt install -y nvidia-driver-535
@@ -477,7 +477,7 @@ sudo apt install -y nvidia-driver-535
 
 ### 可选：处理 Nouveau 冲突
 
-只有在 Nouveau 与目标 NVIDIA 驱动冲突、且安装流程未自动处理时，再禁用 Nouveau。原笔记的两条配置连在一起，实际应分行写入：
+只有在 Nouveau 与目标 NVIDIA 驱动冲突、且安装流程未自动处理时，再禁用 Nouveau。以下两条配置应分行写入：
 
 ```sh
 sudo vim /etc/modprobe.d/blacklist-nouveau.conf
@@ -503,7 +503,7 @@ lsmod | grep nouveau
 
 ### 可选：应用依赖与库路径
 
-以下是原笔记保留的应用构建依赖，**不是安装 NVIDIA 驱动的必需步骤**：
+以下是应用构建依赖，**不是安装 NVIDIA 驱动的必需步骤**：
 
 ```sh
 sudo apt-get install libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev protobuf-compiler
@@ -512,7 +512,7 @@ sudo apt-get install libopenblas-dev liblapack-dev libatlas-base-dev
 sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 ```
 
-原笔记还记录了为应用设置共享库搜索路径的做法。仅在应用确实需要这些路径时，编辑当前用户的 `~/.bashrc`；两条 `export` 不应连在一起：
+应用可通过共享库搜索路径查找依赖。仅在应用确实需要这些路径时，编辑当前用户的 `~/.bashrc`；两条 `export` 不应连在一起：
 
 ```sh
 vim ~/.bashrc
@@ -536,7 +536,7 @@ nvidia-smi
 
 ## 安全补丁管理
 
-参考原笔记的[安全更新说明](https://zhuanlan.zhihu.com/p/74768044#%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%9A%E5%A6%82%E4%BD%95%E6%A3%80%E6%9F%A5%20Debian/Ubuntu%20%E4%B8%AD%E6%98%AF%E5%90%A6%E6%9C%89%E4%BB%BB%E4%BD%95%E5%8F%AF%E7%94%A8%E7%9A%84%E5%AE%89%E5%85%A8%E6%9B%B4%E6%96%B0%EF%BC%9F)。
+参考[安全更新说明](https://zhuanlan.zhihu.com/p/74768044#%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%9A%E5%A6%82%E4%BD%95%E6%A3%80%E6%9F%A5%20Debian/Ubuntu%20%E4%B8%AD%E6%98%AF%E5%90%A6%E6%9C%89%E4%BB%BB%E4%BD%95%E5%8F%AF%E7%94%A8%E7%9A%84%E5%AE%89%E5%85%A8%E6%9B%B4%E6%96%B0%EF%BC%9F)。
 
 ### 查看与手动安装
 
@@ -548,7 +548,7 @@ sudo unattended-upgrade                # 直接安装
 
 ### 自动更新配置
 
-- `/etc/apt/apt.conf.d/50unattended-upgrades`：允许的更新来源和自动更新行为。原笔记中的安全来源配置示例：
+- `/etc/apt/apt.conf.d/50unattended-upgrades`：允许的更新来源和自动更新行为。安全来源配置示例：
 
   ```text
   Unattended-Upgrade::Allowed-Origins {
@@ -561,7 +561,7 @@ sudo unattended-upgrade                # 直接安装
 
   ESM Apps 提供应用包的扩展安全维护，ESM Infra 提供基础设施包的扩展安全维护。允许哪些来源取决于 Ubuntu 版本和本机配置；检查现有配置后再调整。Ubuntu 建议通过 `/etc/apt/apt.conf.d/` 中编号更靠后的独立配置文件覆盖设置，避免直接改发行版提供的 `50unattended-upgrades`。
 
-- `/etc/apt/apt.conf.d/20auto-upgrades`：周期性刷新包列表与运行自动更新。原笔记中的每日配置：
+- `/etc/apt/apt.conf.d/20auto-upgrades`：周期性刷新包列表与运行自动更新。每日配置示例：
 
   ```text
   APT::Periodic::Update-Package-Lists "1";
@@ -605,7 +605,7 @@ sudo crontab -e
 
    第二个表达式利用“七天后月份已变化”判断本周六为当月最后一个周六。`\%` 是 crontab 中必须保留的转义。`date -d` 是 GNU date 语法，适用于这里的 Ubuntu 环境。
 
-保存 crontab 后用 `sudo crontab -l` 和 `systemctl status cron.service` 核对；通常不需要重启 cron。原笔记中的 `sudo systemctl restart cron.service` 仅在服务异常时使用。
+保存 crontab 后用 `sudo crontab -l` 和 `systemctl status cron.service` 核对；通常不需要重启 cron。`sudo systemctl restart cron.service` 仅在服务异常时使用。
 
 ### 使用 APT 查看更新
 
@@ -615,4 +615,4 @@ apt list --upgradable | grep -- '-security'
 apt changelog packagename
 ```
 
-`focal-security` 是 Ubuntu 20.04 LTS 的安全更新来源名称。原笔记用管道批量提取包名并调用 `apt install`，但输出格式和来源匹配可能不完整；安装前应核对候选版本，再明确安装所需包。`apt install -s` 可预览安装计划。
+`focal-security` 是 Ubuntu 20.04 LTS 的安全更新来源名称。用管道批量提取包名并调用 `apt install` 时，输出格式和来源匹配可能不完整；安装前应核对候选版本，再明确安装所需包。`apt install -s` 可预览安装计划。

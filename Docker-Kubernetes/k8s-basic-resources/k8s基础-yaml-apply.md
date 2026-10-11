@@ -135,7 +135,7 @@ heima:
 > Client-side Apply（CSA）在客户端基于 last-applied、live state 和新 manifest 做三路合并；Server-side Apply（SSA）由 API Server 计算差异，并通过 `managedFields` 追踪字段所有权，把多工具共管时的静默覆盖转化为显式冲突。
 
 > [!source]
-> 整合自《kubectl apply 背后的真相：为什么 Server-side Apply 正在成为标配》。
+> 参考：《kubectl apply 背后的真相：为什么 Server-side Apply 正在成为标配》。
 
 跑 `kubectl apply -f deployment.yaml` 是每个 K8s 工程师的肌肉记忆。但你有没有想过：这一条命令在 API Server 那一侧到底做了什么？为什么同一个 Deployment，被 kubectl、Helm、Argo CD、HPA 同时管理的时候，会出现「副本数莫名其妙被改回去」「手动修复被覆盖」这类灵异事件？
 

@@ -171,7 +171,7 @@ aliases:
   - 清除登录缓存优先使用 `Clear-AzContext -Scope CurrentUser` 或 `az account clear`，不要不加区分地批量删除缓存文件
 
 ### [[12_Azure 故障排查工具|12_Azure 故障排查工具]]
-- 核心内容：按浏览器和 HTTP 请求、Azure API、Windows 进程与性能、磁盘 I/O 的排障顺序整合五篇旧笔记。
+- 核心内容：按浏览器和 HTTP 请求、Azure API、Windows 进程与性能、磁盘 I/O 的顺序介绍排障工具和操作方法。
 - 关键知识点：
   - Browser Trace 导出 HAR；Fiddler Classic 捕获并过滤 HTTP/HTTPS 会话
   - Postman 调试 Entra ID（AAD）与 ARM API 时需使用对应目标资源的令牌

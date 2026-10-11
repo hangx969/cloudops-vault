@@ -47,7 +47,7 @@ Hermes Agent 是 Nous Research 推出的开源 AI Agent 框架，核心特色是
 
 ## 在本仓库中的覆盖
 
-- [[AI/Hermes-agent/Hermes-Agent-满配指南与生态资源]]：五大配置模块实操 + 高阶进化工具 + 生态资源合集（两篇合并）
+- [[AI/Hermes-agent/Hermes-Agent-满配指南与生态资源]]：五大配置模块实操 + 高阶进化工具 + 生态资源合集
 - [[AI/Hermes-agent/Ubuntu 25.10 安装与使用 Hermes Agent 指南]]：Ubuntu 完整部署、Web Dashboard、OpenClaw 迁移、飞书集成
 - [[AI/Hermes-agent/Hermes与OpenClaw对比及飞书接入指南|Hermes Agent：OpenClaw 对比与飞书接入]]：五层架构深度解析、记忆系统、与 OpenClaw 六维对比
 - [[AI/Hermes-agent/Hermes-Curator-Skill膨胀治理|Hermes Agent：Skill 膨胀与上下文治理]]：Curator 四步工作流（监测/降级/复盘/锁定）、Skill 与记忆的区别、Agent 四种记忆类型

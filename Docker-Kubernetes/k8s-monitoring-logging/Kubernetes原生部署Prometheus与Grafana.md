@@ -18,7 +18,7 @@ date: 2026-09-28
 
 # Kubernetes 原生部署 Prometheus 与 Grafana
 
-本文合并了三份 Kubernetes 原生部署与 Grafana 笔记。主流程固定使用 Prometheus `v2.33.5` 与 Grafana `v8.4.5`，保留旧版 `v2.2.1` 的架构、应用监控和 Pushgateway 实验经验，以及 Grafana `v5.0.4` 的界面、面板排障与 kube-state-metrics 实验。这里的版本用于复现实验，不代表当前生产版本建议。PromQL 语法集中在 [[Docker-Kubernetes/k8s-monitoring-logging/Prometheus基础|Prometheus 基础]]；Operator/Helm 部署见 [[Docker-Kubernetes/k8s-monitoring-logging/helm部署prometheus-stack全家桶|Prometheus-Stack：生产部署与运维]]。
+主流程使用 Prometheus `v2.33.5` 与 Grafana `v8.4.5`，并介绍 Prometheus `v2.2.1` 的架构、应用监控和 Pushgateway 实验，以及 Grafana `v5.0.4` 的界面、面板排障与 kube-state-metrics 接入。这里的版本用于复现实验，不代表当前生产版本建议。PromQL 语法见 [[Docker-Kubernetes/k8s-monitoring-logging/Prometheus基础|Prometheus 基础]]；Operator/Helm 部署见 [[Docker-Kubernetes/k8s-monitoring-logging/helm部署prometheus-stack全家桶|Prometheus-Stack：生产部署与运维]]。
 
 ## 1. 监控范围与部署方案
 
@@ -106,13 +106,13 @@ curl http://192.0.2.10:9100/metrics
 ```
 
 > [!note] 版本差异
-> 旧笔记使用 `prom/node-exporter:v0.16.0`、`--collector.filesystem.ignored-mount-points` 和宿主机多个目录挂载；合并后的示例改用当前 Node Exporter 的 `--path.rootfs` 与 `--collector.filesystem.mount-points-exclude` 参数。
+> 早期 `prom/node-exporter:v0.16.0` 使用 `--collector.filesystem.ignored-mount-points` 并挂载宿主机多个目录。当前 Node Exporter 示例通过 `--path.rootfs` 指定宿主机根目录，使用 `--collector.filesystem.mount-points-exclude` 排除挂载点；不同版本的参数不能直接混用。
 
 ## 3. 部署 Prometheus
 
 ### 3.1 创建 ServiceAccount 与只读发现权限
 
-旧笔记将 `cluster-admin` 绑定给监控账号，还重复绑定了一个写错命名空间的 User。服务发现只需要读取相应资源；以下示例显式授权所用的 `node`、`endpoints` 与 kubelet 代理路径。按集群实际指标端点调整权限。
+服务发现只需要读取相应资源，无需授予监控账号 `cluster-admin`。以下示例显式授权所用的 `node`、`endpoints` 与 kubelet 代理路径；绑定主体与被引用 ServiceAccount 的命名空间应一致。按集群实际指标端点调整权限。
 
 ```yaml
 apiVersion: v1
@@ -156,7 +156,7 @@ subjects:
 - `kubernetes-apiserver`：发现 `default/kubernetes` Service 的 HTTPS 端点。
 - `kubernetes-service-endpoints`：仅抓取标有 `prometheus.io/scrape: "true"` 的 Service 端点，并尊重端口、协议和路径注解。
 
-以下配置沿用原文的 `endpoints` 发现角色，适合复现所述 Prometheus 2.x 实验；新集群也可根据 EndpointSlice 的使用情况改为 `endpointslice` 角色及对应标签。Service 注解并非 Kubernetes 自动采集机制，只有此处的 relabel 规则启用后才会生效。
+以下配置使用 `endpoints` 发现角色，适合复现所述 Prometheus 2.x 实验；新集群也可根据 EndpointSlice 的使用情况改为 `endpointslice` 角色及对应标签。Service 注解并非 Kubernetes 自动采集机制，只有此处的 relabel 规则启用后才会生效。
 
 ```yaml
 apiVersion: v1
@@ -238,7 +238,7 @@ data:
 
 ### 3.3 准备存储并部署
 
-以下示例使用 PVC。它必须由**支持 Prometheus 本地 TSDB 的 POSIX 兼容块/本地文件系统**提供；请按集群实际 StorageClass 创建 PVC，不要照搬旧笔记的 NFS 示例。实验环境也可将 `prometheus-data` 卷换成 `emptyDir: {}`，但 Pod 重建会丢失本地数据。旧版 `hostPath: /data` 需要固定调度节点和正确的目录属主，不能用 `chmod 777` 代替权限规划。
+以下示例使用 PVC。它必须由**支持 Prometheus 本地 TSDB 的 POSIX 兼容块/本地文件系统**提供；请按集群实际 StorageClass 创建 PVC，不要把 NFS 当作本地 TSDB 文件系统的替代。实验环境也可将 `prometheus-data` 卷换成 `emptyDir: {}`，但 Pod 重建会丢失本地数据。旧版 `hostPath: /data` 需要固定调度节点和正确的目录属主，不能用 `chmod 777` 代替权限规划。
 
 ```yaml
 apiVersion: v1
@@ -330,7 +330,7 @@ curl -X POST http://127.0.0.1:9090/-/reload
 
 ### 4.1 主流程：Grafana v8.4.5
 
-Grafana 数据目录为 `/var/lib/grafana`。旧笔记同时挂载 `/var`、`/var/lib/grafana`，并给匿名用户 Admin 权限；下面保留单一数据卷和管理员登录。示例 Secret 请在部署时填入实际密码，避免把明文写入 Git。
+Grafana 数据目录为 `/var/lib/grafana`，部署时使用单一数据卷和管理员登录，避免同时挂载 `/var`、`/var/lib/grafana`，或给匿名用户 Admin 权限。示例 Secret 请在部署时填入实际密码，避免把明文写入 Git。
 
 ```sh
 kubectl -n monitor-sa create secret generic grafana-admin \
@@ -411,11 +411,11 @@ spec:
 ![Grafana 仪表盘示例](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202401051615776.png)
 
 > [!note] 历史部署差异
-> 原 Grafana 实验将 Pod 放在 `kube-system`，采用 `grafana/grafana:8.4.5` 镜像、NodePort 暴露，并示例了两个 NFS PVC；其中 PVC 却写在 `monitor-sa` 命名空间，无法被 `kube-system` 的 Pod 挂载。合并后的示例统一使用 `monitor-sa` 命名空间。
+> Grafana `v8.4.5` 示例通过 NodePort 暴露服务，并统一使用 `monitor-sa` 命名空间。PVC 与挂载它的 Pod 必须位于同一命名空间；`kube-system` 的 Pod 无法挂载 `monitor-sa` 的 PVC。
 
 ### 4.2 旧版 Grafana v5.0.4 实验记录
 
-早期实验使用 `k8s.gcr.io/heapster-grafana-amd64:v5.0.4`，在 `kube-system` 创建 `monitoring-grafana` Deployment 和 NodePort Service。它与上面的 Grafana v8.4.5 主流程承担相同的部署与数据源配置，因此无需再维护一份重复的 Deployment YAML。若需要复现旧环境，应先确认镜像来源与 Kubernetes 兼容性；`docker load -i` 的参数应是本地镜像归档文件路径，而非镜像名称。
+早期实验使用 `k8s.gcr.io/heapster-grafana-amd64:v5.0.4`，在 `kube-system` 创建 `monitoring-grafana` Deployment 和 NodePort Service。它的部署与数据源配置流程与 Grafana v8.4.5 示例相同。若需要复现旧环境，应先确认镜像来源与 Kubernetes 兼容性；`docker load -i` 的参数应是本地镜像归档文件路径，而非镜像名称。
 
 旧版 UI 中，从 **Create your first data source** 选择 Prometheus，填写 `http://prometheus.monitor-sa.svc.cluster.local:9090`，再点击 **Save & Test**。v5 实验的配置页面如下：
 
@@ -425,9 +425,9 @@ spec:
 
 ![Grafana v5 Dashboard 模板选择](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202401041802433.png)
 
-旧 Deployment 中的 `GF_AUTH_ANONYMOUS_ENABLED=true` 与 `GF_AUTH_ANONYMOUS_ORG_ROLE=Admin` 会赋予匿名访问者管理权限，合并后的部署示例已删除这组设置。`INFLUXDB_HOST` 也不是连接 Prometheus 数据源所必需的环境变量。
+`GF_AUTH_ANONYMOUS_ENABLED=true` 与 `GF_AUTH_ANONYMOUS_ORG_ROLE=Admin` 会赋予匿名访问者管理权限，部署时应避免这组设置。`INFLUXDB_HOST` 不是连接 Prometheus 数据源所必需的环境变量。
 
-原笔记把 Grafana 告警概括为“不常用”，现在应按告警源选择：Grafana 可评估和路由自身管理的规则，Prometheus 规则也可交给 Alertmanager 处理。两者都不是另一个的简单替代。
+告警方案应按告警源选择：Grafana 可评估和路由自身管理的规则，Prometheus 规则也可交给 Alertmanager 处理。两者都不是另一个的简单替代。
 
 ### 4.3 面板没有数据时如何定位
 
@@ -543,7 +543,7 @@ spec:
       nodePort: 31360
 ```
 
-如果用上文的 Service 注解发现规则，还需根据此 Exporter 实际暴露路径设置 `prometheus.io/path`。先用 `curl` 验证目标端点返回 Prometheus 文本格式，再检查 Targets。原笔记仅给出了 scrape 注解，未确认路径；不能仅凭注解认为采集成功。
+如果用上文的 Service 注解发现规则，还需根据此 Exporter 实际暴露路径设置 `prometheus.io/path`。先用 `curl` 验证目标端点返回 Prometheus 文本格式，再检查 Targets。仅设置 scrape 注解不能证明采集成功，还需确认实际暴露路径和 Targets 状态。
 
 ### 6.2 Redis
 
@@ -599,7 +599,7 @@ spec:
       targetPort: 9121
 ```
 
-原示例使用 `redis:4` 与 `oliver006/redis_exporter:latest`，并在 Grafana 导入 `Redis Cluster-1571393212519.json`。实用时固定 Exporter 版本并确认其 Redis 连接地址；同 Pod 场景通常可通过 localhost 连接。原笔记参考：[Redis 监控实验](https://note.youdao.com/ynoteshare/index.html?id=b9f87092ce8859cd583967677ea332df&type=note)。
+Redis 示例使用 `redis:4` 与 `oliver006/redis_exporter:latest`，并在 Grafana 导入 `Redis Cluster-1571393212519.json`。实用时固定 Exporter 版本并确认其 Redis 连接地址；同 Pod 场景通常可通过 localhost 连接。参考：[Redis 监控实验](https://note.youdao.com/ynoteshare/index.html?id=b9f87092ce8859cd583967677ea332df&type=note)。
 
 ### 6.3 MySQL
 
@@ -655,7 +655,7 @@ curl http://127.0.0.1:9104/metrics
    make && make install
    ```
 
-2. 在 Nginx 的 `http` 块中配置 `vhost_traffic_status_zone;`，在 `server` 块中配置以下位置。Nginx 配置文件使用 `#` 注释，不能照搬旧笔记里的 `//`。
+2. 在 Nginx 的 `http` 块中配置 `vhost_traffic_status_zone;`，在 `server` 块中配置以下位置。Nginx 配置文件使用 `#` 注释，不支持 `//` 注释。
 3. 运行 `nginx -t`，确认 `/status/format/json` 可访问，再启动 Exporter。
 
 ```nginx
@@ -760,7 +760,7 @@ curl -X DELETE \
   http://192.168.40.181:9091/metrics/job/test_job
 ```
 
-旧笔记还用 `free -m`、`awk '{print $3/$2*100}'`、`crontab */1 * * * *` 每分钟推送主机内存百分比。这保留为历史实验思路，但持续运行的主机应通过 Node Exporter 抓取；与机器绑定的短任务可考虑 Node Exporter textfile collector。Pushgateway 按 `instance` 累积指标会形成陈旧序列，并使 `up` 仅反映 Gateway 自身。
+早期实验用 `free -m`、`awk '{print $3/$2*100}'`、`crontab */1 * * * *` 每分钟推送主机内存百分比。持续运行的主机应通过 Node Exporter 抓取；与机器绑定的短任务可考虑 Node Exporter textfile collector。Pushgateway 按 `instance` 累积指标会形成陈旧序列，并使 `up` 仅反映 Gateway 自身。
 
 ## 8. 验证清单
 

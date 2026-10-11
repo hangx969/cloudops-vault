@@ -21,7 +21,7 @@ aliases:
 
 ## 摘要
 
-文章将 cert-manager 的 Helm 部署、声明式证书生命周期与既有实战笔记整合为一条完整主线。内容覆盖 Issuer/ClusterIssuer、Certificate/CertificateRequest、Order/Challenge、Secret 与 Ingress 的资源关系，HTTP01/DNS01 选型、Staging 到 Production 的验证路径，以及自动续期、生产安全、验收和回滚。实战部分保留自签名 Pod TLS、Cloudflare DNS01、Azure DNS Workload Identity、通配符证书、PKCS#12 和 Helm 管理配置。
+文章按 Helm 部署、声明式证书生命周期和场景实战介绍 cert-manager 的使用方法。内容覆盖 Issuer/ClusterIssuer、Certificate/CertificateRequest、Order/Challenge、Secret 与 Ingress 的资源关系，HTTP01/DNS01 选型、Staging 到 Production 的验证路径，以及自动续期、生产安全、验收和回滚。实战部分介绍自签名 Pod TLS、Cloudflare DNS01、Azure DNS Workload Identity、通配符证书、PKCS#12 和 Helm 管理配置。
 
 ## 关键知识点
 
