@@ -200,7 +200,7 @@ aliases:
   - PATH 需要手动配置；插件平台支持与客户端 API 兼容性分别核对
   - rolesum 默认查询 ServiceAccount，也可查询 User/Group；who-can 静态分析需要读取角色和绑定
   - 资源清单快照不能代替完整灾备；outdated 检查镜像，废弃 API 检查使用相应工具
-  - Windows 可参考现有 Scoop 笔记；无效参数和示例数据的校订见正文
+  - Windows 可参考现有 Scoop 笔记；插件参数、资源统计和版本限制见正文
 - **独立摘要**：[[KnowledgeBase/sources/kubectl-krew-plugins-summary|kubectl 插件指南 来源摘要]]。
 
 ### [[Docker-Kubernetes/k8s-UI-tools/rancher(v2.6.4)管理k8s集群|Rancher管理K8s集群]]

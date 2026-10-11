@@ -20,7 +20,7 @@ aliases:
 
 ## 摘要
 
-文章围绕多 Kubernetes 集群下的 context 误切换风险，说明 kubeconfig 中 cluster、user、namespace、context 与 current-context 的关系，并给出 kubectx、kubens、fzf 和 kube-ps1 的日常使用方法。整合版本进一步补充隔离/只读 shell、最小权限 RBAC、多 kubeconfig 合并、凭证保护和生产防误操作清单。
+文章围绕多 Kubernetes 集群下的 context 误切换风险，说明 kubeconfig 中 cluster、user、namespace、context 与 current-context 的关系，并给出 kubectx、kubens、fzf 和 kube-ps1 的日常使用方法。生产防误操作措施包括隔离/只读 shell、最小权限 RBAC、多 kubeconfig 合并、凭证保护和生产防误操作清单。
 
 ## 关键知识点
 
@@ -40,7 +40,7 @@ aliases:
 
 ## 值得注意
 
-- 原始剪藏声称 KUBECONFIG 中“后面的文件优先”，与 Kubernetes 官方规则相反；整合版本已更正为“第一个设置某值或同名 map key 的文件胜出”。
-- 原始剪藏把无参数 kubectx 描述成必然出现交互菜单；整合版本明确只有安装 fzf 时才启用交互式模糊选择。
-- 原文固定使用旧 release 下载地址，整合版本改为官方包管理命令和 Releases 页面，避免版本快速过期。
+- KUBECONFIG 合并多个文件时，第一个设置某值或同名 map key 的文件胜出，不能按“后面的文件优先”理解。
+- 无参数 kubectx 只有在安装 fzf 时才启用交互式模糊选择，不保证总是出现交互菜单。
+- 安装使用官方包管理命令或 Releases 页面，避免固定过时的 release 下载地址。
 - kube-ps1 动态颜色改用官方提供的 `KUBE_PS1_CTX_COLOR_FUNCTION`，不再依赖混用 Bash/Zsh 的 `PROMPT_COMMAND` 示例。

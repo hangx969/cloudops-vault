@@ -31,7 +31,7 @@ aliases:
 
 1. Resource（CPU/内存）指标无法在 0 副本时表达每 Pod 平均需求；Scale-to-Zero 需要与副本数无关的 External/Object 指标。
 2. Kubernetes 官方文档将 `HPAScaleToZero` 标为 1.37 起 Beta 且默认启用；kube-apiserver 与 kube-controller-manager 都必须启用该门控。
-3. 整合后的 HPA 示例使用 `minReplicas: 0`、`maxReplicas: 20`、`autoscaling/v2` 和队列指标 `queue_messages_visible`，以 `AverageValue: "1"` 避免零目标值成为计算分母，并配置 300 秒缩容稳定窗口。
+3. HPA 示例使用 `minReplicas: 0`、`maxReplicas: 20`、`autoscaling/v2` 和队列指标 `queue_messages_visible`，以 `AverageValue: "1"` 避免零目标值成为计算分母，并配置 300 秒缩容稳定窗口。
 4. Prometheus 可以采集队列深度或 Kafka consumer group lag，经 Prometheus Adapter 暴露为 `external.metrics.k8s.io`，供 HPA 读取。
 5. HPA 中的 `metric.name` 必须与 Adapter 显式暴露的指标名一致，否则指标会显示 `<unknown>`，扩缩容无法按预期工作。
 6. 从 0 拉起 Worker 会经历调度、拉镜像、启动进程、建立依赖连接和预热；镜像预拉、节点池亲和、readinessProbe 和消息重试可以降低风险。
@@ -46,7 +46,7 @@ aliases:
 - [[KnowledgeBase/entities/Prometheus|Prometheus]]
 - [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]
 - [[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]
-- [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA#五、Kubernetes 1.37 原生 HPA Scale-to-Zero|整合文章中的 Scale-to-Zero 章节]]
+- [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA#五、Kubernetes 1.37 原生 HPA Scale-to-Zero|HPA Scale-to-Zero 章节]]
 
 ## 值得注意
 

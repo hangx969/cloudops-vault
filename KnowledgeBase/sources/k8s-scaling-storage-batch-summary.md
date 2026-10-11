@@ -67,7 +67,7 @@ aliases:
 
 ### [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]
 
-**核心内容**: 将原 HPA/VPA 总览、Helm 部署 VPA 和 Kubernetes 1.37 原生 HPA Scale-to-Zero 三篇正文整合为一篇，按“选型→指标基础→HPA→Scale-to-Zero→VPA→生产治理”组织。
+**核心内容**: 按“选型→指标基础→HPA→Scale-to-Zero→VPA→生产治理”介绍 Kubernetes 扩缩容策略，覆盖 Helm 部署 VPA 与 Kubernetes 1.37 原生 HPA Scale-to-Zero。
 
 - 四层体系：HPA 调整 Pod 副本、VPA 调整资源 requests、KPA 按 Knative 并发缩放、Cluster Autoscaler 调整节点容量
 - 指标基础：Metrics Server、Resource/Custom/External Metrics API、Helm 与 Manifest 安装、kubeadm kubelet TLS 排障

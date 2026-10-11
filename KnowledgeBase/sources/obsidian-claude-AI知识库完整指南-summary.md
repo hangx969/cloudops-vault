@@ -17,7 +17,6 @@ aliases:
 - **原始文档**：[[AI/Obsidian/obsidian-claude-code-AI知识库完整指南|Obsidian + Claude Code：AI 知识库指南]]
 - **领域**：AI / 知识管理
 - **摄入日期**：2026-05-09
-- **说明**：本文由三篇文章合并而成（karpathy-llm-wiki-改造计划、obsidian-claude-搭建karpathy-wiki知识库、obsidian-claude-code-AI知识管家），覆盖从理念论证到工具搭建到行动计划的完整路径
 
 ## 摘要
 
@@ -46,4 +45,3 @@ aliases:
 - **规约入口（2026-10-03 更新）**：原文以 `CLAUDE.md` 为规约文件；本仓库现统一维护 [[AGENTS|AGENTS.md]]，根目录 [[CLAUDE|CLAUDE.md]] 仅保留 `@AGENTS.md` 导入
 - 文章中的"现有知识库现状分析"和"改造行动计划"是历史快照（2026-05 初始状态），现已全部完成
 - "40 万字以内不需要向量数据库"的判断对多数个人知识库有指导意义，与 Claude 1M token 长上下文能力直接相关
-- 三篇文章的合并消除了重复内容（三层架构描述 3 次→1 次、Karpathy 理念 2 次→1 次），同时保留了所有独特视角和实操细节

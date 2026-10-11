@@ -47,7 +47,6 @@ aliases:
 
 ## 值得注意
 
-- 整理稿保留原文标题、章节、表格数据和 21 个代码块；润色正文并清理剪藏列表、重复作者和页脚格式，原始剪藏保持原样。
 - 版本、参数默认值和云平台接入配置应按目标环境核对。文中的 Helm 命令含占位符，不是可以直接执行的完整部署配置。
 - 本次核对使用 [Node Autoscaling 官方文档](https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/)、[CA 官方 FAQ](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md)、[CA 版本说明](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler#releases) 和 [官方 Helm Chart](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler)；未在集群中执行部署、扩缩容或回滚。
-- [[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战|FinOps 实战]]将 CA 描述为“仅缩容空节点”，与本篇描述的安全迁移后回收非空节点不一致；CA 的缩容限制应结合 Pod 迁移条件判断。该旧文未在本次任务中修改。
+- [[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战|FinOps 实战]]将 CA 描述为“仅缩容空节点”，与本篇描述的安全迁移后回收非空节点不一致；CA 的缩容限制应结合 Pod 迁移条件判断。

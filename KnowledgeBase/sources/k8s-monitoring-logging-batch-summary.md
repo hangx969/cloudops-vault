@@ -62,7 +62,7 @@ aliases:
   - 高效存储：每个采样数据约 3.5 bytes，300 万时间序列 30s 间隔保留 60 天约消耗 200G
 
 ### [[Docker-Kubernetes/k8s-monitoring-logging/Kubernetes原生部署Prometheus与Grafana|Kubernetes 原生部署 Prometheus 与 Grafana]]
-- 核心内容：合并 Prometheus v2.2.1、Prometheus v2.33.5 + Grafana v8.4.5、Grafana v5.0.4 三篇原生部署笔记，保留 HA、Node Exporter、服务发现、应用 Exporter、Pushgateway、Grafana v8.4.5/v5.0.4、面板排障与 kube-state-metrics 接入。
+- 核心内容：以 Prometheus v2.33.5 + Grafana v8.4.5 为主流程，并介绍 Prometheus v2.2.1 和 Grafana v5.0.4 实验。覆盖 HA、Node Exporter、服务发现、应用 Exporter、Pushgateway、面板排障与 kube-state-metrics 接入。
 - 关键知识点：
   - 以单一主流程说明 Node Exporter DaemonSet、只读 RBAC、Prometheus 抓取配置、PVC 与 Grafana 数据源。
   - HA、远程存储和联邦承担不同职责；Prometheus 本地 TSDB 不使用 NFS。
@@ -84,7 +84,7 @@ aliases:
   - 各节点分别部署 node-exporter 采集主机指标
 
 ### [[Docker-Kubernetes/k8s-monitoring-logging/helm部署prometheus-stack全家桶|Prometheus-Stack：生产部署与运维]]
-- 核心内容：使用 Helm 部署 kube-prometheus-stack，一键安装 Prometheus、Alertmanager、Grafana、kube-state-metrics、node-exporter 等全套组件。整合了参数优化、高可用方案和故障排查内容。
+- 核心内容：使用 Helm 部署 kube-prometheus-stack，一键安装 Prometheus、Alertmanager、Grafana、kube-state-metrics、node-exporter 等全套组件。内容包括参数优化、高可用方案和故障排查。
 - 关键知识点：
   - kube-prometheus-stack 是 Prometheus Operator 的 Helm Chart 封装
   - 子 Chart 依赖：kube-state-metrics（容器指标）、node-exporter（宿主机指标）、grafana
@@ -124,7 +124,7 @@ aliases:
   - 使用 ConfigMap 挂载 alertmanager.yml 和 prometheus rules
 
 ### [[Docker-Kubernetes/k8s-monitoring-logging/k8s日志管理-采集方案与审计日志|K8s 日志：基础机制、六种采集方案与审计日志]]
-- 核心内容：三篇合并——kubelet 本地日志管理 + 六种采集方案对比 + 审计日志实战。覆盖从日志基础机制到生产选型再到合规审计的完整体系。
+- 核心内容：按日志基础机制、生产选型和合规审计的顺序介绍 kubelet 本地日志管理、六种采集方案对比与审计日志实战。
 - 关键知识点：
   - kubelet 默认日志限制：containerLogMaxSize 10Mi / containerLogMaxFiles 5，每容器最多约 50MiB
   - Docker 和 containerd 运行时的日志存储路径差异，容器删除时日志同步删除

@@ -64,7 +64,7 @@ aliases:
 
 ### [[Docker-Kubernetes/k8s-networking-service-mesh/k8s精细化流量管理-istio|Istio 服务网格：架构、部署与精细化流量治理]]
 
-**核心内容**: 合并后的综合指南系统介绍服务网格背景、Istio 架构和核心资源，并贯通 istioctl/Helm 部署、Sidecar/Ambient 选型以及 Bookinfo 流量治理实践。
+**核心内容**: 介绍服务网格背景、Istio 架构和核心资源，并贯通 istioctl/Helm 部署、Sidecar/Ambient 选型以及 Bookinfo 流量治理实践。
 
 - 服务网格解决的问题：服务间通信、流量精细化管理、安全通信、多语言治理、可观测性
 - 安装路径：istioctl + IstioOperator、Helm 分步安装，以及 Kubernetes 1.23 + Istio 1.13.1 历史环境记录

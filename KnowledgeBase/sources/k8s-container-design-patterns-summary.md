@@ -16,10 +16,10 @@ aliases:
 - **原始文档**：[[k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter|K8s 四种容器设计模式]]
 - **领域**：Docker-Kubernetes / 基础资源
 - **摄入日期**：2026-06-28
-- **合并来源**：四篇文章合并——Sidecar + Init Container + Ambassador + Adapter
+- **覆盖模式**：Sidecar、Init Container、Ambassador、Adapter
 
 ## 摘要
-K8s 四大容器设计模式的完整指南（四篇合并）。覆盖每种模式的核心理念、典型场景、完整 YAML 配置示例和选型指南。解决"把所有功能塞进一个容器"导致的维护困难、升级复杂、耦合度高问题。
+K8s 四大容器设计模式指南。覆盖每种模式的核心理念、典型场景、完整 YAML 配置示例和选型指南。解决"把所有功能塞进一个容器"导致的维护困难、升级复杂、耦合度高问题。
 
 ## 关键知识点
 1. **Sidecar 模式**：主容器 + 辅助容器同时运行，典型用例是 Istio Envoy 代理和 Fluentd 日志采集；通过 emptyDir 共享卷交换数据

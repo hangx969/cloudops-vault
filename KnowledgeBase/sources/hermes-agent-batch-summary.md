@@ -22,7 +22,7 @@ aliases:
 - **摄入日期**：2026-05-04
 
 ## 摘要
-Hermes Agent 是 Nous Research 推出的 AI Agent 框架，具备持久记忆、自动技能提炼、跨会话成长等自我进化能力。本批次包含一份满配指南与生态资源合集（五大配置模块实操 + 中文社区 + 生态工具，由两篇合并）、一份 Ubuntu 25.10 完整部署指南（安装、Web Dashboard、OpenClaw 迁移、升级、飞书集成）、一份深度架构解析文章（五层架构、记忆系统、子代理委托、与 OpenClaw 对比、飞书接入），以及一份 Hermes Curator Skill 膨胀治理解析（监测→降级→复盘→锁定四步工作流、Skill 与记忆的区别、Agent 四种记忆类型）。
+Hermes Agent 是 Nous Research 推出的 AI Agent 框架，具备持久记忆、自动技能提炼、跨会话成长等自我进化能力。本批次包含一份满配指南与生态资源合集（五大配置模块实操 + 中文社区 + 生态工具）、一份 Ubuntu 25.10 完整部署指南（安装、Web Dashboard、OpenClaw 迁移、升级、飞书集成）、一份深度架构解析文章（五层架构、记忆系统、子代理委托、与 OpenClaw 对比、飞书接入），以及一份 Hermes Curator Skill 膨胀治理解析（监测→降级→复盘→锁定四步工作流、Skill 与记忆的区别、Agent 四种记忆类型）。
 
 ## 关键知识点
 1. Hermes 采用五层架构：入口/编排 → Agent 核心 → 工具注册 → 状态/持久 → 平台适配，层间单向依赖。
@@ -36,7 +36,7 @@ Hermes Agent 是 Nous Research 推出的 AI Agent 框架，具备持久记忆、
 
 ## 各文档摘要
 
-### [[AI/Hermes-agent/Hermes-Agent-满配指南与生态资源|满配指南与生态资源]]（两篇合并）
+### [[AI/Hermes-agent/Hermes-Agent-满配指南与生态资源|满配指南与生态资源]]
 - 核心内容：五大配置模块实操（身份与记忆/感知/搜索/表达/效率）+ 高阶进化工具（Skill Factory/Maestro/Camel/Control Interface）+ 工具增强（HUD/Wiki/Alpha）+ 官方与中文社区资源合集
 - 关键知识点：
   - **Hindsight vs 内置 MEMORY**：内置仅 ~2200 字符线性文本，Hindsight 无上限、知识图谱组织
