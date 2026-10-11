@@ -208,7 +208,7 @@ date: 2026-10-11
 
 - [[KnowledgeBase/sources/argocd-sync-troubleshooting-summary|ArgoCD 同步故障排查 来源摘要]] — 五类同步问题、三组原文案例、配置示例与官方资料校正。
 
-- [[KnowledgeBase/sources/kubectl-krew-plugins-summary|kubectl 插件指南 来源摘要]] — Krew 安装与离线分发、13 个插件、rolesum/RBAC 排查及参数边界。
+- [[KnowledgeBase/sources/kubectl-krew-plugins-summary|kubectl 插件指南 来源摘要]] — 本机 Krew 安装清单、14 个业务插件的运维用法、ACK D7 实测与参数边界。
 
 - [[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|Cluster Autoscaler 节点扩缩容来源摘要]] — 节点组选择、缩容保护、Helm 部署、参数、监控排障与上线回滚。
 

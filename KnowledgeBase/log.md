@@ -2259,3 +2259,10 @@ date: 2026-04-17
 - 同步更新 25 个来源摘要、[[KnowledgeBase/entities/Hermes-Agent|Hermes Agent]]、[[KnowledgeBase/concepts/KV Cache|KV Cache]]、[[KnowledgeBase/INDEX|知识库入口]]、[[AI/index|AI 索引]]、[[KnowledgeBase/maps/ai-workflow-map|AI 工作流地图]]和[[KnowledgeBase/maps/tool-map|工具地图]]；容器设计模式导航按实际一篇正文计数，四种模式仍完整覆盖。
 - 保留来源归属、版本和案例验证边界；43 个页面均经 Obsidian MCP 写入并完整读回，310 个代码块、YAML frontmatter 和链接目标与更新前一致，git diff --check 通过。复扫剩余 20 处命中均属于 Git、kubeconfig、RAG 或工具实现等技术内容。
 - Obsidian 阅读预览因 Mac 锁定未完成；文本核对与结构检查已完成。操作日志仅追加，维护报告和盘点记录继续保留历史信息。
+
+## [2026-10-11] update | 本机 Krew 插件运维用法与实测记录
+
+- 将本机 14 个 Krew 业务插件及 Krew v0.5.0 的版本清单、ForgeOps 常用命令、只读实测结果写入 [[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew|kubectl 插件指南]]；注明 ctx/ns 由 Homebrew 管理，outdated 已卸载。
+- 补充 Stern、df-pv、blame、view-allocations 的用法与前提，记录两个资源插件的命名空间汇总限制；保留原有章节、演示输出、Deployment 配置和 14 项检查清单，并按 humanizer-zh 整理正文表达。
+- 同步 [[KnowledgeBase/sources/kubectl-krew-plugins-summary|来源摘要]]、[[KnowledgeBase/entities/Kubernetes|Kubernetes 实体页]] 与 [[KnowledgeBase/INDEX|知识库目录]]，操作日志仅追加。
+- 15 个 Krew 条目覆盖、原有 38 个标题和 14 项检查清单保留、56 个代码块闭合及 Bash 语法检查通过；按当前版本校正 get-all 输出格式与创建时间注释，并实测 JSON 输出及新增参数。正文、摘要和导航均经完整 MCP 读回校验；Obsidian 阅读视图因界面工具未找到运行中的应用而未完成检查。

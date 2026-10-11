@@ -185,7 +185,7 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 
 **UI 工具链**：Dashboard（Web 原生）、Kuboard（国产增强）、Lens（桌面 IDE，内置 Prometheus）、k9s（终端 TUI，Vim 风格）、Rancher（企业级多集群管理平台）、Krew 插件管理器。
 
-**kubectl 插件排查**：[[kuebctl-插件krew|Krew 与 kubectl 插件指南]] 按上下文、资源、镜像、日志、容量与 CI 组织 13 个插件；whoami、rolesum、who-can 和 auth can-i 分别处理身份、角色来源、主体反查与授权查询。详见 [[KnowledgeBase/sources/kubectl-krew-plugins-summary|来源摘要]]。
+**kubectl 插件排查**：[[kuebctl-插件krew|Krew 与 kubectl 插件指南]] 列出本机 14 个 Krew 业务插件及安装版本，说明上下文、资源、字段归属、镜像、日志、容量、卷用量与 CI 查询；whoami、rolesum、who-can 和 auth can-i 分别处理身份、角色来源、主体反查与授权查询。Stern、df-pv、blame、view-allocations 的用法与 ACK D7 实测限制见正文及 [[KnowledgeBase/sources/kubectl-krew-plugins-summary|来源摘要]]。
 
 ### 杂项专题（18 篇）
 详见 [[KnowledgeBase/sources/k8s-misc-batch-summary|k8s-misc 批量摘要]]

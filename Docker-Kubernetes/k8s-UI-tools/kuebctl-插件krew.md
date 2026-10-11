@@ -17,10 +17,10 @@ source: "https://mp.weixin.qq.com/s/H0PCEn6yVjbskCUB7hl94g"
 
 排查 Kubernetes 问题时，常见的任务包括查看资源创建关系、盘点镜像、检查权限和跟踪多个 Pod 的日志。kubectl 插件把这些操作封装成独立命令，Krew 则负责插件的发现、安装、升级和卸载。
 
-常用插件覆盖上下文切换、配置整理、资源关系、镜像检查、RBAC 排查、日志聚合、资源分配和 CI 清单检查。
+本机的日常工具覆盖上下文切换、配置整理、字段归属、资源关系、镜像盘点、RBAC 排查、日志聚合、CPU/内存分配、PVC 用量和 CI 清单检查。下文按用途说明命令，并列出当前安装版本与集群实测结果。
 
 > [!note] 示例与使用范围
-> 命令与输出用于说明插件的字段和使用场景，未在实际集群执行。参数和平台支持请以所用版本的帮助信息为准。
+> “本机安装清单与实测记录”来自 2026-10-11 的安装检查和 ACK D7 集群只读验证。其余 `payment` 等资源名、历史版本及示意输出用于解释用法，不能当作当前集群状态；各节的 ForgeOps 命令可用于日常查询，但不表示每个命令组合都已实测。参数和平台支持以安装版本的 `--help` 为准。
 
 ## 插件机制与 Krew 的职责
 
@@ -89,7 +89,7 @@ Krew 索引便于追溯插件来源和安装包，不等于插件代码已经完
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 ~~~
 
-现有笔记中的 Bash 写法如下；使用 Zsh 时把目标文件换成 `~/.zshrc`。
+Bash 可以用下面的命令追加配置；使用 Zsh 时把目标文件换成 `~/.zshrc`。
 
 ~~~bash
 tee -a ~/.bashrc <<'EOF'
@@ -117,7 +117,7 @@ kubectl krew info tree     # 看某个插件的说明
 
 ### Windows 安装
 
-现有笔记通过 Scoop 安装 Helm、kubectl 和 Krew，相关步骤见 [[Docker-Kubernetes/helm/helmv3-安装与使用|Helm v3 安装与使用]]。
+通过 Scoop 安装 Helm、kubectl 和 Krew 的步骤见 [[Docker-Kubernetes/helm/helmv3-安装与使用|Helm v3 安装与使用]]。
 
 该笔记记录的 Krew 可执行文件目录为 `D:\0Software\scoop\apps\krew\current`；实际位置以本机 Scoop 配置为准。需要按官方流程完成 Krew 自安装时，进入 `krew.exe` 所在目录，在命令提示符中执行：
 
@@ -183,24 +183,101 @@ kubectl krew index list
 
 ### 插件的日常操作
 
-下面包含来源文章涉及的插件，以及现有笔记中的 rolesum。按需求选择安装，也可以一次安装多个：
+在其他运维机上复用本机的 Krew 工具集时，可以一次安装以下 14 个业务插件；Krew 管理器由前面的安装流程提供：
 
 ~~~bash
-kubectl krew install ctx ns neat tree get-all images whoami who-can rolesum tail resource-capacity score outdated
+kubectl krew install neat tree get-all images whoami who-can rolesum tail resource-capacity score stern df-pv blame view-allocations
 kubectl krew upgrade             # 升级全部已安装插件
-kubectl krew upgrade ctx         # 升级单个插件
+kubectl krew upgrade stern       # 升级单个插件
 kubectl krew list                # 查看已安装插件及版本
 kubectl krew uninstall neat      # 卸载指定插件
 kubectl krew update              # 更新本地索引
 ~~~
 
-安装通常会更新索引；在 CI 中应把插件版本纳入构建和测试记录，避免每次运行都下载不受控的最新版。
+安装通常会更新索引；在 CI 中应把插件版本纳入构建和测试记录，避免每次运行都下载不受控的最新版。`kubectl krew list` 只列出 Krew 管理的条目；在交互终端中会显示版本，重定向或管道输出通常只有名称。本机的 ctx/ns 由 Homebrew 管理，因此不在这份清单中。
+
+## 本机安装清单与实测记录
+
+### 当前 Krew 清单
+
+2026-10-11 在 macOS arm64 上查询到 15 个 Krew 条目：Krew 管理器和 14 个业务插件。默认安装根目录为 `~/.krew`，`~/.krew/bin` 已加入 `~/.zshrc` 的 `PATH`。
+
+| Krew 条目 | 安装版本 | 主要用途 |
+| --- | --- | --- |
+| krew | v0.5.0 | 查找、安装、升级和卸载插件 |
+| blame | v0.1.1 | 查看资源字段的 manager |
+| df-pv | v0.5.0 | 查询持久卷的实际用量 |
+| get-all | v1.4.3 | 盘点可读取的 API 资源 |
+| images | v0.6.5 | 盘点 Pod 引用的镜像 |
+| neat | v2.0.4 | 清理导出清单的运行时字段 |
+| resource-capacity | v0.8.0 | 查看 CPU/内存 requests、limits 和用量 |
+| rolesum | v1.5.5 | 汇总主体绑定的 RBAC 角色 |
+| score | v1.20.0 | 静态检查 Kubernetes 清单 |
+| stern | v1.34.0 | 按正则或标签聚合 Pod/容器日志 |
+| tail | v0.17.4 | 用 Kail 动态跟踪匹配 Pod 的日志 |
+| tree | v0.6.0 | 沿 ownerReferences 查看子资源 |
+| view-allocations | v3.1.0 | 按资源、节点、命名空间或 Pod 汇总分配和用量 |
+| who-can | v0.4.0 | 反查具备指定 RBAC 权限的主体 |
+| whoami | v0.0.48 | 查询当前认证身份 |
+
+另外，`kubectl ctx`、`kubectl ns` 已由 Homebrew 提供，可继续使用。它们属于 kubectl 可发现的插件入口，但不由 Krew 升级；切换操作会写入 kubeconfig。`outdated` 已卸载，下文保留它的功能和限制说明供参考。
+
+可以用下面的命令重新核对本机状态：
+
+~~~bash
+kubectl krew list
+kubectl plugin list
+kubectl krew info stern
+kubectl stern --help
+~~~
+
+`krew list` 用于查安装记录，`plugin list` 用于查 `PATH` 中实际可被 kubectl 调用的入口；两者的范围不同。上表是检查时的版本记录，升级后应重新查询。
+
+### 集群实测结果
+
+安装验证使用当前 ACK ForgeRock D7 集群，查询范围主要是 `forgeops`。当时集群有 3 个工作节点，`forgeops` 中有 11 个运行中的 Pod；以下结果均来自只读查询或对导出清单的本地分析，未修改集群对象、当前 context 或 kubeconfig。
+
+| 插件 | 实测结果与使用限制 |
+| --- | --- |
+| whoami | 返回当前认证用户名，与原生 `kubectl auth whoami` 的身份一致 |
+| rolesum | 能查询 Group 的角色；没有直接绑定的 Group 可返回空策略，需继续核对 User/ServiceAccount 的绑定 |
+| who-can | 能反查 `forgeops` 中具备 `get pods` RBAC 权限的主体 |
+| tree | 正确展示 `admin-ui` 的 Deployment → ReplicaSet → Pod 关系 |
+| images | 列出 11 个 Pod、34 个容器（含 init 容器）引用的 10 种镜像 |
+| get-all | 能盘点命名空间 API 资源；验证时排除了 Event、PodMetrics 和 Secret |
+| neat | 对 `admin-ui` 导出清单清除了 status、managedFields、resourceVersion，并保留资源名称 |
+| score | 对导出 Deployment 生成有效 JSON 报告并返回退出码 1，表示发现配置问题；该清单未通过检查 |
+| tail | 从 metrics-server Pod 读到 13 行日志；持续跟踪验证在 10 秒后主动结束 |
+| stern | 从 6 个 DS Pod 各读取 3 行日志，共 18 行，`--no-follow` 正常退出 |
+| df-pv | 显示 6 个 DS PVC 的容量、已用量、可用量和使用率 |
+| blame | 识别出 `admin-ui` 字段的 `argocd-controller` 与 `kube-controller-manager` manager |
+| resource-capacity | 能显示节点和 Pod 的分配及用量；v0.8.0 加命名空间过滤时，集群总 Utilization 曾显示为 0，而节点/Pod 行有值，全局查询正常 |
+| view-allocations | 读取 3 个节点及 11 个 ForgeOps Pod 的资源信息，requests/limits 与原生 API 一致；v3.1.0 的 `-n forgeops -u` 汇总仍包含其他命名空间用量，应使用全局查询比较总量 |
+
+`ctx/ns` 只核对了当前值，没有执行切换。`outdated` 虽然能够启动，但多个 Artifactory 镜像返回 `Unable to get image data`，未得到可靠的完整更新结果，随后按需卸载。
+
+### 日常排查顺序
+
+先核对 context 和身份，再缩小到命名空间、工作负载或容器。可按问题选择下面的入口，详细参数见各插件章节。
+
+| 排查任务 | 常用入口 |
+| --- | --- |
+| 当前连到哪里、使用什么身份 | `kubectl config current-context`；`kubectl whoami --all` |
+| 权限报 Forbidden | `rolesum` 找绑定来源，`who-can` 反查主体，`auth can-i` 查询目标身份的授权结果 |
+| Pod 属于哪个控制器 | `kubectl tree deploy admin-ui -n forgeops` |
+| 某个字段由哪个客户端或控制器管理 | `kubectl blame -n forgeops deploy admin-ui` |
+| 导出配置供阅读和对照 | <code>kubectl get deploy admin-ui -n forgeops -o yaml &#124; kubectl neat</code> |
+| 盘点资源或镜像 | `kubectl get-all -n forgeops`；`kubectl images -n forgeops --unique` |
+| 聚合 DS 日志 | <code>kubectl stern '^ds-(cts&#124;idrepo)-[0-2]$' -n forgeops -c '^ds$' --tail 20</code> |
+| 查看 CPU/内存分配和用量 | `kubectl resource-capacity --pods --util`；`kubectl view-allocations -r cpu,memory -g resource,namespace -u` |
+| 查看持久卷用量 | `kubectl df-pv -n forgeops` |
+| 在本地或 CI 检查清单 | `kubectl score --kubernetes-version v1.35 --exit-one-on-warning ./manifests/*.yaml` |
 
 ## 上下文切换与配置整理
 
 ### ctx / ns：切换集群和默认命名空间
 
-`ctx` 和 `ns` 是 kubectx/kubens 通过 Krew 提供的插件入口，用于切换 kubeconfig 的当前 context 和该 context 的默认 namespace。
+`ctx` 和 `ns` 是 kubectx/kubens 的插件入口，用于切换 kubeconfig 的当前 context 和该 context 的默认 namespace。它们既可通过 Krew 安装，也可由 Homebrew 提供；本机使用后者。
 
 ~~~bash
 kubectl krew install ctx ns
@@ -228,6 +305,17 @@ kubectl ns -         # 切回上一个命名空间，跟 cd - 一个手感
 ~~~
 
 `kubectl ns` 会持久化修改 kubeconfig，而不是只改变当前终端的状态。读取同一份 kubeconfig 的其他终端也可能受影响。共享跳板机上应确认各用户是否共用配置；切换后需要恢复时可使用 `kubectl ns -`。
+
+只核对当前 context 或默认命名空间时，可以使用：
+
+~~~bash
+kubectl config current-context
+kubectl config view --minify -o jsonpath='{.contexts[0].context.namespace}'
+kubectl ctx -c
+kubectl ns -c
+~~~
+
+kubeconfig 未设置 namespace 时按 `default` 使用；原生 jsonpath 查询可能输出空值。需要对某个命名空间执行查询时，优先在命令中加 `-n forgeops`，不必先修改默认命名空间。
 
 CI 更适合显式指定上下文和命名空间，避免依赖交互式切换产生的状态。更多多集群配置见 [[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理|多集群 kubeconfig、kubectx 与 kubens]]；插件文档见 [kubectx/kubens](https://github.com/ahmetb/kubectx)。
 
@@ -272,6 +360,40 @@ kubectl get svc payment-api -o json | kubectl neat
 
 字段处理方式见 [kubectl-neat 文档](https://github.com/itaysk/kubectl-neat/blob/v2.0.4/Readme.md)。
 
+本机常用的导出阅读命令：
+
+~~~bash
+kubectl get deploy admin-ui -n forgeops -o yaml | kubectl neat
+kubectl get sts ds-idrepo -n forgeops -o json | kubectl neat -o json
+~~~
+
+### blame：查看字段由哪个 manager 管理
+
+blame 读取对象的 `metadata.managedFields`，把 manager 信息标在 YAML 字段旁。排查 ArgoCD 同步、控制器更新或字段归属时，可以先看具体字段属于哪个工作流。
+
+~~~bash
+kubectl krew install blame
+
+# 从集群直接读取对象并标注字段
+kubectl blame -n forgeops deploy admin-ui
+kubectl blame -n forgeops sts ds-idrepo --time full --color never
+
+# 导出带 managedFields 的清单，再做本地分析
+kubectl get deploy admin-ui -n forgeops --show-managed-fields -o yaml > admin-ui-managed.yaml
+kubectl blame -i admin-ui-managed.yaml
+
+# 也可以直接通过管道分析
+kubectl get deploy admin-ui -n forgeops --show-managed-fields -o yaml | kubectl blame
+~~~
+
+直接使用 `kubectl blame TYPE NAME` 会读取集群；`-i` 读取本地文件，`-f` 按文件中的资源标识到集群查询。`--time` 支持 `full`、`relative`、`none`，`--color never` 可生成不带终端颜色的文本。
+
+本机对 `admin-ui` 的实测结果中，`spec.replicas` 由 `argocd-controller` 管理，`status.availableReplicas`、`status.readyReplicas` 等字段由 `kube-controller-manager` 管理。
+
+manager 标识的是客户端或控制器工作流，可能来自客户端指定的名称或 User-Agent，并不等于操作人的认证用户名。blame 不能恢复完整修改历史；要追踪具体账号和每次请求，应结合审计日志。输入缺少 managedFields 时，字段可能没有归属标注，因此不要先经过 neat 清理，再交给 blame。
+
+用法见 [kubectl-blame](https://github.com/knight42/kubectl-blame)，字段含义见 [Kubernetes 字段管理](https://kubernetes.io/docs/reference/using-api/server-side-apply/#field-management)。
+
 ## 资源关系、盘点与镜像检查
 
 ### tree：按 ownerReferences 展示资源树
@@ -300,6 +422,13 @@ kubectl tree helmrelease redis -n default
 kubectl tree pod payment-api-7d9f8b6c4-x2mnp -n payment
 ~~~
 
+在本机已连接的集群中，可以把查询限制到明确的资源类型：
+
+~~~bash
+kubectl tree deploy admin-ui -n forgeops --resources=deployments,replicasets,pods
+kubectl tree sts ds-idrepo -n forgeops --resources=statefulsets,pods
+~~~
+
 tree 只识别 `ownerReferences`。仅通过 label、Helm 注解或外部流程关联的资源，不一定能组成树；跨集群关系也不会自动连接。示例中的 `HelmRelease → StatefulSet/ConfigMap` 仅在相应控制器设置了 ownerReferences 时才成立，不能理解为所有 Helm 安装都会产生这棵树。
 
 查询自定义资源及其子资源还需要相应读取权限。tree 展示的是指定对象的子资源，不会运行控制器，也不支持 `--run-workload-controllers` 参数。支持的参数见 [kubectl-tree](https://github.com/ahmetb/kubectl-tree/blob/v0.6.0/README.md)。
@@ -322,11 +451,21 @@ kubectl get-all -n payment
 # payment-api-token                     payment    Secret               12d
 # payment-api-hpa                       payment    HorizontalPodAutoscaler  12d
 
-kubectl get-all --since 1h            # 只看一小时内新建的，排查"刚才谁动了集群"
-kubectl get-all -o wide
+kubectl get-all --since 1h            # 只看过去一小时内创建的资源
+kubectl get-all -o json
 ~~~
 
 它的“all”仍受 API 可用性、RBAC 和排除配置约束；当前版本默认排除 Event 与 PodMetrics，也可能显示不完整结果。`--since 1h` 按创建时间筛选，不能据此查出“过去一小时谁修改了已有资源”。生产环境应先用 `-n` 限定范围，并关注请求耗时和 Forbidden 信息。
+
+日常盘点 ForgeOps 资源时，可以排除 Secret 并限制并发；需要完整结果时关闭默认允许部分结果的行为：
+
+~~~bash
+kubectl get-all -n forgeops --only-scope=namespace \
+  --exclude=Event,PodMetrics,Secret --max-inflight=4 \
+  --request-timeout=15s --allow-incomplete=false
+~~~
+
+`--exclude` 会覆盖默认排除列表，所以这里同时列出 Event 和 PodMetrics。`--allow-incomplete=false` 便于让查询失败显式返回错误，但不能让当前身份获得额外读取权限。
 
 与 neat 结合，可以导出迁移前的配置对照：
 
@@ -337,6 +476,8 @@ wc -l payment-backup.yaml
 ~~~
 
 快照中的 `1842` 行只是示例值。这样的清单快照不包含完整应用数据，不保证资源读取的一致时间点、依赖恢复顺序或恢复成功，不能作为完整灾备方案。导出内容还可能含 Secret，需要控制保存和访问范围。
+
+本机 v1.4.3 不支持 `-o wide`，结构化输出使用 `-o json` 或 `-o yaml`。JSON 输出按资源类型依次打印多个顶层对象；需要交给只接受单个 JSON 文档的程序时，可用 `jq -s .` 收集成数组，不能直接假定输出只有一个 List。
 
 工具选项见 [get-all 使用说明](https://github.com/stackitcloud/kubectl-get-all/blob/v1.4.3/docs/USAGE.md)。
 
@@ -361,11 +502,23 @@ kubectl images -A | rg 'v2[.]2'
 kubectl images -A | rg -v 'registry[.]internal/'
 ~~~
 
+本机常用的镜像盘点与机器可读输出：
+
+~~~bash
+kubectl images -n forgeops --unique
+kubectl images -n forgeops -o json
+kubectl images -n forgeops '^ds-(cts|idrepo)-[0-2]$'
+~~~
+
+`--unique` 按命名空间、容器、镜像及 pull policy 等信息去重，不能理解为只剩一行一个镜像地址。
+
 后两条命令用于筛选表格行，也可能保留标题或统计行。插件的位置参数是 Pod 名称正则表达式，不是镜像 tag 过滤器。
 
 查询对象是已有 Pod，不能代表 Git 或 Helm 清单中的全部镜像，也不能把“Pod 引用了该镜像”直接等同于“容器正在健康运行”。全量查询可能较慢，先限定命名空间；参数与输出列见 [kubectl-images](https://github.com/chenjiandongx/kubectl-images/blob/v0.6.5/README.md)。
 
 ### outdated：检查容器镜像是否存在更新版本
+
+**本机已卸载。** 2026-10-11 在 ACK D7 查询时，多个 Artifactory 镜像返回 `Unable to get image data`，未得到完整可靠的更新结果。下面保留工具的用途与命令参考，不将它列入当前安装工具集。
 
 outdated 收集可读取的 Pod 镜像，并连接镜像仓库比较 tag 或发布时间。它用于评估镜像更新，不检查 Kubernetes 废弃 API。
 
@@ -437,7 +590,7 @@ kubectl rolesum -c -k Group developer
 kubectl rolesum --help
 ~~~
 
-现有笔记中的 `kubectl rolesum <svc name>` 应理解并修正为 ServiceAccount/主体名称；它不查询 Service 对象。`-n` 指定查询的命名空间范围，`-k` 选择主体类型，`-c` 只显示 ClusterRole。具体参数见 [rolesum 官方用法](https://github.com/Ladicle/kubectl-rolesum#usage)。
+`kubectl rolesum <svc name>` 中的参数应为 ServiceAccount/主体名称；rolesum 不查询 Service 对象。`-n` 指定查询的命名空间范围，`-k` 选择主体类型，`-c` 只显示 ClusterRole。具体参数见 [rolesum 官方用法](https://github.com/Ladicle/kubectl-rolesum#usage)。
 
 ### who-can：反查哪些主体具备 RBAC 权限
 
@@ -455,6 +608,18 @@ kubectl who-can get secrets -n kube-system
 who-can 需要列出 Role、ClusterRole 及其绑定。权限不足时，看到的角色数据和分析结果可能不完整。它通过 RBAC 规则推导主体，不代表已经验证了其他授权器、准入策略或操作执行结果。
 
 `--as` 改变的是查询请求的身份，不会把 who-can 的输出变成“仅判断这个主体是否有权限”。这项区别尤其影响 ServiceAccount 排查。RBAC 本身是累加授权，不存在 RBAC 显式 deny 规则。工具说明见 [kubectl-who-can](https://github.com/aquasecurity/kubectl-who-can/blob/v0.4.0/README.md)。
+
+本机排查当前账号权限时，可以组合使用：
+
+~~~bash
+kubectl whoami --all
+kubectl rolesum -k User "$(kubectl whoami)" -n forgeops
+kubectl who-can get pods -n forgeops
+kubectl who-can get pods --subresource=log -n forgeops
+kubectl auth can-i get pods -n forgeops
+~~~
+
+Group 没有直接角色绑定，不代表当前 User 没有权限；权限也可能通过 User 或其他 Group 的绑定获得。whoami 显示组名时，应按实际主体类型继续查询，而不是把组名当作用户名。
 
 ### CI 报 Forbidden 时的排查顺序
 
@@ -500,6 +665,62 @@ kubectl tail -n payment -l app=payment-api -c sidecar    # 只跟 sidecar 容器
 
 已有 [[Docker-Kubernetes/k8s-UI-tools/kubectl-可视化插件k9s-stern|k9s 与 stern 笔记]] 介绍了终端 UI 和另一种多 Pod 日志工具，可以结合使用。
 
+本机用 Kail 查询 DS 日志时，先确认匹配的 Pod，再持续跟踪：
+
+~~~bash
+kubectl tail -n forgeops --regex='^ds-(cts|idrepo)-[0-2]$' --dry-run
+kubectl tail -n forgeops -p ds-idrepo-0 -c ds --since 10m
+~~~
+
+Kail v0.17.4 的 `--since` 默认是 `1s`，所以直接运行时通常看不到较早日志。它会持续运行，读取完成后可用 Ctrl+C 结束；需要读完历史日志自动退出时，可以使用下节 Stern 的 `--no-follow`。
+
+### stern：按正则、标签或工作负载聚合日志
+
+Stern 可以同时读取多个 Pod/容器的日志；Pod 名和容器名支持正则，Pod 集合变化时会调整跟踪对象。日常查询可按命名空间、容器、工作负载或日志内容缩小范围。
+
+~~~bash
+kubectl krew install stern
+
+# 持续跟踪 DS Pod 的主容器
+kubectl stern '^ds-(cts|idrepo)-[0-2]$' -n forgeops -c '^ds$' \
+  --since 10m --tail 100
+
+# 跟踪某个 Deployment，或按标签选择 Pod
+kubectl stern deployment/admin-ui -n forgeops --tail 20
+kubectl stern -n payment -l app=payment-api -c '^api$' --since 10m
+
+# 只显示匹配内容的日志
+kubectl stern '^ds-idrepo-' -n forgeops -c '^ds$' \
+  --include='(?i)error|exception' --since 30m
+~~~
+
+常用参数：
+
+| 参数 | 含义 |
+| --- | --- |
+| Pod 查询参数 | Pod 名正则，或 `deployment/admin-ui` 这样的资源标识 |
+| `-n` / `-l` | 限定命名空间 / Pod 标签 |
+| `-c` | 容器名正则 |
+| `--since` / `--tail` | 历史时间范围 / 每个容器最多回看的末尾行数 |
+| `--include` / `--exclude` | 按正则保留 / 排除日志行 |
+| `--init-containers=false` | 排除 init 容器日志 |
+| `--ephemeral-containers=false` | 排除临时容器日志 |
+| `--no-follow` | 读取历史日志后退出 |
+| `--max-log-requests` | 限制并发日志请求 |
+| `-o json` | 输出带 Pod、容器等信息的 JSON 日志记录 |
+
+本机验证使用以下命令，从 6 个 DS Pod 各读取 3 行，共 18 行，然后自动退出：
+
+~~~bash
+kubectl stern '^ds-(cts|idrepo)-[0-2]$' -n forgeops -c '^ds$' \
+  --since 1000h --tail 3 --no-follow --max-log-requests 3 \
+  --init-containers=false --ephemeral-containers=false -o json
+~~~
+
+`1000h` 用于覆盖较早的日志，读取量仍受 `--tail 3` 限制；日常排查可以换成 `10m`、`1h` 等范围。Stern v1.34.0 的默认回看范围是 48 小时，持续跟踪模式默认并发上限为 50，达到上限会报错；`--no-follow` 模式默认并发为 5，按并发上限分批读取。
+
+本机已安装 tail 和 stern。按工作负载关系动态跟踪可使用 Kail；需要正则筛选、日志内容过滤或有限历史读取时，Stern 的对应参数可直接使用。用法见 [Stern 官方文档](https://github.com/stern/stern)。
+
 ### resource-capacity：比较 requests、limits 和实际用量
 
 resource-capacity 对应 kube-capacity，展示节点以及可选 Pod/容器层面的 CPU、内存 requests/limits；`--util` 则增加实际使用量，需要集群中的 metrics-server 正常工作。
@@ -531,6 +752,88 @@ kubectl resource-capacity --pods --util -n payment
 示例表格中三节点的绝对数可以相加，但汇总百分比与节点百分比推算出的总容量不一致，不能用于实际容量结论。当前版本没有 `--pod-template` 参数，也不会输出 `Allocations for pod template ...: 14`；不能直接计算某份 Deployment 还能调度多少副本。
 
 容量规划仍需要结合工作负载资源需求、节点可分配资源和调度条件。CPU 或内存 limits 超售会增加资源竞争风险，但不能据此认定所有 Pod 一定同时发生 throttle 或 OOM。功能与参数见 [kube-capacity v0.8.0](https://github.com/robscott/kube-capacity/blob/v0.8.0/README.md)。
+
+本机常用的容量查询：
+
+~~~bash
+# 集群完整分配及现场用量
+kubectl resource-capacity --pods --util
+
+# 限定 ForgeOps Pod，并展开容器
+kubectl resource-capacity --pods --containers --util -n forgeops
+
+# 按内存使用量排序，或导出 JSON
+kubectl resource-capacity --pods --util --sort mem.util
+kubectl resource-capacity --pods --util -o json
+~~~
+
+> [!warning] resource-capacity v0.8.0 的命名空间汇总
+> 在 ACK D7 的实测中，`--pods --util -n forgeops` 的集群总 Utilization 显示为 0，而节点和 Pod 行已有用量；不加 `-n` 的全局查询正常。查看总用量时使用全局查询，单 Pod 用量可用 `kubectl top pods -n forgeops` 交叉检查。
+
+### view-allocations：按层级查看资源分配
+
+view-allocations 将 Requested、Limit、Allocatable、Free 和可选的 Utilization 组织为树。它可显示 CPU、内存、GPU 或自定义资源，并按 resource、node、namespace、pod 的组合汇总。
+
+~~~bash
+kubectl krew install view-allocations
+
+# 日常查看集群 CPU/内存分配与实时用量，按命名空间汇总
+kubectl view-allocations -r cpu,memory -g resource,namespace -u
+
+# 按节点和 Pod 展开
+kubectl view-allocations -r cpu,memory -g resource,node,pod -u
+
+# 只看 ForgeOps 的 requests/limits
+kubectl view-allocations -n forgeops -r cpu,memory -g resource,namespace,node,pod
+
+# JSON / CSV 输出
+kubectl view-allocations -r cpu,memory -g resource,namespace -u -o json
+kubectl view-allocations -r cpu,memory -g resource,namespace -u -o csv
+
+# 将带 taint 的节点也纳入查询
+kubectl view-allocations --ignore-taints -r cpu,memory -g resource,node -u
+
+# 按 requests 计算 Free；v3.1.0 的参数值使用下划线
+kubectl view-allocations -r cpu,memory -g resource --used-mode only_request
+~~~
+
+输出字段的含义：
+
+| 字段 | 解读方式 |
+| --- | --- |
+| Requested / Limit | 清单中的资源请求量和上限，按所选层级汇总 |
+| Allocatable | 纳入查询的节点可分配资源 |
+| Utilization | 从 Metrics API 读取的 CPU/内存使用量；需要 `-u` 和可用的 metrics-server |
+| Free | 默认按 Allocatable 减去汇总后的 Requested、Limit 两者较大值计算；结果不会小于 0，不能当作实时空闲量 |
+
+默认只显示没有 taint 的节点，结果不完整时检查节点 taint，再决定是否使用 `--ignore-taints`。`-n` 过滤 Pod，但节点容量仍来自纳入查询的节点；仅看单命名空间时不能据此判断整台节点剩余多少调度空间。
+
+> [!warning] view-allocations v3.1.0 的命名空间用量汇总
+> 在 ACK D7 的实测中，`-n forgeops -u` 的 Pod requests/limits 只包含 ForgeOps，但 resource/namespace 层级还包含其他命名空间的 Utilization。需要比较总分配量和总用量时，使用不带 `-n` 的全局命令；ForgeOps 的实际用量可用 `kubectl top pods -n forgeops` 核对。
+
+本机对 3 个节点和 11 个 ForgeOps Pod 做了 JSON 对照：Pod requests/limits 与原生 API 一致，Allocatable 与节点 API 一致；全局 Utilization、Requested、Limit 的汇总也与各命名空间行相加一致。数值会随负载变化，这些检查只对应当时的快照。
+
+功能与通用字段说明见 [view-allocations 官方文档](https://github.com/davidB/kubectl-view-allocations)。`--used-mode` 的具体值以安装版本帮助为准：本机 v3.1.0 支持 `max_request_limit` 和 `only_request`，不要直接照搬其他版本使用连字符的写法。
+
+### df-pv：查询持久卷容量与使用率
+
+`kubectl get pvc` 显示 PVC 的声明或绑定容量；df-pv 读取挂载卷的统计信息，显示 SIZE、USED、AVAILABLE 和 %USED，并列出关联的 PV、PVC、Pod 与节点，适合排查 DS 数据卷是否接近满盘。
+
+~~~bash
+kubectl krew install df-pv
+
+# ForgeOps 的持久卷用量
+kubectl df-pv -n forgeops
+
+# 输出不带终端颜色的表格，并限制请求超时
+kubectl df-pv -n forgeops --disable-color --request-timeout=30s
+~~~
+
+本机在 ACK D7 读到了 `data-ds-cts-0..2`、`data-ds-idrepo-0..2` 共 6 个 PVC 的统计。验证时每个 PVC 申请 100Gi，插件显示文件系统 SIZE 约 97.87Gi；声明容量与文件系统统计是不同字段，不宜混用。
+
+它依赖通过 API Server 读取节点上的卷统计，以及存储驱动提供兼容的 PV metrics；需要相应节点代理读取权限，不是只获得命名空间 PVC 读取权限就一定能使用。无输出或缺卷时，检查挂载状态、节点统计权限和 CSI/存储驱动是否上报数据。CPU/内存的 Metrics API 可用，不能单独证明卷统计也可用。
+
+插件按 IEC 单位输出容量；颜色阈值来自工具自身，阅读时直接核对 %USED，低使用率的黄色显示不等同于故障。用法与前提见 [kubectl-df-pv](https://github.com/yashbhutwala/kubectl-df-pv)。
 
 ## 清单检查与 CI 集成
 
@@ -572,6 +875,19 @@ kubectl score -o json ./deploy.yaml |
 与 jq 等程序组合时，要保留 kube-score 的失败退出码，避免管道最后一个命令成功而使 CI 错误放行。老项目可以先观察默认检查结果，再决定是否启用 `--exit-one-on-warning`。默认模式本身也会在发现 critical 时退出失败。
 
 命令行参数见 [kube-score](https://github.com/zegl/kube-score/blob/v1.20.0/README.md)，JSON 字段见 [JSON v2 数据结构](https://github.com/zegl/kube-score/blob/v1.20.0/renderer/json_v2/api.go)。
+
+本机检查目标集群的清单时，显式设置 Kubernetes 版本；插件 v1.20.0 的默认检查版本是 `v1.18`：
+
+~~~bash
+kubectl score --kubernetes-version v1.35 --exit-one-on-warning ./manifests/*.yaml
+
+# 读取当前 Deployment，只在本地检查，不修改集群
+set -o pipefail
+kubectl get deploy admin-ui -n forgeops -o yaml |
+  kubectl score --kubernetes-version v1.35 -o json -
+~~~
+
+本机对 `admin-ui` 的导出清单生成了有效报告并返回 1；这是检查发现问题的结果，不表示插件启动失败，也不能说该清单已经通过检查。
 
 ### 用注解记录例外规则
 
@@ -693,19 +1009,24 @@ kubectl krew upgrade resource-capacity
 | 插件 | 用途 | 高频命令 |
 | --- | --- | --- |
 | ctx / ns | 切换 context 与默认 namespace | `kubectl ctx`；`kubectl ns payment`；`kubectl ns -` |
+| krew | 管理插件 | `kubectl krew list`；`kubectl krew info stern`；`kubectl krew upgrade stern` |
 | neat | 清理资源 YAML/JSON | <code>kubectl get deploy x -o yaml &#124; kubectl neat</code> |
+| blame | 查看字段 manager | `kubectl blame -n forgeops deploy admin-ui` |
 | tree | 按 ownerReferences 展示子资源 | `kubectl tree deploy payment-api -n payment` |
 | get-all | 盘点可读取的 API 资源 | `kubectl get-all -n payment --since 1h` |
 | images | 查看 Pod 引用的镜像 | `kubectl images -n payment` |
-| outdated | 比较镜像仓库中的更新版本 | `kubectl outdated` |
+| outdated（本机已卸载） | 比较镜像仓库中的更新版本 | `kubectl outdated`，仅作工具参考 |
 | whoami | 查看当前认证身份 | `kubectl whoami`；`kubectl whoami --all` |
 | rolesum | 汇总主体绑定的 RBAC 角色 | `kubectl rolesum ci-bot -n payment` |
 | who-can | 反查拥有指定 RBAC 动作的主体 | `kubectl who-can delete pods -n payment` |
 | tail | 聚合匹配 Pod/容器的日志 | `kubectl tail -n payment -l app=payment-api` |
+| stern | 正则匹配并聚合日志 | <code>kubectl stern '^ds-(cts&#124;idrepo)-[0-2]$' -n forgeops -c '^ds$' --tail 20</code> |
+| df-pv | 查看持久卷容量与用量 | `kubectl df-pv -n forgeops` |
+| view-allocations | 按层级汇总分配和用量 | `kubectl view-allocations -r cpu,memory -g resource,namespace -u` |
 | resource-capacity | 查看 requests/limits 与用量 | `kubectl resource-capacity --pods --util -n payment` |
 | score | 静态检查清单 | `kubectl score --exit-one-on-warning ./manifests/*.yaml` |
 
-日常切换与阅读配置可先选 ctx/ns、neat、tree；镜像、日志、权限和资源分配工具按排查任务选择。CI 可以从 score 的默认检查开始，逐步收紧已确认适用的规则。
+日常切换与阅读配置可使用 ctx/ns、neat、tree 和 blame；DS 日志可用 stern，卷用量可用 df-pv，CPU/内存分配可用 resource-capacity 或 view-allocations。CI 可以从 score 的默认检查开始，逐步收紧已确认适用的规则。
 
 ## 使用边界与参考资料
 
@@ -726,10 +1047,17 @@ kubectl krew upgrade resource-capacity
 | `score -f ... --exit-code-on-warning`；<code>jq '.[] &#124; select(.grade &lt; 5)'</code> | 使用位置文件参数与 `--exit-one-on-warning`；JSON v2 的 grade 在 `checks[]` 中 |
 | 相同的 Readiness/Liveness 探针；镜像检查 | 相同探针仍可能告警；镜像 tag 与 pull policy 是不同检查 |
 | `--since` 可以限制日志跟踪速率；get-all 能查最近修改者 | `--since` 只限定日志回看时间或资源创建时间，不提供限速或审计结论 |
+| `get-all -o wide` | 本机 v1.4.3 不支持 wide，使用默认表格或 `-o json` / `-o yaml` |
+| Krew 清单等于全部 kubectl 插件 | `krew list` 只列 Krew 管理的条目，Homebrew 等来源的入口用 `kubectl plugin list` 核对 |
+| blame 能确认具体操作人、恢复每次修改 | managedFields 标识字段 manager，完整历史与认证账号需结合审计日志；管道输入应保留 managedFields |
+| 资源插件的命名空间过滤结果可以直接当作集群总量 | resource-capacity v0.8.0 与 view-allocations v3.1.0 在本机实测中各有汇总限制，详见各节；查看集群总量使用全局命令 |
+| view-allocations 的 Free 是实时空闲量 | 默认按 requests/limits 与 Allocatable 计算；Utilization 才是 Metrics API 的现场用量 |
+| df-pv 只需要读取 PVC；PVC 的 100Gi 就等于显示的 SIZE | 还需可读取节点卷统计及兼容驱动；PVC 容量与文件系统统计属于不同字段 |
+| score 使用默认 Kubernetes 版本即可 | 本机 v1.20.0 默认检查 `v1.18`，应显式设置目标集群版本 |
 
 主要来源：
 
 - [WAKEUP技术：kubectl 不够用？krew 装 10 插件](https://mp.weixin.qq.com/s/H0PCEn6yVjbskCUB7hl94g)，发布于 2026-10-09。
 - [Krew GitHub](https://github.com/kubernetes-sigs/krew) 与 [Krew 快速入门](https://krew.sigs.k8s.io/docs/user-guide/quickstart/)。
 - [Krew 官方插件索引](https://github.com/kubernetes-sigs/krew-index/tree/master/plugins)：用于核对各插件的仓库、平台和版本。
-- 各插件的官方文档与相关实现已在对应章节链接。
+- 各插件的官方文档与相关实现已在对应章节链接。本机版本来自 Krew 安装记录，参数已核对对应版本的 `--help`；实测结果来自 2026-10-11 的只读安装验证。
