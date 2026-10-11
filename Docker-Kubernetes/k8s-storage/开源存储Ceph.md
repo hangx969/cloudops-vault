@@ -34,7 +34,7 @@ Weil 在读博之前参与创办过一家网络托管公司 DreamHost。毕业�
 
 商业化经历了几个阶段：2012 年，团队成立 Inktank 公司，专门做 Ceph 的商业支持，同年发布第一个稳定版本系列 Argonaut。2014 年 4 月，Red Hat 以约 1.75 亿美元现金收购 Inktank。2018 年 11 月，Ceph 基金会成立，隶属于 Linux 基金会，项目治理从单一公司主导变成多家共管。2019 年 IBM 收购 Red Hat，2022 年 IBM 把 Red Hat 的存储产品线整合进 IBM Storage，Ceph 的商业发行版改名 IBM Storage Ceph。发行版的分工见 [[#发行版与厂商生态]]。
 
-![Ceph 的二十年](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-01-ceph-history.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-01-ceph-history.svg" alt="Ceph 的二十年" style="background-color: #ffffff;">
 
 图：从博士论文到基金会项目，Ceph 的关键节点
 
@@ -70,7 +70,7 @@ HDFS 采用集中放置表，NameNode 记录每个数据块在哪些 DataNode �
 
 不维护集中放置表，只分发一份集群地图，所有参与者用同一个算法，拿数据的标识当场算出位置。相同输入得到相同输出，不必逐次查询集中服务。Ceph 选的就是这条。
 
-![数据放在哪：三类答案](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-02-data-placement-options.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-02-data-placement-options.svg" alt="数据放在哪：三类答案" style="background-color: #ffffff;">
 
 图：数据放置的三类答案与各自代价
 
@@ -98,7 +98,7 @@ CRUSH 的全称是 Controlled Replication Under Scalable Hashing，可控的、�
 
 地图变化的时候怎么办？每份地图有一个版本号，叫 epoch。加一块盘、撤一台机器，epoch 加一，新地图分发下去。重新计算之后，绝大多数数据的落点不变，只有和变化节点相关的那部分数据得到新的落点，需要迁移。迁移量大致等于新增容量占集群总容量的比例——这个性质和一致性哈希的优点是同一个，但 CRUSH 是靠树结构和权重做到的，不需要虚拟节点。
 
-![CRUSH 的计算过程](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-03-crush-map-rules.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-03-crush-map-rules.svg" alt="CRUSH 的计算过程" style="background-color: #ffffff;">
 
 图：地图加规则加标识，算出一组目标 OSD
 
@@ -108,7 +108,7 @@ CRUSH 的全称是 Controlled Replication Under Scalable Hashing，可控的、�
 
 CRUSH 把层级直接做进结构里：树形地图天然有层级，规则明确声明副本打散到哪一层，权重精确控制分布比例。迁移量小这个优点两者都有，实现路径不同。工程上的区别在于：基础的一致性哈希环主要表达节点位置，CRUSH 直接表达拓扑层级和故障域规则。后者可以按主机、机架或机房表达放置边界。
 
-![一致性哈希与 CRUSH 的分野](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-04-hash-ring-vs-crush.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-04-hash-ring-vs-crush.svg" alt="一致性哈希与 CRUSH 的分野" style="background-color: #ffffff;">
 
 图：平的环与带层级的树
 
@@ -124,7 +124,7 @@ RADOS 对象很简单，三样东西：一个名字，一段字节，一组键�
 
 名字里的 Autonomic（自治）指的是：故障检测、数据重建和负载均衡由集群自动执行。一块盘坏了，OSD 之间的心跳发现它不响应，MON 确认后更新地图，相关数据开始往别处补，全程自动。具体流程见 [[#故障恢复与巡检]]。
 
-![RADOS：上层三种形态，底层一种对象](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-05-rados-layers.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-05-rados-layers.svg" alt="RADOS：上层三种形态，底层一种对象" style="background-color: #ffffff;">
 
 图：三种接口最终都落到 RADOS 对象
 
@@ -134,7 +134,7 @@ RADOS 对象很简单，三样东西：一个名字，一段字节，一组键�
 
 映射链是这样的：对象标识先经过哈希和池的 PG 映射，得到所属 PG；教学上常把这一步简化为对 PG 数量取模；PG 再作为一个整体走 CRUSH，算出一组 OSD。同一个 PG 里的对象共同管理：放在同一组 OSD 上，用同一套冗余策略，处于同一个状态。系统要跟踪的单位从几十亿个对象变成了几千个 PG，管理成本直接降了几个数量级。
 
-![从对象到盘的映射链](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-06-object-pg-osd.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-06-object-pg-osd.svg" alt="从对象到盘的映射链" style="background-color: #ffffff;">
 
 图：对象先归入 PG，PG 再整体映射到一组 OSD
 
@@ -160,7 +160,7 @@ MDS（Metadata Server）只管 CephFS。目录树、inode、权限这些文件�
 
 还有一个角色严格说属于三种形态那一层：RGW（RADOS Gateway），对象存储的 HTTP 网关，下一节讲。
 
-![一个 Ceph 集群的组件拓扑](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-07-components.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-07-components.svg" alt="一个 Ceph 集群的组件拓扑" style="background-color: #ffffff;">
 
 图：MON 管地图，MGR 管仪表盘，OSD 管数据，MDS 只管 CephFS
 
@@ -185,7 +185,7 @@ RGW 提供对象接口。RGW 进程对外提供 HTTP 服务，兼容 S3 接口�
 
 CephFS 提供文件系统接口。这是 Ceph 出生时的第一个形态。MDS 维护目录树和 inode，文件数据按块切成对象存进 RADOS。客户端用内核挂载或者 FUSE 挂载，多台机器可以同时挂同一个文件系统，标准 POSIX 语义。NFS 导出也支持，走 Ganesha。CephFS 的快照同样是写时复制。
 
-![一套底座，三种形态](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-08-three-interfaces.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-08-three-interfaces.svg" alt="一套底座，三种形态" style="background-color: #ffffff;">
 
 图：三种形态共用同一个 RADOS 底座
 
@@ -205,7 +205,7 @@ RADOS 的池在创建时就要定冗余策略，二选一：副本（replicated�
 
 纠删码池把数据切成 k 个数据块，算出 m 个校验块，分散存放。典型配置 4+2：4 个数据块加 2 个校验块，任意坏两块都能恢复，空间开销只有 1.5 倍。省空间的代价是：写入要凑齐一个条带才能编码，覆盖写要先读旧块再算新校验（读改写），CPU 有额外开销，延迟也比副本高。原文建议优先把纠删码用于冷数据、大对象和 RGW 归档负载；具体取舍需看写入大小和延迟要求。
 
-![三副本与纠删码 4+2](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-09-replicas-vs-ec.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-09-replicas-vs-ec.svg" alt="三副本与纠删码 4+2" style="background-color: #ffffff;">
 
 图：三副本与纠删码的容量和性能取舍
 
@@ -228,7 +228,7 @@ RADOS 的池在创建时就要定冗余策略，二选一：副本（replicated�
 
 如果写入过程中某个副本 OSD 没了，主 OSD 会报告，MON 更新地图，这个 PG 进入重新协商状态（peering），选出新的主，核对各副本的操作日志，把不一致的地方补齐，然后继续服务。这套流程保证了一件事：副本写入由主 OSD 定序，恢复时核对副本历史，以维持一致性。这里描述的是通常的主 OSD 路径，并不覆盖所有版本的副本读优化。常见 RBD 文件系统卷以单节点读写方式使用；CephFS 多客户端共享，还要由 MDS 协调文件元数据、锁和访问能力。
 
-![一次写入的完整路径](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-10-replicated-write.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-architecture-10-replicated-write.svg" alt="一次写入的完整路径" style="background-color: #ffffff;">
 
 图：写入直达主 OSD，全副本确认后返回
 
@@ -248,7 +248,7 @@ Ceph 的部署工具经历过几代变化。cephadm 从 2020 年的 Octopus 开�
 
 盘的组织方式是"一块盘一个 OSD"。常见混合介质配置是大容量 HDD 做数据盘，SSD 切出一部分给 BlueStore 的元数据（db 和 wal），元数据操作走 SSD，顺序写走 HDD。预算充足就全闪，性能上限高得多。原文特别提醒避开 SMR（叠瓦式磁记录）机械盘。这类盘写入特性差，重写放大严重，放进 Ceph 会拖慢恢复、放大抖动，社区和盘厂都反复提示过。
 
-![OSD 磁盘的三种常见配置](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-01-disk-tiers.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-01-disk-tiers.svg" alt="OSD 磁盘的三种常见配置" style="background-color: #ffffff;">
 
 图：三档磁盘配置，按预算和延迟要求选
 
@@ -258,7 +258,7 @@ MON 和 MGR 可以放在管理节点上，避免与高 IO 业务争用资源。M
 
 监控可以使用 MGR 的 Prometheus 模块和 Grafana 仪表盘。容量常见默认水位为 nearfull 85%、backfillfull 90%、full 95%。这些水位需要检查每个 OSD 的使用率和实际配置：backfillfull 会阻止向过满目标 OSD 回填，full 会限制相关 PG 的写入；整体容量还有空闲也可能出现局部满盘。
 
-![一个典型的 Ceph 部署](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-02-deployment-layout.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-02-deployment-layout.svg" alt="一个典型的 Ceph 部署" style="background-color: #ffffff;">
 
 图：两张网、三种节点，一个典型部署的形状
 
@@ -281,7 +281,7 @@ FileStore 复用本地文件系统：每块盘先格式化成 XFS，对象当成
 
 BlueStore 的思路是反过来：让对象存储直接控制本地数据布局，减少通用文件系统带来的额外日志和语义适配。BlueStore 直接管理裸盘，元数据放进内嵌的 RocksDB，数据块用写时复制的方式分配，每个数据块带校验和。2017 年的 Luminous 版本（v12）里 BlueStore 成为默认引擎，FileStore 后来退出主要部署路径，Reef 起不再受支持。
 
-![FileStore 与 BlueStore 的层次对比](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-03-filestore-vs-bluestore.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-03-filestore-vs-bluestore.svg" alt="FileStore 与 BlueStore 的层次对比" style="background-color: #ffffff;">
 
 图：去掉中间的 XFS，是这次演进的核心动作
 
@@ -309,7 +309,7 @@ OSD 掉线是理解自愈过程的常见场景。故障检测、地图变化和 
 - recovery：通常依据近期操作日志恢复缺失或过期的对象，避免扫描整个 PG。
 - backfill：扫描和同步 PG 的全部内容，常见于新放置目标或日志不足以做增量同步的情况。它是 recovery 的一种特殊情况，不意味着健康副本已经丢失；如果数据本身无法找到，可能出现 unfound 或 incomplete，需要人工判断。
 
-![一块盘掉线后的自愈时间线](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-04-osd-failure-recovery.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-04-osd-failure-recovery.svg" alt="一块盘掉线后的自愈时间线" style="background-color: #ffffff;">
 
 图：OSD 掉线后的恢复过程；图中 recovery / backfill 的区别以正文定义为准
 
@@ -325,7 +325,7 @@ OSD 掉线是理解自愈过程的常见场景。故障检测、地图变化和 
 
 PG 可以同时带多个状态。长时间未回到 active+clean 的 PG 是排查信号，但原因可能是空间、限速、未找到对象或故障尚未处理。参见 [PG 状态定义](https://docs.ceph.com/en/tentacle/rados/operations/pg-states/) 和 [min_size](https://docs.ceph.com/en/tentacle/rados/operations/pools/#setting-the-number-of-rados-object-replicas)。
 
-![PG 的几个关键状态](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-05-pg-states.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-05-pg-states.svg" alt="PG 的几个关键状态" style="background-color: #ffffff;">
 
 图：常见 PG 状态；图中的 undersized 不等于低于 min_size
 
@@ -364,7 +364,7 @@ Ceph 的学习成本来自相互关联的 PG、CRUSH、pool、flag 和 peering�
 
 这些日期会调整，选型和升级前应再次查阅 [Ceph 发布与维护列表](https://docs.ceph.com/en/latest/releases/)。
 
-![近年的版本节奏](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-06-releases-upgrades.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-06-releases-upgrades.svg" alt="近年的版本节奏" style="background-color: #ffffff;">
 
 图：原文版本时间线；图中的 LTS 分类、固定不跳级和升级顺序请按正文及目标版本说明理解
 
@@ -384,7 +384,7 @@ Ceph 的生态包括上游社区、商业发行版和部署编排工具。上游
 
 商业线的变迁很快：2014 年 Red Hat 收购 Inktank，做出 Red Hat Ceph Storage；2019 年 IBM 收购 Red Hat；2022 年，IBM 把 Red Hat 的存储产品线整合进 IBM Storage，发行版改名 IBM Storage Ceph。同期，Red Hat 自己的存储重心转向 OpenShift Data Foundation（ODF）——跑在 OpenShift 上的存储层，底座同样是 Ceph。SUSE Enterprise Storage 已不向新客户销售，既有客户支持取决于合同；官方生命周期页给出的 SES 6 通用支持结束日期为 2022-05-30，不能用原文的 2022 年 1 月概括整个产品线。Ubuntu 阵营有 Canonical 的 Charmed Ceph。Kubernetes 场景常用 Rook 编排 Ceph。
 
-![Ceph 的发行版与生态](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-07-distributions.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-07-distributions.svg" alt="Ceph 的发行版与生态" style="background-color: #ffffff;">
 
 图：上游一棵树，商业分支各有去向
 
@@ -427,7 +427,7 @@ Ceph 的生态包括上游社区、商业发行版和部署编排工具。上游
 
 原文建议至少预留一名专职人员，规模扩大后配置团队。没有这个人力预算，前面的理由再多也别自建，去买发行版的支持服务，或者直接用云厂商的托管存储。
 
-![选型判断树](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-08-selection.svg)
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/ceph-operations-08-selection.svg" alt="选型判断树" style="background-color: #ffffff;">
 
 图：从接口、规模和团队能力判断是否适合自建
 

@@ -2266,3 +2266,11 @@ date: 2026-04-17
 - 补充 Stern、df-pv、blame、view-allocations 的用法与前提，记录两个资源插件的命名空间汇总限制；保留原有章节、演示输出、Deployment 配置和 14 项检查清单，并按 humanizer-zh 整理正文表达。
 - 同步 [[KnowledgeBase/sources/kubectl-krew-plugins-summary|来源摘要]]、[[KnowledgeBase/entities/Kubernetes|Kubernetes 实体页]] 与 [[KnowledgeBase/INDEX|知识库目录]]，操作日志仅追加。
 - 15 个 Krew 条目覆盖、原有 38 个标题和 14 项检查清单保留、56 个代码块闭合及 Bash 语法检查通过；按当前版本校正 get-all 输出格式与创建时间注释，并实测 JSON 输出及新增参数。正文、摘要和导航均经完整 MCP 读回校验；Obsidian 阅读视图因界面工具未找到运行中的应用而未完成检查。
+
+## [2026-10-11] ingest | 分布式存储全景、Ceph 合并与 SVG 图床迁移
+
+- 新建 [[Docker-Kubernetes/k8s-storage/分布式存储全景-架构与发展路线]]；将 Ceph 上下篇合入 [[Docker-Kubernetes/k8s-storage/开源存储Ceph]]，按 humanizer-zh 整理标题、章节、表达和列表，保留背景、原理、对比、运维经验及旧版操作流程，原笔记 52 个代码块按原顺序完整保留。
+- 核对并说明 PG 合并、size / min_size、recovery / backfill、网络与容量水位、维护日期、升级顺序和 in-tree 插件移除等版本边界；旧版配置中的已知问题保留原示例并加注说明，未执行 Ceph / Kubernetes 部署。
+- 用 PicGo CLI 与 GitHub Plus 上传 26 张原文 SVG 和 9 张既有 3FS SVG，35 个外链均为 HTTP 200、SVG MIME，内容哈希与上传文件一致；将 [[Docker-Kubernetes/k8s-storage/开源存储DeepSeek 3FS，AI原生的并行文件系统]] 的 9 条矢量源图引用改为外链，确认无本地路径引用后经 MCP 删除 9 个本地 SVG。
+- 创建 [[KnowledgeBase/sources/distributed-storage-overview-summary]]、[[KnowledgeBase/sources/ceph-storage-summary]]、[[KnowledgeBase/concepts/分布式存储]] 和 [[KnowledgeBase/entities/Ceph]]，更新 [[KnowledgeBase/concepts/StorageClass]]、[[KnowledgeBase/sources/k8s-scaling-storage-batch-summary]]、[[KnowledgeBase/maps/kubernetes-map]] 与 [[KnowledgeBase/INDEX]]。
+- 11 个正文与导航文件经 MCP 全文读回一致，frontmatter、新增 wikilink、代码围栏和任务范围差异检查通过；Obsidian 阅读模式中 26 张图全部加载，透明原图的展示加白底以适配深色主题。三篇剪藏原稿未改动。
