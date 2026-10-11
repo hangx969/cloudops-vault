@@ -5,7 +5,7 @@ tags:
   - kubernetes/autoscaling
 date: 2026-10-11
 sources:
-  - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱]]"
+  - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler]]"
   - "[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA]]"
   - "[[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战]]"
 aliases:
@@ -42,7 +42,7 @@ Cluster Autoscaler（CA）依据 Pod 的调度需求调整 Kubernetes Worker 节
 
 ## 在本仓库中的覆盖
 
-- [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱]]：节点组选择、缩容保护、生产部署、调优、排障、上线验证与回滚。
+- [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler]]：节点组选择、缩容保护、生产部署、调优、排障、上线验证与回滚。
 - [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA]]：CA 在自动扩缩容体系中的位置，以及 requests 与 HPA/VPA 的关系。
 - [[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战]]：CA 与 Karpenter 的成本和节点选型比较；其中“CA 仅缩容空节点”的表述与节点迁移机制不一致，参见 [[KnowledgeBase/sources/k8s-cluster-autoscaler-summary#值得注意]]。
 

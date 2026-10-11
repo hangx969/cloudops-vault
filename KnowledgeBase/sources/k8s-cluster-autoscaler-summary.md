@@ -5,7 +5,7 @@ tags:
   - kubernetes/autoscaling
 date: 2026-10-11
 sources:
-  - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱]]"
+  - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler]]"
 aliases:
   - K8s Cluster Autoscaler 来源摘要
 ---
@@ -14,7 +14,7 @@ aliases:
 
 ## 元信息
 
-- **原始文档**：[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱]]
+- **原始文档**：[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler]]
 - **作者**：LinuxLuMing
 - **原文时间**：2026-08-28 09:04
 - **外部来源**：[LinuxLuMing 原文](https://mp.weixin.qq.com/s/A0QZw99L8ngrvDZV-ocrlQ)

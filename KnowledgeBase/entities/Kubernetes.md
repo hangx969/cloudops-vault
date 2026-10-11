@@ -176,7 +176,7 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 - Volume Health Monitor 通过 4 个 CSI RPC 将卷健康写入 `PVC.status.healthStatus`、`Pod.status.volumeHealth` 和 `CSINode.status.storageHealth`，补足 PVC 长期 `Bound` 但底层已降级的可观测性盲区
 - 该特性以 Kubernetes 1.37 Alpha 为前提，必须同时验证 feature gate 与 CSI 驱动版本，并把 `Degraded`/`Inaccessible` 分级接入告警和 remediation
 
-- [[KnowledgeBase/entities/Cluster Autoscaler|Cluster Autoscaler]] 基于 requests 和调度约束判断新增节点能否解决 Pending；回收节点前检查 PDB、本地存储和迁移条件。部署、排障与上线回滚见 [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱|节点自动扩缩容实践]]。
+- [[KnowledgeBase/entities/Cluster Autoscaler|Cluster Autoscaler]] 基于 requests 和调度约束判断新增节点能否解决 Pending；回收节点前检查 PDB、本地存储和迁移条件。部署、排障与上线回滚见 [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler|节点自动扩缩容实践]]。
 
 ### 数据库中间件与 UI 工具（19 篇）
 详见 [[KnowledgeBase/sources/k8s-db-middleware-UI-batch-summary|k8s-db-middleware-UI 批量摘要]]

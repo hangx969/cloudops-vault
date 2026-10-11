@@ -1,5 +1,5 @@
 ---
-title: "K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱"
+title: "K8s Cluster Autoscaler"
 source: "https://mp.weixin.qq.com/s/A0QZw99L8ngrvDZV-ocrlQ"
 author:
   - "[[LinuxLuMing]]"

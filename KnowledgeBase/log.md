@@ -2235,3 +2235,13 @@ date: 2026-04-17
 - 单列官方资料核验说明：Recreate 在 1.37 中为 Alpha、默认关闭，需启用两个控制面组件的 StatefulSetRecreateStrategy；rollingUpdate.partition 不可与 Recreate 组合；区分 PVC 保留和 PV 回收策略，并标明启动顺序、init 容器、EndpointSlice 与 Redis 槽位接管案例的适用边界。
 - 同步[[KnowledgeBase/sources/k8s-basic-resources-batch-summary|基础资源来源摘要]]、[[KnowledgeBase/maps/kubernetes-map|Kubernetes 专题地图]]和[[KnowledgeBase/INDEX|目录]]；基于各页最新内容更新，保留同期其他摄入改动。
 - 正文与三页导航经 Obsidian MCP 完整读回一致，原文代码保留、11 个案例编号、7 个新增章节代码块、5 处新增 wikilink/章节锚点及任务范围 git diff 空白检查通过；日志仅追加。未执行 Kubernetes/Redis 命令或复现作者案例。阅读视图检查未完成：界面工具未能找到运行中的 Obsidian。
+
+## [2026-10-11] update | K8s Cluster Autoscaler 标题
+
+- 将已整理文章的文件名与 frontmatter 标题统一改为 [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler|K8s Cluster Autoscaler]]，正文和原始剪藏保持原样。
+- 同步来源摘要、自动扩缩容概念页、CA 与 Kubernetes 实体页及专题地图中的 9 处路径引用，地图显示名使用新标题；历史日志仅追加，不改写。
+
+## [2026-10-11] update | 清理临时剪藏引用
+
+- 按用户要求移除 StatefulSet 正文和基础资源来源摘要中两处指向临时剪藏的链接；保留作者、日期、技术内容、代码和案例。
+- 全 vault 搜索及完整 MCP 读回确认，其他文章未发现此类引用。历史日志中的一个来源链接和一个目录前缀暂未修改：整文件写入与按章节修改均被自动审批拒绝，因日志按规约仅允许追加，待用户明确授权例外后清理。

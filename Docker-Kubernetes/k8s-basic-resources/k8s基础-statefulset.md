@@ -309,7 +309,7 @@ provisioner: example.com/nfs
 
 ## Recreate 更新策略（Kubernetes 1.37 Alpha）
 
-本节根据 WAKEUP技术的[[0raw/有状态也能原地重建：K8s 1.37 StatefulSet Recreate 策略实战|StatefulSet Recreate 策略文章]]整理。原文发表于 2026 年 8 月 24 日；下文保留其配置、命令和案例，并将官方资料核验说明与作者经验分开。
+本节根据 WAKEUP技术的 StatefulSet Recreate 策略文章整理。原文发表于 2026 年 8 月 24 日；下文保留其配置、命令和案例，并将官方资料核验说明与作者经验分开。
 
 > [!warning] 版本与配置核验（2026-10-11）
 > 原文称 Recreate 在 Kubernetes 1.37 中已 GA，但官方将它标为 **Alpha、默认关闭**。使用前需在 `kube-apiserver` 和 `kube-controller-manager` 启用 `StatefulSetRecreateStrategy`。版本号本身不能证明集群已启用该功能。见[官方特性门控列表](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates)。

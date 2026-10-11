@@ -8,7 +8,7 @@ aliases:
   - K8s Map
 date: 2026-10-11
 sources:
-  - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱]]"
+  - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler]]"
   - "[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum]]"
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查]]"
   - "[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统]]"
@@ -233,7 +233,7 @@ sources:
 ### 扩缩容（5 篇）
 [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]、[[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]、Goldilocks、[[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战|K8s 集群成本优化]]
 
-- [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler：节点自动扩缩容怎么用才靠谱|Cluster Autoscaler：节点自动扩缩容实践]] — 调度模拟、Node Group、PDB、调优、排障与回滚；[[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|来源摘要]]。
+- [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler|K8s Cluster Autoscaler]] — 调度模拟、Node Group、PDB、调优、排障与回滚；[[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|来源摘要]]。
 
 ### 存储（8 篇）
 NFS Provisioner、Ceph、CubeFS、[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑|PV/PVC 数据保护与复用避坑]]、[[Docker-Kubernetes/k8s-storage/让存储故障现形：Kubernetes Volume Health Monitor 原理与生产接入|K8s Volume Health Monitor：原理与生产接入]]、[[Docker-Kubernetes/k8s-storage/emptyDir监控与驱逐机制实战|emptyDir 监控与驱逐]]
