@@ -55,6 +55,8 @@ date: 2026-10-11
 
 - [[KnowledgeBase/concepts/自动扩缩容|自动扩缩容]] — HPA、VPA、KEDA 与节点容量协同，涵盖 requests、迁移保护和扩容延迟。
 
+- [[KnowledgeBase/concepts/分布式存储|分布式存储]] — 数据放置、冗余、一致性、故障恢复与文件 / 对象 / 块接口。
+
 ---
 
 ## 🔧 实体页（Entities）
@@ -108,6 +110,8 @@ date: 2026-10-11
 | [[KnowledgeBase/entities/ModelScope|ModelScope]] | 模型与数据集平台，可作为国内模型下载及离线资产准备入口 |
 
 - [[KnowledgeBase/entities/Cluster Autoscaler|Cluster Autoscaler]] — 基于 Pod 调度需求扩容节点组，并在满足迁移条件时安全缩容。
+
+- [[KnowledgeBase/entities/Ceph|Ceph]] — RADOS 统一底座、CRUSH / PG、三种存储接口、运维及 Kubernetes 接入。
 
 ---
 
@@ -342,6 +346,9 @@ date: 2026-10-11
 > 2026-10-03 统计为 18 个领域、377 篇学习笔记（Markdown 清单含迁移文章，不含各目录 index.md 导航页和 280 篇引用/嵌入内容），详见 [[KnowledgeBase/inventory/repository-inventory|全库文档盘点]]。2026-09-29 检查时有 33 篇尚无来源摘要，历史清单见 [[KnowledgeBase/maintenance/wiki-lint-2026-09-29|Wiki 健康检查 2026-09-29]]。
 
 > Terraform 系列于 2026-10-02 新增 12 篇正文和 1 个学习路线入口；上面的全库篇数保留为 2026-09-29 盘点快照，本次系列以 [[KnowledgeBase/maps/terraform-map|Terraform 学习地图]] 为当前导航。
+
+- [[KnowledgeBase/sources/distributed-storage-overview-summary|分布式存储全景来源摘要]] — 四条发展路线、三次负载变化、29 篇项目目录和阅读路径。
+- [[KnowledgeBase/sources/ceph-storage-summary|Ceph 架构、部署与 Kubernetes 集成来源摘要]] — 原理、硬件、恢复、版本边界和完整旧版示例。
 
 ---
 

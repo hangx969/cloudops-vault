@@ -3,11 +3,11 @@ title: StorageClass
 tags:
   - knowledgebase/concept
   - kubernetes/storage
-date: 2026-10-04
+date: 2026-10-11
 sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage]]"
   - "[[Docker-Kubernetes/k8s-storage/helm部署nfs-subdir-external-provisioner]]"
-  - "[[开源存储Ceph]]"
+  - "[[Docker-Kubernetes/k8s-storage/开源存储Ceph]]"
   - "[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑]]"
   - "[[开源存储Longhorn，K8s的轻量块存储]]"
 aliases:
@@ -46,7 +46,7 @@ StorageClass 是 Kubernetes 提供的动态创建 PersistentVolume（PV）的模
 
 - [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage]]：系统性介绍了 StorageClass 的概念、CSI 机制、NFS 存储类的两种实现方式（nfs-subdir 插件和 CSI Driver）、默认存储类设置，以及结合 StatefulSet volumeClaimTemplates 的使用
 - [[Docker-Kubernetes/k8s-storage/helm部署nfs-subdir-external-provisioner]]：通过 Helm 部署 nfs-subdir-external-provisioner 实现 NFS StorageClass 动态供应的完整实战
-- [[开源存储Ceph]]：Ceph 分布式存储的部署与 K8s 集成，涉及 RBD StorageClass 配置
+- [[Docker-Kubernetes/k8s-storage/开源存储Ceph]]：Ceph 架构、故障恢复、部署取舍与 Kubernetes 接入；旧版 Provisioner / in-tree 示例已标明版本边界，当前接入使用 Ceph CSI
 - [[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑]]：围绕 PVC 删除后的 Delete/Retain 行为、Released PV 的 claimRef 复用风险、StatefulSet 和快照保护给出操作 SOP
 - [[Docker-Kubernetes/k8s-db-middleware/k8s基于yaml部署mysql主从高可用]]：包含 NFS Provisioner 的完整搭建流程，通过 StorageClass 动态供给 PV
 

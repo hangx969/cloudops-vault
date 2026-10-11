@@ -8,6 +8,8 @@ aliases:
   - K8s Map
 date: 2026-10-11
 sources:
+  - "[[Docker-Kubernetes/k8s-storage/分布式存储全景-架构与发展路线]]"
+  - "[[Docker-Kubernetes/k8s-storage/开源存储Ceph]]"
   - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler]]"
   - "[[kuebctl-插件krew]]"
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查]]"
@@ -235,13 +237,16 @@ sources:
 
 - [[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler|K8s Cluster Autoscaler]] — 调度模拟、Node Group、PDB、调优、排障与回滚；[[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|来源摘要]]。
 
-### 存储（8 篇）
-NFS Provisioner、Ceph、CubeFS、[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑|PV/PVC 数据保护与复用避坑]]、[[Docker-Kubernetes/k8s-storage/让存储故障现形：Kubernetes Volume Health Monitor 原理与生产接入|K8s Volume Health Monitor：原理与生产接入]]、[[Docker-Kubernetes/k8s-storage/emptyDir监控与驱逐机制实战|emptyDir 监控与驱逐]]
+### 存储（9 篇）
+NFS Provisioner、CubeFS、[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑|PV/PVC 数据保护与复用避坑]]、[[Docker-Kubernetes/k8s-storage/让存储故障现形：Kubernetes Volume Health Monitor 原理与生产接入|K8s Volume Health Monitor：原理与生产接入]]、[[Docker-Kubernetes/k8s-storage/emptyDir监控与驱逐机制实战|emptyDir 监控与驱逐]]
 
 
 - [[开源存储Longhorn，K8s的轻量块存储|Longhorn 轻量块存储]] — 每卷引擎与副本、同步复制、快照备份、v2 SPDK 和选型边界；[[KnowledgeBase/sources/longhorn-block-storage-summary|来源摘要]]
 
 - [[开源存储DeepSeek 3FS，AI原生的并行文件系统|开源存储DeepSeek 3FS，AI原生的并行文件系统]] — AI 集群的并行存储、USRBIO/RDMA、CRAQ、KVCache 外置与性能口径；[[KnowledgeBase/sources/deepseek-3fs-summary|来源摘要]]。
+
+- [[Docker-Kubernetes/k8s-storage/分布式存储全景-架构与发展路线|分布式存储全景]] — 文件 / 对象 / 块接口、发展路线、时间线与选型路径；[[KnowledgeBase/sources/distributed-storage-overview-summary|来源摘要]]。
+- [[Docker-Kubernetes/k8s-storage/开源存储Ceph|Ceph：架构原理、部署与 Kubernetes 集成]] — CRUSH / RADOS / PG、冗余、恢复、成本与旧版示例；[[KnowledgeBase/sources/ceph-storage-summary|来源摘要]]。
 
 ### 中间件部署（11 篇）
 MySQL(3)、Redis(2)、PostgreSQL、Kafka(Strimzi)、RabbitMQ HA、MongoDB、httpd、SpringCloud
@@ -275,4 +280,4 @@ MySQL(3)、Redis(2)、PostgreSQL、Kafka(Strimzi)、RabbitMQ HA、MongoDB、http
 ---
 
 ## 🛠️ 相关工具
-[[KnowledgeBase/entities/Helm|Helm]]、[[KnowledgeBase/entities/Kustomize|Kustomize]]、[[KnowledgeBase/entities/Prometheus|Prometheus]]、[[KnowledgeBase/entities/Grafana|Grafana]]、[[KnowledgeBase/entities/Istio|Istio]]、[[KnowledgeBase/entities/ArgoCD|ArgoCD]]、[[KnowledgeBase/entities/Jenkins|Jenkins]]、[[KnowledgeBase/entities/Docker|Docker]]、[[KnowledgeBase/entities/Harbor|Harbor]]、[[KnowledgeBase/entities/Dragonfly|Dragonfly]]
+[[KnowledgeBase/entities/Helm|Helm]]、[[KnowledgeBase/entities/Kustomize|Kustomize]]、[[KnowledgeBase/entities/Prometheus|Prometheus]]、[[KnowledgeBase/entities/Grafana|Grafana]]、[[KnowledgeBase/entities/Istio|Istio]]、[[KnowledgeBase/entities/ArgoCD|ArgoCD]]、[[KnowledgeBase/entities/Jenkins|Jenkins]]、[[KnowledgeBase/entities/Docker|Docker]]、[[KnowledgeBase/entities/Harbor|Harbor]]、[[KnowledgeBase/entities/Dragonfly|Dragonfly]]、[[KnowledgeBase/entities/Ceph|Ceph]]

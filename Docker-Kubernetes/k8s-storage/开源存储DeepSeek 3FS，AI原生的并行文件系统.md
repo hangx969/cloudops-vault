@@ -36,7 +36,7 @@ DeepSeek 为什么自己写文件系统，快在哪，复现门槛在哪
 
 ![AI 集群的三类 IO 负载](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-01-io-workloads.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-01-io-workloads.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-01-io-workloads.svg)
 
 图：训练与推理的三类 IO 负载，形状各不相同
 
@@ -50,7 +50,7 @@ Fire-Flyer 集群有两代演进。第一代集群建于 2021 年前后，第二
 
 ![DeepSeek 开源周（2025 年 2 月）](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-02-open-source-week.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-02-open-source-week.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-02-open-source-week.svg)
 
 图：开源周五天发布顺序，3FS 是收官项目
 
@@ -67,7 +67,7 @@ Fire-Flyer 集群有两代演进。第一代集群建于 2021 年前后，第二
 
 ![3FS 总体架构](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-03-architecture.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-03-architecture.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-03-architecture.svg)
 
 图：3FS 四组件架构，元数据与数据分离
 
@@ -85,7 +85,7 @@ USRBIO 是 3FS 自定义的用户态块 IO 接口，官方设计文档的原话�
 
 ![原生客户端的数据路径](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-04-native-io-path.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-04-native-io-path.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-04-native-io-path.svg)
 
 图：原生客户端路径，从应用内存到 NVMe 盘的直通
 
@@ -98,7 +98,7 @@ USRBIO 是 3FS 自定义的用户态块 IO 接口，官方设计文档的原话�
 
 ![CRAQ 链复制：写全链，读任意点](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-05-craq-replication.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-05-craq-replication.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-05-craq-replication.svg)
 
 图：CRAQ 的写路径与读路径，强一致下摊开读压力
 
@@ -113,7 +113,7 @@ chunk 映射到 target，target 组成 chain，一张链表（chain table）定�
 
 ![数据放置：从文件到盘](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-06-data-placement.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-06-data-placement.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-06-data-placement.svg)
 
 图：文件到盘的放置链路，放置算法保证故障时流量均衡
 
@@ -131,7 +131,7 @@ chunk 映射到 target，target 组成 chain，一张链表（chain table）定�
 
 ![带宽怎么堆到 6.6 TiB/s](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-07-bandwidth.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-07-bandwidth.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-07-bandwidth.svg)
 
 图：从单盘到集群的带宽堆叠，配比是关键
 
@@ -158,7 +158,7 @@ GraySort 是另一种测试口径。它是大数据领域的经典基准：把�
 
 ![并行文件系统的三代](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-08-filesystem-generations.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-08-filesystem-generations.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-08-filesystem-generations.svg)
 
 图：三代并行文件系统，介质换代驱动架构重做
 
@@ -172,7 +172,7 @@ DeepSeek 是 3FS 的首个用户。官方给出的四个使用场景，正好对
 
 ![KVCache 的多级放置](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/04/deepseek-3fs/deepseek-3fs-09-kv-cache-tiers.png)
 
-[[Docker-Kubernetes/k8s-storage/assets/deepseek-3fs/deepseek-3fs-09-kv-cache-tiers.svg|SVG 矢量源图]]
+[SVG 矢量源图](https://raw.githubusercontent.com/hangx969/upload-images-md/main/2026/10/11/storage/deepseek-3fs-09-kv-cache-tiers.svg)
 
 图：KVCache 多级缓存，3FS 接磁盘层
 

@@ -11,7 +11,7 @@ sources:
   - "[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA]]"
   - "[[开源存储CubeFS，分布式存储]]"
   - "[[Docker-Kubernetes/k8s-storage/helm部署nfs-subdir-external-provisioner]]"
-  - "[[开源存储Ceph]]"
+  - "[[Docker-Kubernetes/k8s-storage/开源存储Ceph]]"
   - "[[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战]]"
   - "[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑]]"
   - "[[Docker-Kubernetes/k8s-storage/让存储故障现形：Kubernetes Volume Health Monitor 原理与生产接入]]"
@@ -38,7 +38,7 @@ aliases:
 3. KEDA 分工为 Operator 负责 `0 ↔ 1`、生成的 HPA 负责 `1 ↔ N`；Kubernetes 1.37 Beta `HPAScaleToZero` 可配合 `minReplicas: 0` 与 Object/External 指标原生缩零，但不替代 KEDA 的事件源、认证和 ScaledJob 能力。
 4. KServe + vLLM 扩缩容链路为 Predictor Deployment → vLLM `/metrics` → Prometheus → KEDA → External Metrics API → HPA，以 `vllm:num_requests_running + vllm:num_requests_waiting` 为信号；必须确认 `external.metrics.k8s.io` 可用，仅 CRD 就绪并不够。
 5. 动态供给 PV 常见默认回收策略为 `Delete`，删除 PVC 可能销毁底层卷；修改 StorageClass 不回溯已有 PV，需逐个 patch `persistentVolumeReclaimPolicy`，删除前按“确认策略 → 创建并验证快照 → 必要时改为 Retain → 删除后检查 PV 与底层卷”执行。
-6. 存储选型：nfs-subdir-external-provisioner 替代已归档的 nfs-client-provisioner，exports 需写宿主机网段而非 Pod 网段；Ceph 提供 RBD/CephFS/RGW 三类存储，最低 3 Monitor + 2 Manager + 3 OSD；CubeFS 轻量、云原生友好但不支持块存储。
+6. 存储选型：nfs-subdir-external-provisioner 替代已归档的 nfs-client-provisioner，exports 需写宿主机网段而非 Pod 网段；Ceph 提供 RBD/CephFS/RGW 三类存储，高可用常见配置为 3 或 5 MON、2 MGR，并按副本与故障域规划 OSD；CubeFS 轻量、云原生友好但不支持块存储。
 7. Volume Health Monitor 通过 4 个 CSI RPC 将卷健康写入 `PVC.status.healthStatus`、`Pod.status.volumeHealth` 与 `CSINode.status.storageHealth`，前提是控制平面与 kubelet 开启 feature gate 且 CSI 驱动实现这 4 个 RPC。
 8. FinOps 五层降本路径：Right-Sizing → 节点效率（Karpenter、Spot、Topology Spread）→ 调度策略（非生产环境 CronJob 定时开关投入产出比最高、PriorityClass 抢占）→ FinOps 监控（Prometheus 成本告警 + OpenCost）→ 存储网络（GP3 替代 GP2、WaitForFirstConsumer 减少跨 AZ 费用）。
 
@@ -96,14 +96,15 @@ aliases:
 - 支持通过 StorageClass 动态创建 PV，无需手动创建 PV 资源
 - 注意 exports 配置需写宿主机网段（非 Pod 网段），因 PV 先挂载到宿主机再挂载到 Pod
 
-### [[开源存储Ceph|K8s Ceph 部署与集成]]
+### [[Docker-Kubernetes/k8s-storage/开源存储Ceph|Ceph：架构原理、部署与 Kubernetes 集成]]
 
-**核心内容**: Ceph 分布式存储系统的完整介绍，包含三种存储类型（块/文件系统/对象）、核心组件和集群搭建。
+**核心内容**：CRUSH、RADOS、PG 与 RBD / RGW / CephFS，硬件、BlueStore、故障恢复、运维成本和完整旧版接入示例。
 
-- 三种存储类型：RBD（块存储，高性能单挂载）、CephFS（文件系统，共享挂载）、RADOS Gateway（对象存储，HTTP 协议）
-- 核心组件：Monitor（集群状态映射）、Manager（运行时指标）、OSD（对象存储守护进程）、MDS（文件系统元数据）
-- 最低要求：3 Monitor + 2 Manager + 3 OSD
-- 生产环境强烈建议二进制安装在服务器上，不要装在 K8s 中（数据恢复困难）
+- MON 维护地图和仲裁，MGR 提供管理模块，OSD 存储和恢复数据，MDS 管理 CephFS 元数据
+- PG 数可由 autoscaler 调整，Nautilus 起支持 PG 合并；服务 IO 需结合 min_size 和 PG 状态判断
+- 部署可以使用 cephadm 或 Rook；故障隔离与维护能力决定是否独立运行存储集群
+- 旧版 RBD / CephFS in-tree 插件在 Kubernetes 1.31 被移除，当前使用 Ceph CSI
+- 详细内容见 [[KnowledgeBase/sources/ceph-storage-summary|Ceph 来源摘要]]
 
 ### [[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑|删除 PVC 后 PV 数据保护与复用避坑]]
 
@@ -172,4 +173,4 @@ aliases:
 
 - 版本边界：`HPAScaleToZero` 为 Kubernetes 1.37 Beta（原文注明默认启用），Volume Health Monitor 为 1.37 Alpha，字段与行为仍可能变化，原文建议与存储厂商监控互补、不作为唯一故障判定依据；KEDA 结论基于 2.17.2 实测。
 - 文档间不一致：[[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战|K8s 集群成本优化]]仍按 VPA 四种模式讲解，并在第 2 周路线图启用 `Auto`；[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]则标注 `Auto` 已被上游弃用、新配置应改用显式模式。
-- 数据安全红线：`Released` PV 清理 `claimRef` 前必须确认旧数据可弃或已有备份；Ceph 原文强烈建议生产环境二进制安装在服务器上、不要装在 K8s 中（数据恢复困难）；卷健康 remediation 需要冷却、重试上限和人工确认。
+- 数据安全红线：`Released` PV 清理 `claimRef` 前必须确认旧数据可弃或已有备份；Ceph 需按故障域、恢复窗口和维护能力选择 cephadm 或 Rook，旧版接入示例不能直接用于当前 Kubernetes；卷健康 remediation 需要冷却、重试上限和人工确认。
