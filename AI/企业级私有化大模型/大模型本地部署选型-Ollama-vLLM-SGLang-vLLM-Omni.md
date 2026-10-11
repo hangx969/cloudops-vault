@@ -26,7 +26,7 @@ aliases:
 > **模型权重**（DeepSeek、Qwen、Wan、FLUX）是数据资产；**推理 Runtime**（Ollama、vLLM、SGLang、vLLM-Omni）负责加载权重并执行推理；**Model Gateway** 为业务系统提供稳定的能力入口。三者不是一回事。
 
 > [!warning] 版本边界
-> 推理框架发展很快，命令参数、模型支持范围和 API 会随版本变化。本文保留可复用的工程方法；落地前仍需用目标版本的官方文档与 `--help` 核对参数，尤其是 vLLM-Omni 的模型支持矩阵。
+> 推理框架发展很快，命令参数、模型支持范围和 API 会随版本变化。落地前需用目标版本的官方文档与 `--help` 核对参数，尤其是 vLLM-Omni 的模型支持矩阵。
 
 ## 1. 先看结论：按工作负载选择 Runtime
 

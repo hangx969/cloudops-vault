@@ -19,7 +19,7 @@ aliases:
 - **摄入日期**：2026-10-04
 
 ## 摘要
-文章按反复 OutOfSync、资源停在 Progressing、同步执行失败、prune 误删和控制面性能五类问题组织排查，保留 YAML、CLI、Lua 示例、12 条生产注意事项、三个案例和 13 项检查清单。它适合在基础篇之后独立阅读：基础篇已介绍同步选项、Webhook 和健康机制，多集群实战侧重目录、权限和分发；本文把这些配置放到具体故障中解释。导入稿在对应段落标注官方资料校正，保留案例作者的归因和数据，并说明未复现。
+文章按反复 OutOfSync、资源停在 Progressing、同步执行失败、prune 误删和控制面性能五类问题组织排查，包含 YAML、CLI、Lua 示例、12 条生产注意事项、三个案例和 13 项检查清单。它适合在基础篇之后独立阅读：基础篇已介绍同步选项、Webhook 和健康机制，多集群实战侧重目录、权限和分发；本文把这些配置放到具体故障中解释。配置说明依据官方资料；案例归因和数据来自作者描述，尚未复现验证。
 
 ## 关键知识点
 1. 同步状态、资源健康状态和最近一次操作结果分别判断；传统三方模型不能解释所有健康、删除和性能问题。
@@ -38,7 +38,6 @@ aliases:
 - [[KnowledgeBase/concepts/CRD|CRD]]
 
 ## 值得注意
-- 使用 humanizer-zh 去掉营销和重复表达，规范剪藏中的列表与标题；技术校正与中文润色分开标注。
-- 原文含不存在的 ignoreDifferences.all、当前命令参考没有的 --ignore-differences、错误的 reconciliation 参数，以及健康、Replace、Webhook 和缓存配置解释；导入稿在相关位置说明依据。
+- Application 不支持 `ignoreDifferences.all`，当前 CLI 命令参考没有 `--ignore-differences`；reconciliation 参数及健康、Replace、Webhook 和缓存配置应分别对照对应的 API、命令和官方说明。
 - 案例中“只移动文件就被 prune”的完整因果、HPA/admission 的字段归属和性能改进效果均未验证，不能转写为本仓库事故记录。
-- 原始剪藏保留；知识库引用指向正式归档文章。未执行任何 ArgoCD、kubectl 部署或集群配置修改。
+- 示例命令和配置尚未通过目标 ArgoCD、Kubernetes 环境的部署验证。

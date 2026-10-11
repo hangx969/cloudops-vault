@@ -23,7 +23,7 @@ aliases:
 ## 元信息
 
 - **原始目录**: `Docker-Kubernetes/k8s-scaling/` 与 `Docker-Kubernetes/k8s-storage/`
-- **文档数量**: 9 篇整合正文（扩缩容 4 篇 + 存储 5 篇；两个目录现有 10 篇）
+- **文档数量**: 9 篇正文（扩缩容 4 篇 + 存储 5 篇；两个目录现有 10 篇）
 - **领域**: Kubernetes 自动扩缩容（HPA/VPA/KEDA/KServe）与存储生命周期（PV/PVC/StorageClass）及分布式存储（NFS/Ceph/CubeFS）
 - **摄入日期**: 2026-04-17
 
@@ -56,11 +56,11 @@ aliases:
 
 ### [[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]
 
-**核心内容**: 统一整理 KEDA 的事件驱动扩缩容原理、与 HPA/原生 Scale-to-Zero 的选型边界、资源模型、多事件源实践，以及 KServe + vLLM 请求指标实战。
+**核心内容**: 说明 KEDA 的事件驱动扩缩容原理、与 HPA/原生 Scale-to-Zero 的选型边界、资源模型、多事件源实践，以及 KServe + vLLM 请求指标实战。
 
 - KEDA Operator 负责 `0 ↔ 1`，生成的 HPA 负责 `1 ↔ N`；Kubernetes 1.37 原生 HPA 缩零并未替代 KEDA 的事件源、认证和 ScaledJob 能力
 - 核心 CRD：ScaledObject、ScaledJob、TriggerAuthentication 与 ClusterTriggerAuthentication
-- 通用实战覆盖 Cron、RabbitMQ、MySQL、Redis 与 Kafka，并保留完整命令和 YAML
+- 通用实战覆盖 Cron、RabbitMQ、MySQL、Redis 与 Kafka，并提供完整命令和 YAML
 - KServe 实战链路：Predictor Deployment → vLLM `/metrics` → Prometheus → KEDA → External Metrics API → HPA
 - 实测 KEDA 2.17.2；必须确认 `external.metrics.k8s.io` 可用，只有 CRD 就绪并不够
 - 使用 `vllm:num_requests_running + vllm:num_requests_waiting` 驱动 1→2→1，并通过 HAMi DRA 在单 GPU 节点共享 GPU

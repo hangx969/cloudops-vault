@@ -174,11 +174,11 @@ date: 2026-10-11
 | [[KnowledgeBase/sources/docker-image-download-summary|Docker 镜像无引擎下载]] | 1 | Registry 直接拉取、多架构选择、断点续传、重试与 tar 离线导入 |
 | [Docker 安全加固](sources/docker-security-capabilities-summary.md) | 1 | Capabilities 最小化、no-new-privileges 防提权、User Namespace/只读文件系统/资源限制纵深防御 |
 | [[KnowledgeBase/sources/k8s-basic-resources-batch-summary\|K8s 基础资源]] | 22 | Pod/Deployment/Service/Ingress/ConfigMap/Storage/RBAC/CRD/Operator/API Server 深度剖析/Finalizer；StatefulSet Recreate Alpha 与 PVC/PV 生命周期 |
-| [[KnowledgeBase/sources/kubectl-server-side-apply-summary|kubectl Server-side Apply]] | 1（整合） | CSA 三路合并、SSA 字段所有权、CRD schema 与 Helm 4 迁移边界 |
-| [[KnowledgeBase/sources/kubectx-kubens-multi-cluster-summary|kubectx 与 kubens 多集群切换]] | 1（整合） | context/namespace 快速切换、fzf、kube-ps1、多 kubeconfig 合并及生产防误操作 |
+| [[KnowledgeBase/sources/kubectl-server-side-apply-summary|kubectl Server-side Apply]] | 1 | CSA 三路合并、SSA 字段所有权、CRD schema 与 Helm 4 迁移边界 |
+| [[KnowledgeBase/sources/kubectx-kubens-multi-cluster-summary|kubectx 与 kubens 多集群切换]] | 1 | context/namespace 快速切换、fzf、kube-ps1、多 kubeconfig 合并及生产防误操作 |
 | [[KnowledgeBase/sources/k8s-probe-restart-storm-summary|K8s 健康探针重启风暴]] | 1 | Liveness 误判外部依赖抖动引发 300+ Pod 连锁重启，覆盖探针分工、时间窗口、监控和治理 |
 | [K8s 标签与选择器](sources/k8s-labels-selectors-summary.md) | 1 | 5 条 SRE 铁律（selector 匹配/节点调度/成本归因/版本陷阱/单值原则）、4 个翻车案例、`app.kubernetes.io/*` 命名规范 |
-| [K8s 容器设计模式](sources/k8s-container-design-patterns-summary.md) | 4（合并） | Sidecar/Init Container/Ambassador/Adapter 四大模式：核心理念、场景、完整 YAML、选型对比 |
+| [K8s 容器设计模式](sources/k8s-container-design-patterns-summary.md) | 1 | Sidecar/Init Container/Ambassador/Adapter 四大模式：核心理念、场景、完整 YAML、选型对比 |
 | [K8s PDB 实战](sources/k8s-pdb-summary.md) | 1 | PodDisruptionBudget 自愿中断保护、四大配置陷阱、与 drain/滚动更新/HPA 的配合 |
 | [K8s 安装管理](sources/k8s-installation-management-batch-summary.md) | 17 | v1.20→v1.35 安装演进、企业高可用、etcd HA、运行时迁移、cgroup v2 |
 | [K8s CGroup v2](sources/k8s-cgroup-v2-summary.md) | 1 | cgroup v1→v2 架构演进、K8s 实战配置（kubelet/containerd 对齐）、5 个生产踩坑案例、Prometheus 监控告警 |
@@ -188,9 +188,9 @@ date: 2026-10-11
 | [K8s 发布策略](sources/k8s-release-strategy-summary.md) | 1 | 蓝绿部署/金丝雀发布三种方案（原生/Nginx Ingress/Argo Rollouts）、选型决策树、数据库兼容性 |
 | [K8s 网络与服务网格](sources/k8s-networking-service-mesh-batch-summary.md) | 5 | Ingress-Nginx/External-DNS/Calico/Istio 流量管理 |
 | [K8s 安全认证](sources/k8s-security-auth-batch-summary.md) | 8 | Cert-Manager/External Secrets/Kyverno(含1.18新特性)/OAuth2 Proxy/Trivy/SonarQube/Security Context |
-| [[KnowledgeBase/sources/cert-manager-tls-automation-summary|cert-manager TLS 自动化]] | 1（整合） | Helm 安装、自签名 Pod TLS、HTTP01/DNS01、Cloudflare/Azure DNS、续期、排障与回滚 |
+| [[KnowledgeBase/sources/cert-manager-tls-automation-summary|cert-manager TLS 自动化]] | 1 | Helm 安装、自签名 Pod TLS、HTTP01/DNS01、Cloudflare/Azure DNS、续期、排障与回滚 |
 | [Kyverno 1.18](sources/kyverno-1.18-summary.md) | 1 | CNCF 毕业后首版：SSRF 防护、CLI 扩展、CEL 策略演进、性能与可观测性提升 |
-| [K8s 扩缩容与存储](sources/k8s-scaling-storage-batch-summary.md) | 9（整合后） | HPA/VPA、KEDA/KServe、Goldilocks 与 FinOps + 原生 HPA Scale-to-Zero + PV/PVC 数据保护 + NFS/Ceph/CubeFS 存储 |
+| [K8s 扩缩容与存储](sources/k8s-scaling-storage-batch-summary.md) | 9 | HPA/VPA、KEDA/KServe、Goldilocks 与 FinOps + 原生 HPA Scale-to-Zero + PV/PVC 数据保护 + NFS/Ceph/CubeFS 存储 |
 | [KServe + KEDA 请求指标扩缩容](sources/kserve-keda-request-autoscaling-summary.md) | 1 | KServe/vLLM 指标经 Prometheus、KEDA、External Metrics API 驱动 HPA，实现 1→2→1 扩缩容 |
 | [[KnowledgeBase/sources/k8s-hpa-scale-to-zero-1.37-summary|K8s 1.37 HPA Scale-to-Zero]] | 1 | HPAScaleToZero Beta、External/Object 指标、Worker 缩零、冷启动防抖与 KEDA 迁移清单 |
 | [PV/PVC 回收策略](sources/k8s-pv-pvc-reclaim-policy-summary.md) | 1 | PVC 删除后的 PV 回收策略、Released 复用风险、快照与 StatefulSet 安全删除 |
@@ -429,7 +429,7 @@ date: 2026-10-11
 1. [Claude Code 基础指南](../AI/ClaudeCode/Claude%20Code%20基础指南.md) → Claude Code 入门
 2. [扩展体系](../AI/ClaudeCode/Claude%20Code%20扩展体系.md) → MCP、Skills、Slash Commands、Plugin
 3. [OpenClaw-基础-安装](../AI/OpenClaw/OpenClaw-基础-安装.md) → OpenClaw 入门
-4. [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南|Obsidian + Claude Code：AI 知识库指南]] → 知识库完整指南（三文合并）
+4. [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南|Obsidian + Claude Code：AI 知识库指南]] → 知识库完整指南
 
 ### 云平台实战
 1. [VPC](../Aliyun/网络/VPC.md) + [Azure-Networking](../Azure/6_Azure-Networking.md) → 云网络对比
@@ -437,7 +437,7 @@ date: 2026-10-11
 3. [python-Linux-operation](../Python/python-运维开发/python-Linux-operation.md) → 自动化运维脚本
 
 
-## 📌 本次新增 | KV Cache
+## 📌 KV Cache
 
 ### 概念页
 
@@ -447,6 +447,6 @@ date: 2026-10-11
 
 - [[KnowledgeBase/sources/kv-cache-inference-cluster-summary|KV Cache 从诞生到集群调度来源摘要]] — KV Cache 生命周期、Prefill/Decode、显存带宽瓶颈、Prefix Cache、PD 分离与负载均衡
 
-### 归档文章
+### 技术文章
 
 - [[AI/企业级私有化大模型/KV Cache-从原理到集群调度]] — 从 Attention 复用到集群调度的完整技术文章

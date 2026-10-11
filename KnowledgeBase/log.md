@@ -2251,3 +2251,11 @@ date: 2026-04-17
 
 - 按用户本次明确授权，清理历史日志中的一个临时剪藏来源链接和一个目录前缀，保留事件文字、文件名及其余历史记录。
 - 此前被自动审批拒绝的两处日志修改已通过 Obsidian MCP 完成。
+
+## [2026-10-11] update | 清理文章合并与编辑过程说明
+
+- 扫描 848 个文章与导航页面，按 humanizer-zh 清理 43 个页面中的历史合并、重复剪藏和编辑过程说明，正文直接说明技术用途、步骤、版本差异与使用边界。
+- 更新 12 篇技术正文：[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum|kubectl 插件指南：Krew 安装、常用工具与 RBAC 排查]]、[[Docker-Kubernetes/k8s-monitoring-logging/Kubernetes原生部署Prometheus与Grafana|Kubernetes 原生部署 Prometheus 与 Grafana]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply|K8s基础-YAML]]、[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查|ArgoCD 同步故障排查]]、[[Linux-Shell/Ubuntu基础操作|Ubuntu 基础操作]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset|K8s基础-StatefulSet]]、[[AI/Codex/Codex-使用技巧和最佳实践|Codex 使用技巧和最佳实践]]、[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]、[[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]、[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS，AI原生的并行文件系统]]、[[Docker-Kubernetes/k8s-storage/开源存储列传第 18 篇 — Longhorn，K8s的轻量块存储|Longhorn，K8s的轻量块存储]]、[[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni|大模型本地部署选型：Ollama、vLLM、SGLang 与 vLLM-Omni]]。
+- 同步更新 25 个来源摘要、[[KnowledgeBase/entities/Hermes-Agent|Hermes Agent]]、[[KnowledgeBase/concepts/KV Cache|KV Cache]]、[[KnowledgeBase/INDEX|知识库入口]]、[[AI/index|AI 索引]]、[[KnowledgeBase/maps/ai-workflow-map|AI 工作流地图]]和[[KnowledgeBase/maps/tool-map|工具地图]]；容器设计模式导航按实际一篇正文计数，四种模式仍完整覆盖。
+- 保留来源归属、版本和案例验证边界；43 个页面均经 Obsidian MCP 写入并完整读回，310 个代码块、YAML frontmatter 和链接目标与更新前一致，git diff --check 通过。复扫剩余 20 处命中均属于 Git、kubeconfig、RAG 或工具实现等技术内容。
+- Obsidian 阅读预览因 Mac 锁定未完成；文本核对与结构检查已完成。操作日志仅追加，维护报告和盘点记录继续保留历史信息。

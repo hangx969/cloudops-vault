@@ -155,7 +155,7 @@ sources:
 - [[AI/ClaudeCode/Claude-Fable-5-system-prompt|Claude Fable 5 系统提示词]]
 - [[AI/ClaudeCode/Git-Worktree-AI开发实践指南|Vibe Coding 的 Git Worktree 实践]]
 - [[AI/ClaudeCode/HarnessKit|HarnessKit]] — AI 编码智能体统一管理工具
-- [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南|Obsidian + Claude Code：AI 知识库指南]] — 搭建知识库方法论（三文合并）
+- [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南|Obsidian + Claude Code：AI 知识库指南]] — 搭建知识库方法论
 
 **概念页：** [[KnowledgeBase/entities/Claude-Code|Claude-Code]]
 

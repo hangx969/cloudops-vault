@@ -138,7 +138,7 @@ VPA Chart 的 Metrics Server 子 Chart 或独立 Metrics Server 可能报错：
 
 ### Manifest 安装记录
 
-下面保留基于 Metrics Server `v0.6.1` 的完整部署记录。该清单包含 `--kubelet-insecure-tls`，部署到生产前应按目标版本更新镜像、参数和 TLS 方案。
+以下是基于 Metrics Server `v0.6.1` 的完整部署示例。该清单包含 `--kubelet-insecure-tls`，部署到生产前应按目标版本更新镜像、参数和 TLS 方案。
 
 ```bash
 # 可选：预先导入镜像
@@ -597,7 +597,7 @@ spec:
 ```
 
 > [!note] 指标目标值
-> 原整理稿使用 `type: Value`、`value: "0"` 表达“队列为空即缩零”。实际 HPA 比率计算的目标值不能作为零分母使用，因此这里改为每副本处理 1 条消息的 `AverageValue: "1"`。队列指标为 0 时仍可得到期望副本 0；具体目标值应按单 Pod 吞吐量压测确定。
+> `type: Value`、`value: "0"` 不能用于表达“队列为空即缩零”，因为 HPA 比率计算不能以目标值 0 作为分母。示例使用每副本处理 1 条消息的 `AverageValue: "1"`；队列指标为 0 时仍可得到期望副本 0。具体目标值应按单 Pod 吞吐量压测确定。
 
 ### 与 KEDA 的取舍
 
@@ -651,9 +651,9 @@ VPA 默认包含三个核心组件：
 
 VPA Recommender 使用指数衰减直方图对历史 CPU/内存使用量建模：
 
-- CPU 推荐通常关注使用量分布的高百分位（整理资料中为 P95），而不是简单平均值；
+- CPU 推荐通常关注使用量分布的高百分位（参考资料中为 P95），而不是简单平均值；
 - Memory 推荐关注一段时间内的内存高水位；
-- 整理资料记录的默认历史窗口为过去 8 天，可通过 `--history-length` 调整；
+- 参考资料中的默认历史窗口为过去 8 天，可通过 `--history-length` 调整；
 - 越近的数据权重越高，因此近期负载特征影响更大；
 - 周期性业务峰值会进入推荐，刚上线且样本不足时应至少观察数天到数周。
 
@@ -688,7 +688,7 @@ helm repo update fairwinds-stable
 helm pull fairwinds-stable/vpa --version 4.7.1
 ```
 
-整理资料中的 `values.yaml` 示例会启用 Recommender、关闭 Admission Controller，并安装 Metrics Server 子 Chart：
+参考资料中的 `values.yaml` 示例会启用 Recommender、关闭 Admission Controller，并安装 Metrics Server 子 Chart：
 
 ```yaml
 recommender:
@@ -717,7 +717,7 @@ helm upgrade --install vpa fairwinds-stable/vpa \
 
 ### 上游脚本安装记录
 
-下面是旧环境的手工安装记录，包含 VPA `0.10.0` 镜像与 OpenSSL `1.1.1k` 编译步骤。它保留用于历史排障，不建议直接复制到当前生产系统；尤其是替换系统 OpenSSL 库会影响宿主机其他程序，应改在隔离镜像或维护窗口中验证。
+下面是旧环境的手工安装记录，包含 VPA `0.10.0` 镜像与 OpenSSL `1.1.1k` 编译步骤。这些步骤可用于旧环境排障，不建议直接复制到当前生产系统；尤其是替换系统 OpenSSL 库会影响宿主机其他程序，应改在隔离镜像或维护窗口中验证。
 
 ```bash
 docker load -i vpa-admission_0.10.0.tar.gz
@@ -1142,7 +1142,7 @@ kubectl get vpa -A -o json | jq '.items[] | {
 }'
 ```
 
-整理资料记录的 Grafana Dashboard ID：`14588`。
+参考资料中的 Grafana Dashboard ID：`14588`。
 
 ### 渐进式落地
 

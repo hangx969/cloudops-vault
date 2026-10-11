@@ -12,7 +12,7 @@ source_url: "https://mp.weixin.qq.com/s?__biz=Mzg4MjgxNDYwMA==&mid=2247496820&id
 # DeepSeek 3FS，AI原生的并行文件系统
 
 > 原文：Aspirer2004，架构师修仙之路，2026-09-25，开源存储列传第 24 篇。
-> 本文保留原文的技术内容、性能数字与成文时的社区状态；官方资料核对结果在相应段落另行标注，原图文字按原样保留。
+> 文中性能数字和社区状态来自作者成文时的介绍，其当前适用性需结合目标版本和实际环境判断。
 
 DeepSeek 为什么自己写文件系统，快在哪，复现门槛在哪
 
@@ -89,8 +89,8 @@ USRBIO 是 3FS 自定义的用户态块 IO 接口，官方设计文档的原话�
 
 图：原生客户端路径，从应用内存到 NVMe 盘的直通
 
-> [!note] 实现核对（2026-10-04）
-> 上文和图示保留原文描述。官方文档说明，原生客户端位于 FUSE daemon 内，`open/close/stat` 等元数据操作仍经 FUSE；USRBIO 受 `io_uring` 启发，不等于从应用到磁盘完全绕过内核。当前存储读取代码可在 `libaio` 与 `io_uring` 之间选择，不能把“用户态接口”直接等同于“内核不参与磁盘 IO”。参见 [官方设计文档](https://github.com/deepseek-ai/3FS/blob/main/docs/design_notes.md#asynchronous-zero-copy-api) 与 [AioReadWorker 配置](https://github.com/deepseek-ai/3FS/blob/main/src/storage/aio/AioReadWorker.h)。
+> [!note] 客户端 IO 路径（截至 2026-10-04）
+> 官方文档说明，原生客户端位于 FUSE daemon 内，`open/close/stat` 等元数据操作仍经 FUSE；USRBIO 受 `io_uring` 启发，不等于从应用到磁盘完全绕过内核。当前存储读取代码可在 `libaio` 与 `io_uring` 之间选择，不能把“用户态接口”直接等同于“内核不参与磁盘 IO”。参见 [官方设计文档](https://github.com/deepseek-ai/3FS/blob/main/docs/design_notes.md#asynchronous-zero-copy-api) 与 [AioReadWorker 配置](https://github.com/deepseek-ai/3FS/blob/main/src/storage/aio/AioReadWorker.h)。
 
 ### 副本：CRAQ 链复制
 

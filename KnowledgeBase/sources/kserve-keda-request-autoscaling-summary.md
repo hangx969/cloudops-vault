@@ -37,7 +37,7 @@ aliases:
 - [[KnowledgeBase/entities/Kubernetes|Kubernetes]]
 - [[KnowledgeBase/entities/Prometheus|Prometheus]]
 - [[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]
-- [[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力#KServe + KEDA：基于请求指标的模型服务实战|整合正文]]
+- [[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力#KServe + KEDA：基于请求指标的模型服务实战|KServe 请求指标扩缩容章节]]
 
 ## 值得注意
 

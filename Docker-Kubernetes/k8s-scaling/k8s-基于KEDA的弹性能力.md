@@ -29,7 +29,7 @@ source_urls:
 
 Kubernetes 事件驱动自动扩缩容的原理与选型。
 
-KEDA（Kubernetes Event-Driven Autoscaling）把消息积压、请求并发、数据库查询、Prometheus 指标和定时计划等业务信号转换为 Kubernetes 扩缩容决策。本文统一整理 KEDA 的原理、资源模型、与 HPA 的边界、Scale-to-Zero、常见事件源实战，以及 KServe + vLLM 的请求指标扩缩容案例。
+KEDA（Kubernetes Event-Driven Autoscaling）把消息积压、请求并发、数据库查询、Prometheus 指标和定时计划等业务信号转换为 Kubernetes 扩缩容决策。使用 KEDA 时，需要理解资源模型、与 HPA 的控制边界和 Scale-to-Zero 行为，再结合常见事件源或 KServe + vLLM 场景选择扩缩容指标。
 
 > [!info] 示例版本
 > 通用示例与 KServe 实测使用 KEDA 2.17.2；KEDA 与 Kubernetes 的字段、兼容矩阵和升级要求会变化，生产使用前应核对目标版本的 [KEDA 文档](https://keda.sh/docs/) 与 [Release Notes](https://github.com/kedacore/keda/releases)。
@@ -104,7 +104,7 @@ HPA 的基础计算公式是：
 
 ### Kubernetes 1.37 原生 HPA Scale-to-Zero
 
-Kubernetes 1.37 将 `HPAScaleToZero` 提升为 Beta 并默认启用，而不是原整理稿所写的 v1.36。原生 HPA 使用适合的 Object 或 External 指标时，可以把 `minReplicas` 设为 0，并在指标重新活跃时从 0 拉起。版本状态与升级边界见 [Kubernetes Feature Gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) 和 [Kubernetes 1.37 Scale-to-Zero 公告](https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/)。
+Kubernetes 1.37 将 `HPAScaleToZero` 提升为 Beta 并默认启用。原生 HPA 使用适合的 Object 或 External 指标时，可以把 `minReplicas` 设为 0，并在指标重新活跃时从 0 拉起。版本状态与升级边界见 [Kubernetes Feature Gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) 和 [Kubernetes 1.37 Scale-to-Zero 公告](https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/)。
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -1154,7 +1154,7 @@ kubectl get pod -n kserve-test \
 
 ### 冷启动
 
-从 0 恢复到可处理第一条消息，包含 KEDA 轮询、HPA 同步、调度、镜像拉取和应用初始化。原整理稿给出的经验范围为 30～90 秒；模型服务可能因权重加载耗时更久。
+从 0 恢复到可处理第一条消息，包含 KEDA 轮询、HPA 同步、调度、镜像拉取和应用初始化。参考资料给出的经验范围为 30～90 秒；模型服务可能因权重加载耗时更久。
 
 - 延迟敏感服务将 `minReplicaCount` 设为 1；
 - 预拉镜像并使用本地缓存；

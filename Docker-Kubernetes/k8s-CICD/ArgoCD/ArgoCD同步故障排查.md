@@ -19,18 +19,18 @@ aliases:
 
 # ArgoCD 同步故障排查
 
-ArgoCD 同步时，需要对比 Git 中渲染出的期望状态与集群实际状态。两者出现差异、资源迟迟未就绪、API 拒绝更新或清单移除后触发 prune，都需要先定位原因，再决定怎么处理。本文按五类问题整理排查方法、YAML、CLI 命令和原文案例。
+ArgoCD 同步时，需要对比 Git 中渲染出的期望状态与集群实际状态。两者出现差异、资源迟迟未就绪、API 拒绝更新或清单移除后触发 prune，都需要先定位原因，再决定怎么处理。排查可从差异比较、资源健康、API 更新、prune 删除和控制面性能五个方面展开。
 
 先阅读 [[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD基础|ArgoCD 基础]]，了解 Application 和同步策略；多集群目录、权限与发布批次设计见 [[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD多集群GitOps实战|Argo CD 多集群 GitOps 实战]]。Helm 渲染阶段的 DNS 故障见 [[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD部署Helm应用时域名解析失败问题排查与解决|ArgoCD Helm 部署：域名解析故障处理]]。
 
-> [!info] 整理范围
-> 本文根据 WAKEUP技术《ArgoCD 同步踩 5 坑》整理。保留五类问题、配置示例、生产注意事项、三个案例和排查清单。标为“技术校正”的段落来自 2026-10-04 核对的官方文档与代码；案例中的时间、数量和效果是原文作者的描述，未在本仓库复现。YAML 片段只展示相关字段，需要并入已有配置；示例名称、仓库、资源额度和策略须按实际环境调整。
+> [!info] 示例与案例范围
+> 三个案例来自 WAKEUP技术《ArgoCD 同步踩 5 坑》，其中的时间、数量和效果为作者描述，尚未复现验证。参数和行为说明依据 2026-10-04 的官方文档与代码。YAML 片段只展示相关字段，需要并入已有配置；示例名称、仓库、资源额度和策略须按实际环境调整。
 
 ## 同步、差异和健康状态
 
 先区分三种状态：`OutOfSync` 表示期望状态与 live 状态有差异；同步操作的 `Failed` 表示某次执行失败；`Progressing` 是资源健康状态，表示尚未达到健康检查的条件。应用可以已经 `Synced`，健康状态仍是 `Progressing`。
 
-> [!note] 技术校正：三方模型的适用范围
+> [!note] 三方模型的适用范围
 > 三方模型适用于传统 diff 和 Client-side Apply：Git 提供期望状态，live 是当前对象，`kubectl.kubernetes.io/last-applied-configuration` 保存上次应用的配置。ArgoCD 还支持其他 [diff 策略](https://argo-cd.readthedocs.io/en/stable/user-guide/diff-strategies/)，SSA 也使用字段所有权；健康检查、prune 和渲染性能各有机制，不能都归为三方合并失败。
 
 ## 一、OutOfSync 反复出现
@@ -105,7 +105,7 @@ argocd admin app diff-reconcile-results /path/to/result1 /path/to/result2
 
 不同版本和 diff 工具的输出格式可能不同，不应把原文的 `0 files changed, 0 bytes`、`Sync OK` 或 `1 more diffs` 当成固定验收标准。应检查具体字段差异、应用同步状态和最近一次操作结果。
 
-> [!note] 技术校正：管理命令的参数
+> [!note] 管理命令的参数
 > `argocd admin app diff-reconcile-results` 比较的是两份已保存的 reconciliation 结果，参数是 `PATH1 PATH2`，不能直接传一个应用名。普通应用排查先用 `argocd app diff my-app`。见 [命令参考](https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_admin_app_diff-reconcile-results/)。
 
 怀疑字段被其他控制器或人工操作改过时，可以查看 live 对象的 `managedFields`。只列出 manager 名称还不能证明某个字段由谁管理；进一步检查对应的 `fieldsV1`，再判断该忽略差异还是调整管理方式。last-applied 注解则用于核对上次 Client-side Apply 的配置。
@@ -119,7 +119,7 @@ kubectl get deployment my-app -n default \
   -o jsonpath='{.metadata.annotations.kubectl\.kubernetes\.io/last-applied-configuration}' | jq .
 ```
 
-原文还给出了 `argocd app set my-app --ignore-differences json:apps/Deployment:default/my-app:/spec/replicas`。核对当前官方 `argocd app set` 命令参考，没有这个选项；本文使用前面的 Application YAML。需要确认本地 CLI 支持哪些参数时，先查看帮助：
+`argocd app set my-app --ignore-differences json:apps/Deployment:default/my-app:/spec/replicas` 不是当前官方命令参考支持的用法，其中 `--ignore-differences` 选项不存在。差异规则应写入前面的 Application YAML。需要确认本地 CLI 支持哪些参数时，先查看帮助：
 
 ```bash
 argocd app set --help
@@ -127,15 +127,15 @@ argocd app set --help
 
 `managedFieldsManagers` 忽略 live 对象中指定 manager 所拥有字段的差异，范围可能比一个 JSON 指针更大。manager 名称应从实际对象读取；HPA、metrics-server 和准入 Webhook 的职责不同，不能把它们都当成 `kube-controller-manager`。如果清单同时由 kubectl 和 ArgoCD 管理，应先厘清字段归属。last-applied 注解需要检查，但不能仅因它存在就删除。
 
-> [!note] 技术校正：忽略比较与忽略同步
-> 原文的 `ignoreDifferences.all` 不是 Application 支持的字段，示例已改成只忽略聚合 ClusterRole 的 `/rules`。若要在整个 ArgoCD 实例忽略聚合角色的规则变化，可使用 `argocd-cm` 的 `resource.compareoptions.ignoreAggregatedRoles`，见 [差异配置](https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/)。`ignoreDifferences` 默认只影响 diff；同步时也要保留 live 字段，需要 `RespectIgnoreDifferences=true`，且该选项在资源已存在时才生效。
+> [!note] 忽略比较与忽略同步
+> `ignoreDifferences.all` 不是 Application 支持的字段。上面的示例只忽略聚合 ClusterRole 的 `/rules`。若要在整个 ArgoCD 实例忽略聚合角色的规则变化，可使用 `argocd-cm` 的 `resource.compareoptions.ignoreAggregatedRoles`，见 [差异配置](https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/)。`ignoreDifferences` 默认只影响 diff；同步时也要保留 live 字段，需要 `RespectIgnoreDifferences=true`，且该选项在资源已存在时才生效。
 
 ## 二、同步卡住或健康状态停在 Progressing
 
 资源停在 `Progressing` 时，先检查它的就绪条件、事件和控制器日志。例如 Ingress 或 LoadBalancer Service 的地址尚未填入、Job 尚未完成、Certificate 尚未 Ready，都会影响健康状态。
 
-> [!note] 技术校正：先查已有健康检查
-> ArgoCD 对 Service、Ingress、Job 等有内置健康检查，仓库也包含 Certificate 的检查，不能按原文所说一律视为“不认识这些资源”。先核对所用版本的检查逻辑和对象 `status`，再考虑自定义。见 [Resource Health](https://argo-cd.readthedocs.io/en/stable/operator-manual/health/) 和 [Certificate 检查实现](https://github.com/argoproj/argo-cd/blob/master/resource_customizations/cert-manager.io/Certificate/health.lua)。CRD 定义与由它创建的 CR 也应区分，通常需要判定的是 CR 的就绪状态。
+> [!note] 先查已有健康检查
+> ArgoCD 对 Service、Ingress、Job 等有内置健康检查，仓库也包含 Certificate 的检查，不能一律视为“不认识这些资源”。先核对所用版本的检查逻辑和对象 `status`，再考虑自定义。见 [Resource Health](https://argo-cd.readthedocs.io/en/stable/operator-manual/health/) 和 [Certificate 检查实现](https://github.com/argoproj/argo-cd/blob/master/resource_customizations/cert-manager.io/Certificate/health.lua)。CRD 定义与由它创建的 CR 也应区分，通常需要判定的是 CR 的就绪状态。
 
 确实需要调整规则时，可以在 `argocd-cm` 中配置 Lua 健康检查。原文的 Certificate 示例在 `Ready=True` 时返回 `Healthy`，其他情况保持 `Progressing`：
 
@@ -166,12 +166,12 @@ data:
 
 自定义资源的配置键是 `resource.customizations.health.<group>_<Kind>`。脚本应按控制器实际提供的 `status.phase` 或 `status.conditions` 判断，而不是假定所有 CR 都有同样的状态字段。
 
-> [!note] 技术校正：Lua 标准库与示例范围
-> 原文把 `resource.customizations.useOpenLibs.cert-manager.io_Certificate: "true"` 解释为“引入官方 open health 库”。它实际开放 Lua 标准库，本文这段脚本不需要，因此没有启用。上面的最小示例没有区分 `Ready=False` 等失败条件，不应不经评估就覆盖已有检查。
+> [!note] Lua 标准库与示例范围
+> `resource.customizations.useOpenLibs.cert-manager.io_Certificate: "true"` 会开放 Lua 标准库，并非“引入官方 open health 库”。上面的脚本不依赖这些标准库，无需启用。上面的最小示例没有区分 `Ready=False` 等失败条件，不应不经评估就覆盖已有检查。
 
-下面完整保留原文的 Job 自定义检查，作为 Lua 写法示例：当 `succeeded >= completions` 时返回 `Healthy`，当 `failed > backoffLimit` 时返回 `Degraded`。
+下面的 Job 自定义检查展示了 Lua 的写法：当 `succeeded >= completions` 时返回 `Healthy`，当 `failed > backoffLimit` 时返回 `Degraded`。
 
-> [!warning] 原文示例的边界
+> [!warning] Job 示例的边界
 > Job 已有内置检查。这段脚本依赖 `spec.completions` 和 `spec.backoffLimit` 显式存在，也没有完整处理 Job 的 `Complete`、`Failed` 条件和暂停状态。它可能把已结束的 Job 留在 `Progressing`；实际排障应优先使用内置检查，不应直接覆盖。
 
 ```yaml
@@ -228,14 +228,14 @@ spec:
       - ApplyOutOfSyncOnly=true
 ```
 
-> [!note] 技术校正：这些选项不会跳过健康等待
+> [!note] 这些选项不会跳过健康等待
 > `--timeout 300` 限制 CLI 等待时长，不会把资源变成 Healthy；`SkipDryRunOnMissingResource=true` 只处理缺失资源类型时的 dry-run；`ApplyOutOfSyncOnly=true` 只减少 apply 的资源范围，选择性同步也不执行 hooks。若第三方控制器没有提供可判断的状态，需要明确健康标准，而不是靠这几个选项掩盖问题。
 
 ## 三、同步失败：不可变字段、版本冲突与资源缺失
 
 `field is immutable`、`metadata.resourceVersion: Invalid value` 和 `The Kubernetes API could not find` 应分别排查。它们可能涉及不可变字段、更新请求中的版本信息或缺失的资源类型，不能都归为“资源被别人管理”。StatefulSet 的 `volumeClaimTemplates`、Service 的 `clusterIP` 和 Job 的 `spec.template` 都有更新限制，具体允许修改的字段还要对照 Kubernetes 版本和资源类型。
 
-原文使用了下面的 Application 示例。`Replace=true` 适用于选择 replace/create 方式更新资源，例如配置过大、不适合放入 last-applied 注解时；它本身不能绕过 API 对不可变字段的校验。示例补齐了 `project`，保留原文的同步策略，使用前要评估对整个应用的影响：
+`Replace=true` 适用于选择 replace/create 方式更新资源，例如配置过大、不适合放入 last-applied 注解时；它本身不能绕过 API 对不可变字段的校验。下面的 Application 示例包含 `project` 和应用级同步策略，使用前要评估对整个应用的影响：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -270,7 +270,7 @@ argocd app sync my-app --force
 
 `PruneLast=true` 将 prune 放到其他资源已部署、健康且前面的波次成功之后；它不保证同名资源重建时没有中断。`CreateNamespace=true` 创建 Application 的目标命名空间。
 
-> [!warning] 技术校正：replace 与删除重建不同
+> [!warning] replace 与删除重建不同
 > `Replace=true` 使用 replace/create；明确删除再创建资源的选项是 `Force=true,Replace=true`，通常应限制到已确认可重建的资源。`argocd app sync --force` 也不是普通重试。重建 Service 可能改变 ClusterIP 并造成断连，有状态资源还涉及 PVC 与数据恢复。见 [同步选项](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/)。
 
 `resourceVersion` 报错要结合完整消息判断。版本过旧导致的并发更新通常返回 `409 Conflict`；`Invalid value` 不足以证明只是并发。先检查 Git 或渲染清单是否带入服务端管理的元数据、当前 live 对象和更新请求，再处理重试或字段归属。`--force` 不能被理解为重新 GET 并解除“三方合并锁”，也不应因此直接删除 last-applied 注解。见 [Kubernetes 更新机制](https://kubernetes.io/docs/reference/using-api/api-concepts/#updates-to-existing-resources)。
@@ -283,7 +283,7 @@ argocd app sync my-app --force
 
 开启 `automated.prune: true` 后，应用原来管理的资源若不再出现在渲染出的期望清单中，ArgoCD 可以将其删除。`selfHeal: true` 处理的是 live 偏离 Git 的情况，也可能覆盖人工热修。目录迁移、应用拆分或恢复操作前，需要一起检查这两项设置。
 
-关闭自动 prune 可显式设置 `automated.prune: false`。下面还保留应用级 `Prune=false` 默认选项，并列出 prune 的顺序和传播策略：
+关闭自动 prune 可显式设置 `automated.prune: false`。下面的示例还包含应用级 `Prune=false` 默认选项，并列出 prune 的顺序和传播策略：
 
 ```yaml
 spec:
@@ -304,7 +304,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false
 ```
 
-原文也列出 Helm 的保留注解：
+Helm 的资源保留注解示例：
 
 ```yaml
 metadata:
@@ -312,10 +312,10 @@ metadata:
     "helm.sh/resource-policy": keep
 ```
 
-> [!note] 技术校正：Helm keep 与 prune 保护的区别
+> [!note] Helm keep 与 prune 保护的区别
 > 当前 ArgoCD 将 `helm.sh/resource-policy: keep` 对应到 `Delete=false`，用于 Application 删除时保留资源；它不能替代同步阶段的 `Prune=false`。需要二次确认 prune 时，可使用资源注解 `argocd.argoproj.io/sync-options: Prune=confirm`。见 [Helm 注解映射](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/) 与 [同步选项](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/)。
 
-AppProject 限制的是来源仓库、目标集群、命名空间和允许管理的资源类型。它能缩小管理范围，但不是对已允许资源的删除确认。下面修正了原文把 Deployment 放入集群级白名单的问题，并补齐来源仓库和命名空间级白名单：
+AppProject 限制的是来源仓库、目标集群、命名空间和允许管理的资源类型。它能缩小管理范围，但不是对已允许资源的删除确认。下面的示例将 Deployment 列入命名空间级白名单，并明确来源仓库和目标命名空间：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -379,7 +379,7 @@ controller:
 argocd repo get https://github.com/example/repo.git
 ```
 
-可用 app-of-apps 或 ApplicationSet 拆分应用，避免一个 Application 渲染上千资源；也可以按业务组织仓库，缩小单次比较的范围。Git 目录生成器为各目录生成独立 Application，便于单独同步。下面补齐生成器的 `revision`，并把目标命名空间改为 `prod-` 前缀，以匹配前面的 AppProject：
+可用 app-of-apps 或 ApplicationSet 拆分应用，避免一个 Application 渲染上千资源；也可以按业务组织仓库，缩小单次比较的范围。Git 目录生成器为各目录生成独立 Application，便于单独同步。下面的示例设置了生成器的 `revision`，目标命名空间使用 `prod-` 前缀，以匹配前面的 AppProject：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -414,7 +414,7 @@ spec:
           selfHeal: false
 ```
 
-`status-processors` 和 `operation-processors` 分别控制状态刷新与同步操作队列的并发。核对的官方配置中，默认值分别为 20 和 10，原文写成两者都是 10。缓存与并发参数应配置在 `argocd-cmd-params-cm`：
+`status-processors` 和 `operation-processors` 分别控制状态刷新与同步操作队列的并发。所引用的官方配置中，默认值分别为 20 和 10，不能都按 10 理解。缓存与并发参数应配置在 `argocd-cmd-params-cm`：
 
 ```yaml
 apiVersion: v1
@@ -428,8 +428,8 @@ data:
   reposerver.repo.cache.expiration: "24h"
 ```
 
-> [!note] 技术校正：调参位置和效果
-> 原文的 `argocd-cm`、`repo.cache.expiration`、`status.processors` 和 `operation.processors` 配置位置或键名不对，已在示例中改正。官方配置的 manifest 缓存默认已经是 24h，因此显式设为 24h 不代表增加缓存或一定提速；并发提高后也可能增加 API 和 CPU 压力。按安装方式确认参数怎样注入进程，并让相关进程重新加载。见 [参数 ConfigMap](https://argo-cd.readthedocs.io/en/stable/operator-manual/argocd-cmd-params-cm-yaml/) 和 [高可用与扩容](https://argo-cd.readthedocs.io/en/stable/operator-manual/high_availability/)。轮询周期也不是固定 3 分钟；当前配置示例是 `timeout.reconciliation: 120s` 加最多 `timeout.reconciliation.jitter: 60s`，需检查实际配置。Webhook 是加快变更发现的手段，不等于自动禁用轮询。
+> [!note] 调参位置和效果
+> `repo.cache.expiration`、`status.processors` 和 `operation.processors` 不能直接作为 `argocd-cm` 中的键使用；缓存和并发应按上面的 `argocd-cmd-params-cm` 示例配置。官方配置的 manifest 缓存默认已经是 24h，因此显式设为 24h 不代表增加缓存或一定提速；并发提高后也可能增加 API 和 CPU 压力。按安装方式确认参数怎样注入进程，并让相关进程重新加载。见 [参数 ConfigMap](https://argo-cd.readthedocs.io/en/stable/operator-manual/argocd-cmd-params-cm-yaml/) 和 [高可用与扩容](https://argo-cd.readthedocs.io/en/stable/operator-manual/high_availability/)。轮询周期也不是固定 3 分钟；当前配置示例是 `timeout.reconciliation: 120s` 加最多 `timeout.reconciliation.jitter: 60s`，需检查实际配置。Webhook 是加快变更发现的手段，不等于自动禁用轮询。
 
 ## 生产环境注意事项
 
@@ -454,7 +454,7 @@ data:
 
 原文归因为：旧 Application 开启 prune 后删掉了 Service；新位置对应的部署又因目标命名空间尚未创建、缺少 `CreateNamespace=true` 而失败，造成服务空窗。作者通过 `kubectl apply` 紧急重建旧 Service 恢复流量，再把迁移改为同一提交内完成、为关键 Service 添加 `Prune=false`，并收窄项目权限。
 
-> [!note] 技术校正：文件移动不等于资源身份改变
+> [!note] 文件移动不等于资源身份改变
 > ArgoCD 跟踪的是资源及其应用归属。仅在同一应用渲染范围内移动文件，且资源的 group/kind/namespace/name 没变，不应仅因 Git 文件路径变化就被 prune。这个案例没有提供清单、Application 路径和操作日志，无法验证完整因果；排查时要检查渲染范围、资源身份或应用归属是否改变。Service、Ingress 和 Gateway 是命名空间级资源，收窄相应权限应使用 namespace 资源规则。
 
 迁移时在同一提交内完成配置变更，可以减少中间态；若迁移跨越多个 Application，还要分别评估它们的同步与 prune 顺序，不能仅凭一个原子提交保证无中断。
@@ -465,7 +465,7 @@ data:
 
 Git 中固定 `replicas: 3`，HPA 按负载把副本扩到 5；准入组件又为 Pod 补入 `securityContext.runAsNonRoot` 和 `runAsUser`。作者在 `ignoreDifferences` 中添加 `/spec/replicas` 与 `managedFieldsManagers: [kube-controller-manager]`，并描述差异随之消失。
 
-> [!note] 技术校正：不同修改方要分别确认
+> [!note] 不同修改方要分别确认
 > 忽略 HPA 相关字段不能自动豁免所有准入修改。准入字段是否出现在应用管理对象的 diff 中、对应什么路径和 manager，都要从 live 对象确认；不能假定它们归属 `kube-controller-manager`。需要同步时也保留已存在对象的副本数，应配合 `RespectIgnoreDifferences=true`。
 
 遇到这类问题，先看具体字段与归属，再决定调整 Git 清单还是设置有限范围的忽略规则。
@@ -476,7 +476,7 @@ Git 中固定 `replicas: 3`，HPA 按负载把副本扩到 5；准入组件又�
 
 作者归因为单副本 repo-server 在集中 reconcile 时 CPU 满载、manifest 生成排队，以及轮询带来的变更发现延迟。原文采取了扩到 3 副本、设置资源请求/上限、增加 Webhook、用 ApplicationSet 拆分应用和调整缓存的措施，并描述延迟恢复到秒级。
 
-> [!note] 技术校正：保留案例效果，分开核对措施
+> [!note] 性能案例的归因边界
 > 30、200、3 副本和延迟变化是原文案例数据，未在本仓库验证。原文把缓存设为 24h 的位置写错，且官方配置默认已有 24h 缓存；不能把案例效果归因于这一项。Webhook 加快变更发现，也不等于取代全部轮询。
 
 应用数量增加后，ArgoCD 控制面也需要按实际渲染成本、队列等待和资源使用情况维护。
@@ -499,7 +499,7 @@ Git 中固定 `replicas: 3`，HPA 按负载把副本扩到 5；准入组件又�
 
 ## 同步选项速查
 
-排查时先确定问题属于差异比较、健康判断、API 更新、资源删除还是控制面性能，再对照对应配置。原文的“九成源于三方模型”没有统计依据，本文不把它作为比例结论。
+排查时先确定问题属于差异比较、健康判断、API 更新、资源删除还是控制面性能，再对照对应配置。“九成源于三方模型”缺少统计依据，不能作为比例结论。
 
 | 参数 | 作用 | 使用边界 |
 | --- | --- | --- |
@@ -515,7 +515,7 @@ Git 中固定 `replicas: 3`，HPA 按负载把副本扩到 5；准入组件又�
 | `ServerSideApply=true` | 使用服务端 apply 和字段所有权 | 不绕过不可变字段，也不是性能或冲突消失的保证 |
 | `RespectIgnoreDifferences=true` | 同步时也考虑 ignoreDifferences | 只有资源已存在时才能使用 live 状态保留字段 |
 
-## 相关笔记与校核资料
+## 相关笔记与参考资料
 
 - [[KnowledgeBase/entities/ArgoCD|ArgoCD 实体页]]
 - [[KnowledgeBase/concepts/CICD|CI/CD]]
@@ -524,4 +524,4 @@ Git 中固定 `replicas: 3`，HPA 按负载把副本扩到 5；准入组件又�
 - [Application 字段定义](https://github.com/argoproj/argo-cd/blob/master/pkg/apis/application/v1alpha1/types.go) 与 [argocd app set 命令参考](https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_app_set/)
 - [argocd-cm 配置示例](https://argo-cd.readthedocs.io/en/stable/operator-manual/argocd-cm-yaml/)
 
-官方资料用于文中标注的技术校正。本文未执行任何集群命令，也未完成目标 ArgoCD/Kubernetes 版本下的部署验证。
+示例命令和配置尚未通过目标 ArgoCD/Kubernetes 环境下的运行与部署验证。

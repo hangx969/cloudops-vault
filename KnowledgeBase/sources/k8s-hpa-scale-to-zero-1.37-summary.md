@@ -17,7 +17,7 @@ aliases:
 ## 元信息
 
 - **来源文章**：[告别 KEDA：K8s 1.37 原生 HPA Scale-to-Zero 落地实战](https://mp.weixin.qq.com/s/HBmYINXQDECAR664aF31mQ?scene=1&click_id=1921215008)
-- **整合文档**：[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA#五、Kubernetes 1.37 原生 HPA Scale-to-Zero|Kubernetes 自动扩缩容实战 → Scale-to-Zero]]
+- **技术文档**：[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA#五、Kubernetes 1.37 原生 HPA Scale-to-Zero|Kubernetes 自动扩缩容实战 → Scale-to-Zero]]
 - **来源作者**：WAKE UP技术
 - **发布时间**：2026-08-13
 - **领域**：Kubernetes HPA、External/Object 指标、事件驱动扩缩容与 Worker 成本优化
@@ -50,6 +50,6 @@ aliases:
 
 ## 值得注意
 
-- 2026-09-15 已对照 Kubernetes 官方 HPA 与 feature gate 文档校正版本状态和目标值表达；上线前仍应核对目标发行版与集群实际行为。
+- 版本状态和目标值说明依据 2026-09-15 的 Kubernetes 官方 HPA 与 feature gate 文档；上线前仍应核对目标发行版与集群实际行为。
 - `HPAScaleToZero` 的缩零能力依赖 External/Object 指标和指标适配链路；Prometheus、Prometheus Adapter、APIService 和 HPA 指标名需要逐层验证。
 - 示例强调的是异步 Worker 的成本与延迟权衡，不能把缩零能力直接套用到低延迟 API、长连接服务或需要预热缓存的服务。

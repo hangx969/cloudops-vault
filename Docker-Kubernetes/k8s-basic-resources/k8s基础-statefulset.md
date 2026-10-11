@@ -309,7 +309,7 @@ provisioner: example.com/nfs
 
 ## Recreate 更新策略（Kubernetes 1.37 Alpha）
 
-本节根据 WAKEUP技术的 StatefulSet Recreate 策略文章整理。原文发表于 2026 年 8 月 24 日；下文保留其配置、命令和案例，并将官方资料核验说明与作者经验分开。
+以下策略说明和案例来自 WAKEUP技术于 2026 年 8 月 24 日发表的 StatefulSet Recreate 策略文章；作者经验需结合官方配置与版本边界理解。
 
 > [!warning] 版本与配置核验（2026-10-11）
 > 原文称 Recreate 在 Kubernetes 1.37 中已 GA，但官方将它标为 **Alpha、默认关闭**。使用前需在 `kube-apiserver` 和 `kube-controller-manager` 启用 `StatefulSetRecreateStrategy`。版本号本身不能证明集群已启用该功能。见[官方特性门控列表](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates)。
@@ -336,7 +336,7 @@ provisioner: example.com/nfs
 
 ### 配置示例与启用条件
 
-原文给出以下示例。代码保留供对照；其中 `Recreate` 与 `rollingUpdate.partition` 的组合会被当前 StatefulSet API 校验拒绝。它还省略了 Service、selector、Pod 标签、存储和 Redis 集群配置，不能作为完整部署清单使用。
+以下示例用于对照配置约束，其中 `Recreate` 与 `rollingUpdate.partition` 的组合会被当前 StatefulSet API 校验拒绝。它还省略了 Service、selector、Pod 标签、存储和 Redis 集群配置，不能作为完整部署清单使用。
 
 ```yaml
 apiVersion: apps/v1
@@ -401,9 +401,9 @@ kubectl patch sts redis-cluster --type=merge -p '{"spec":{"updateStrategy":{"typ
 
 原文还把 Deployment 的存储概括为临时卷，这个说法过于绝对：Deployment 也可以挂载 PVC。StatefulSet 的特点是为各序号维持稳定身份，并通过存储模板管理相应 PVC。
 
-### 分区灰度：原文命令适用于 RollingUpdate
+### 分区灰度：使用 RollingUpdate
 
-`partition` 以序号为阈值划分更新范围，不能按业务指标自动放行。以下保留原文操作步骤，但它们应在 `type: RollingUpdate` 下使用；Recreate 没有分区灰度入口。默认从 0 编号时，3 副本的 `partition: 2` 会把更新限制在序号 2，较低序号仍运行旧版本。
+`partition` 以序号为阈值划分更新范围，不能按业务指标自动放行。以下分区更新步骤应在 `type: RollingUpdate` 下使用；Recreate 没有分区灰度入口。默认从 0 编号时，3 副本的 `partition: 2` 会把更新限制在序号 2，较低序号仍运行旧版本。
 
 #### 第一步：先更新最高序号 Pod
 
@@ -444,7 +444,7 @@ kubectl exec redis-cluster-0 -- redis-cli cluster info
 
 ### 原文的 11 个故障案例
 
-以下保留作者报告的故障和处理方式。案例未提供完整环境、事件和日志；涉及 Recreate、存储删除或流量行为的结论，需要结合前面的核验说明阅读。
+以下故障和处理方式由作者报告，未提供完整环境、事件和日志；涉及 Recreate、存储删除或流量行为的结论，需要结合前面的核验说明阅读。
 
 1. **未灰度就整体停机。** 作者称首次直接设置 `type: Recreate`，3 个 Pod 同时被删除，服务中断，恢复用了 5 分钟；之后要求先用 `partition` 灰度。核验说明：Recreate 本来就是全量重建，`partition` 不能限制它的更新范围。先灰度需要选择 RollingUpdate 或另行设计验证环境，整体重建则要预留停机窗口。
 
@@ -500,4 +500,4 @@ kubectl exec redis-cluster-0 -- redis-cli cluster info
 - [ ] 演练数据格式迁移和回滚，明确是否需要独立 StatefulSet 的切换方案。
 - [ ] 对 Pod 删除/创建事件配置告警，持续监控 PVC 状态，确认存储仍在位。
 
-本节完成的是文章整理和官方资料核验，未执行 Kubernetes/Redis 命令、部署或复现作者案例。
+示例中的 Kubernetes/Redis 命令和部署流程尚未经过实际运行验证，作者案例也尚未复现。

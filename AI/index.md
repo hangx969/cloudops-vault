@@ -9,7 +9,7 @@
 | ClaudeCode/ | 5 | Claude Code 基础指南、扩展体系、多智能体协作、Skill 质检、Harness 安全约束 |
 | Codex/ | 6 | Codex 配置、Harness 任务循环、上下文与工具执行、交互体验和 Token 优化 |
 | OpenClaw/ | 7 | 安装、Channels、Skills 插件、CoPaw、AIOps、多智能体、Ubuntu 环境 |
-| Obsidian/ | 2 | AI 知识库完整指南（三文合并）、可视化 Skills |
+| Obsidian/ | 2 | AI 知识库完整指南、可视化 Skills |
 | Hermes-agent/ | 3 | 满配指南与生态资源、Ubuntu 安装、架构解析与 OpenClaw 对比 |
 | AI-视觉/ | 4+67 | PPT Master、HTML 动画、html-ppt-skill + awesome-design-md（67 品牌设计系统） |
 | skills/ | 2 套 | 自研 K8s 巡检 Skills（Python 版 + Shell 版） |

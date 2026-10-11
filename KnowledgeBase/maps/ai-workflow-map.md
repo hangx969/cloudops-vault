@@ -145,7 +145,7 @@ sources:
 
 | 文章 | 主题 | 关键词 |
 |------|------|--------|
-| [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南\|Obsidian + Claude Code：AI 知识库指南]] | 完整指南 | Markdown 母语、三层架构、30 分钟上手、六大操作、改造计划（三文合并） |
+| [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南\|Obsidian + Claude Code：AI 知识库指南]] | 完整指南 | Markdown 母语、三层架构、30 分钟上手、六大操作、改造计划 |
 | [[AI/Obsidian/Obsidian可视化Skills-Excalidraw-Mermaid-Canvas\|Obsidian 可视化 Skills]] | AI 可视化 | Excalidraw、Mermaid、Canvas、Skills |
 | [[AI/Obsidian/github-pages-quartz\|Quartz 4 发布笔记]] | 网站发布 | GitHub Actions、Pages artifact、日夜主题、wikilink 与旧路由兼容 |
 

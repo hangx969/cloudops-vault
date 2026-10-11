@@ -13,13 +13,13 @@ tags:
 
 # Longhorn，K8s的轻量块存储
 
-> [!note]- 摄入校核（2026-10-04）
-> 本文保留原文的技术主张、数字、版本和判断；下列说明是摄入时依据官方资料增加的校核，不属于原文。
+> [!note]- 实现与使用边界（截至 2026-10-04）
+> 文中的数据和判断来自原作者介绍；以下官方资料说明实例、复制、重建、快照和部署的具体边界。
 > - **实例与 Pod**：原文用“一个引擎 Pod 加三个副本 Pod”解释卷。官方 1.12.0 架构说明中，同节点多个卷的引擎和副本实例由 Instance Manager Pod 托管，不能按每卷固定四个 Pod 计算规模或故障域。[官方架构](https://longhorn.io/docs/1.12.0/concepts/#12-the-instance-manager)
-> - **写入路径**：原文称请求沿复制链逐级传递，原图却展示引擎向多个副本分发；Mermaid 保留原图关系。官方说明写 IO 并行，串行复制链的说法不宜用来解释 Longhorn 的实现。[Revision Counter](https://longhorn.io/docs/1.12.0/advanced-resources/deploy/revision_counter/)
+> - **写入路径**：原文称请求沿复制链逐级传递，图示却展示引擎向多个副本分发。官方说明写 IO 并行，串行复制链的说法不宜用来解释 Longhorn 的实现。[Revision Counter](https://longhorn.io/docs/1.12.0/advanced-resources/deploy/revision_counter/)
 > - **重建方式**：原文将重建一概描述为增量复制。官方区分完整、增量和快速重建，是否能够只同步差异取决于目标副本已有的数据及相关条件，恢复时间应实测。[Replica Rebuilding](https://longhorn.io/docs/1.12.0/advanced-resources/rebuilding/)
 > - **快照边界**：增量快照仍消耗实际磁盘空间；集群停机或 etcd 故障也不自动意味着磁盘上的快照永久丢失，需区分数据丢失与暂时不可访问。[快照空间与管理](https://longhorn.io/docs/1.12.0/concepts/#24-snapshots)
-> - **部署与性能**：“无外部依赖”“helm 装完即投产”是原文的简化表述；官方列出节点依赖与部署前提。v2 使用 SPDK 不代表整个应用 IO 路径均绕过内核，也不能直接保证 CPU 开销更低；本文保留其官方性能宣称，未执行部署、压测或故障演练。[安装前提](https://longhorn.io/docs/1.12.0/deploy/install/)
+> - **部署与性能**：“无外部依赖”“helm 装完即投产”是原文的简化表述；官方列出节点依赖与部署前提。v2 使用 SPDK 不代表整个应用 IO 路径均绕过内核，也不能直接保证 CPU 开销更低；相关官方性能宣称尚未经过独立部署、压测或故障演练验证。[安装前提](https://longhorn.io/docs/1.12.0/deploy/install/)
 
 在 K8s 上运行数据库，首先要解决数据存储问题。云盘绑定云厂商，Ceph 需要专门的团队运维，按原文的判断，本地盘机器故障后数据就会丢失。Rancher Labs 在 2017 年启动 Longhorn，针对的就是这些方案之间的空档。
 
