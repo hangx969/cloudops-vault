@@ -9,7 +9,7 @@ aliases:
 date: 2026-10-11
 sources:
   - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler]]"
-  - "[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum]]"
+  - "[[kuebctl-插件krew]]"
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查]]"
   - "[[Docker-Kubernetes/k8s-storage/DeepSeek 3FS，AI原生的并行文件系统]]"
   - "[[Docker-Kubernetes/docker/docker基础]]"
@@ -251,7 +251,7 @@ MySQL(3)、Redis(2)、PostgreSQL、Kafka(Strimzi)、RabbitMQ HA、MongoDB、http
 |--------|------|------|
 | Docker | 14 | [[Docker-Kubernetes/docker/docker基础|docker基础]] |
 | Helm | 1 | [[Docker-Kubernetes/helm/helmv3-安装与使用|helmv3-安装与使用]] |
-| UI 工具 | 8 | k9s、Lens、Dashboard、Kuboard、Rancher、[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum\|Krew 与 kubectl 插件指南]] |
+| UI 工具 | 8 | k9s、Lens、Dashboard、Kuboard、Rancher、[[kuebctl-插件krew\|Krew 与 kubectl 插件指南]] |
 | 镜像管理 | 3 | [[Docker-Kubernetes/k8s-image-management/Harbor 部署与使用指南|Harbor 部署与使用指南]]、[[Docker-Kubernetes/k8s-image-management/Dragonfly与Harbor-P2P镜像分发\|Dragonfly + Harbor：P2P 分发]]、Dragonfly Helm 部署 |
 | CKA/CKS | 3 | [[Docker-Kubernetes/CKA-CKS/CKA-备考|CKA-备考]] |
 | KubeBlocks | 2 | WordPress、Harbor 高可用 |

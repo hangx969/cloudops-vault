@@ -1,12 +1,12 @@
 ---
-title: "kubectl 插件指南 来源摘要"
+title: kubectl 插件指南 来源摘要
 tags:
   - knowledgebase/source
   - kubernetes/cli
   - kubernetes/rbac
 date: 2026-10-11
 sources:
-  - "[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum]]"
+  - "[[kuebctl-插件krew]]"
 aliases:
   - Krew 与 kubectl 插件来源摘要
 ---
@@ -15,7 +15,7 @@ aliases:
 
 ## 元信息
 
-- **原始文档**：[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum|kubectl 插件指南：Krew 安装、常用工具与 RBAC 排查]]
+- **原始文档**：[[kuebctl-插件krew|kubectl 插件指南：Krew 安装、常用工具与 RBAC 排查]]
 - **外部来源**：[WAKEUP技术：kubectl 不够用？krew 装 10 插件](https://mp.weixin.qq.com/s/H0PCEn6yVjbskCUB7hl94g)，发布于 2026-10-09。
 - **领域**：Kubernetes CLI 工具、资源排查与 RBAC。
 - **摄入日期**：2026-10-11。

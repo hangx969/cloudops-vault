@@ -23,11 +23,11 @@ sources:
   - "[[Docker-Kubernetes/k8s-UI-tools/k8s部署可视化ui界面kuboard]]"
   - "[[Docker-Kubernetes/k8s-UI-tools/kubectl-UI工具Lens]]"
   - "[[Docker-Kubernetes/k8s-UI-tools/kubectl-可视化插件k9s-stern]]"
-  - "[[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum]]"
+  - "[[kuebctl-插件krew]]"
   - "[[Docker-Kubernetes/k8s-UI-tools/rancher(v2.6.4)管理k8s集群]]"
 aliases:
-  - "k8s-db-middleware-UI 批量摘要"
-  - "K8s 中间件与 UI"
+  - k8s-db-middleware-UI 批量摘要
+  - K8s 中间件与 UI
 ---
 
 ## 元信息
@@ -193,7 +193,7 @@ aliases:
   - 支持上下文切换、标签过滤、正则过滤、模糊查找
   - 多种安装方式：webi、deb 包、snap
 
-### [[Docker-Kubernetes/k8s-UI-tools/kuebctl-插件krew-rolesum|kubectl 插件指南：Krew 与 RBAC 排查]]
+### [[kuebctl-插件krew|kubectl 插件指南：Krew 与 RBAC 排查]]
 
 - **核心内容**：Krew 安装、内网与离线分发、13 个常用插件，以及 whoami/rolesum/who-can/auth can-i 的权限排查分工。
 - **关键知识点**：

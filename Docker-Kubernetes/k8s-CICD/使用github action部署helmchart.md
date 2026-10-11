@@ -86,7 +86,7 @@ sudo ./svc.sh uninstall
 ### 安装必要工具
 
 - kubectl
-  - [kubectl krew插件](../k8s-UI-tools/kuebctl-插件krew-rolesum.md)
+  - [kubectl krew插件](kuebctl-插件krew.md)
   - kubectl krew install kyverno插件
 
 - [helm3](../helm/helmv3-安装与使用.md)
