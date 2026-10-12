@@ -50,7 +50,7 @@ data:
       smtp_smarthost: 'smtp.163.com:25'
       smtp_from: 'xuhang969@163.com' #指定从哪个邮箱发告警
       smtp_auth_username: 'xuhang969@163.com' #邮箱地址
-      smtp_auth_password: 'UDBDVTBABEVRBPDC' #smtp授权码
+      smtp_auth_password: '<smtp-auth-code>' #smtp授权码
       smtp_require_tls: false
     route:  #用于配置告警分发策略
       group_by: [alertname] # alertmanager会根据group_by配置将Alert分组
@@ -730,7 +730,7 @@ data:
       smtp_smarthost: 'smtp.163.com:25'
       smtp_from: 'xuhang969@163.com' #指定从哪个邮箱发告警
       smtp_auth_username: 'xuhang969@163.com' #邮箱地址
-      smtp_auth_password: 'UDBDVTBABEVRBPDC' #smtp授权码
+      smtp_auth_password: '<smtp-auth-code>' #smtp授权码
       smtp_require_tls: false
     route:  #用于配置告警分发策略
       group_by: [alertname] # alertmanager会根据group_by配置将Alert分组
@@ -770,7 +770,7 @@ data:
       smtp_smarthost: 'smtp.163.com:25'
       smtp_from: 'xuhang969@163.com' #指定从哪个邮箱发告警
       smtp_auth_username: 'xuhang969@163.com' #邮箱地址
-      smtp_auth_password: 'UDBDVTBABEVRBPDC' #smtp授权码
+      smtp_auth_password: '<smtp-auth-code>' #smtp授权码
       smtp_require_tls: false
     route:  #用于配置告警分发策略
       group_by: [alertname] # alertmanager会根据group_by配置将Alert分组

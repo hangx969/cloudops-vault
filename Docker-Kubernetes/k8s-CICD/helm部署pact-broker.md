@@ -216,8 +216,8 @@ oci://${{ env.harborURL }}/${{ env.harborProjectName }}/$helmRepoName/$helmChart
 >
 >    ~~~sh
 >    kubectl create secret generic pact-broker-postgresql-secret \
->      --from-literal=admin-password=abc123abc123 \
->      --from-literal=user-password=abc123abc123 \
+>      --from-literal=admin-password=<password> \
+>      --from-literal=user-password=<password> \
 >      -n observability
 >    ~~~
 >
@@ -230,7 +230,7 @@ oci://${{ env.harborURL }}/${{ env.harborProjectName }}/$helmRepoName/$helmChart
 >        # -- Name for a custom user to create
 >        username: bn_broker
 >        # -- Password for the custom user to create
->        password: "abc123abc123"
+>        password: "<password>"
 >        # -- Name for a custom database to create
 >        database: bitnami_broker
 >        # -- Name of existing secret to use for PostgreSQL credentials

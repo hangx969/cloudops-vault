@@ -644,7 +644,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update bitnami
 helm upgrade -i redis bitnami/redis \
 --set global.imageRegistry=docker.kubeasy.com \
---set global.redis.password=dukuan \
+--set global.redis.password=<password> \
 --set architecture=standalone \
 --set master.persistence.enabled=false \
 --version 20.1.6
@@ -660,7 +660,7 @@ metadata:
 type: Opaque
 stringData:
   redis_username: ""
-  redis_password: "dukuan"
+  redis_password: "<password>"
 ---
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
@@ -680,7 +680,7 @@ spec:
 
 ~~~sh
 kubectl exec -ti redis-master-0 -- bash
-redis-cli -h redis-master -a dukuan
+redis-cli -h redis-master -a <password>
 # 写入队列数据
 LPUSH test_list "t1" "t2" "t3"
 LRANGE test_list 0 2

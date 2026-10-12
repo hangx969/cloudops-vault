@@ -558,11 +558,11 @@ oc adm policy add-cluster-role-to-user cluster-admin admin
 oc login -n openshift
 #admin/admin
 oc whoami -t
-#sDNr30KlWs-_NyxKhqhOAyOheLz56FGBA_c_mKT2d38
+#<openshift-token>
 #每个节点执行如下登陆openshift私有镜像仓库    
 docker login docker-registry.default.svc:5000
 #用户：admin
-#密码：sDNr30KlWs-_NyxKhqhOAyOheLz56FGBA_c_mKT2d38
+#密码：<openshift-token>
 ~~~
 
 ### OCP部署应用程序

@@ -2274,3 +2274,9 @@ date: 2026-04-17
 - 用 PicGo CLI 与 GitHub Plus 上传 26 张原文 SVG 和 9 张既有 3FS SVG，35 个外链均为 HTTP 200、SVG MIME，内容哈希与上传文件一致；将 [[Docker-Kubernetes/k8s-storage/开源存储DeepSeek 3FS，AI原生的并行文件系统]] 的 9 条矢量源图引用改为外链，确认无本地路径引用后经 MCP 删除 9 个本地 SVG。
 - 创建 [[KnowledgeBase/sources/distributed-storage-overview-summary]]、[[KnowledgeBase/sources/ceph-storage-summary]]、[[KnowledgeBase/concepts/分布式存储]] 和 [[KnowledgeBase/entities/Ceph]]，更新 [[KnowledgeBase/concepts/StorageClass]]、[[KnowledgeBase/sources/k8s-scaling-storage-batch-summary]]、[[KnowledgeBase/maps/kubernetes-map]] 与 [[KnowledgeBase/INDEX]]。
 - 11 个正文与导航文件经 MCP 全文读回一致，frontmatter、新增 wikilink、代码围栏和任务范围差异检查通过；Obsidian 阅读模式中 26 张图全部加载，透明原图的展示加白底以适配深色主题。三篇剪藏原稿未改动。
+
+## [2026-10-12] update | 原始笔记 A、B 类明文凭据改为占位符
+
+- 按用户确认，将 18 个原始笔记和项目源码文件中的 41 处凭据改为占位符：API Key、集群加入令牌、登录令牌、SMTP 授权码，以及实验环境自设的密码和令牌。
+- 弱口令、软件默认值和文档示例值（C 类）未改。
+- 原值仍保留在 git 历史中。

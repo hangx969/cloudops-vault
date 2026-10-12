@@ -466,7 +466,7 @@ kubectl create secret generic mysql-password --from-literal=password=123
 # 可以创建多key secret
 kubectl create secret generic basic-auth-secret \ 
 --from-literal=username=admin \ 
---from-literal=password=securepassword
+--from-literal=password=<password>
 ~~~
 
 #### 基于yaml文件

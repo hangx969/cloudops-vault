@@ -93,8 +93,8 @@ cat /root/gitlab/config/initial_root_password
 docker exec -it gitlab /bin/bash
 gitlab-rails console -e production
 user=User.find(1)
-user.password='azsxdc1122'
-user.password_confirmation='azsxdc1122'
+user.password='<password>'
+user.password_confirmation='<password>'
 user.send_only_admin_changed_your_password_notification!
 user.save!
 #退出

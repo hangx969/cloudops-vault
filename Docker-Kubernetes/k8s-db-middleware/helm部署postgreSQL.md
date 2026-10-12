@@ -49,11 +49,11 @@ helm pull bitnami/postgresql-ha --version 16.3.1 # 这个chart是用来安装HA�
 global: 
   defaultStorageClass: "sc-nfs" 
   postgresql: 
-    password: "hangx" 
-    repmgrPassword: "hangx" 
+    password: "<password>" 
+    repmgrPassword: "<password>" 
   pgpool: # pgpool可以将查询分发到多个PostgreSQL节点，实现读写分离 
     adminUsername: "" 
-    adminPassword: "hangx" 
+    adminPassword: "<password>" 
 witness: # 用于提供额外的投票机制，防止脑裂现象。奇数个节点非必须，偶数个节点必须要装。
   create: true
 ~~~

@@ -93,7 +93,7 @@ metadata:
   name: redis-secret 
   namespace: public-service
 stringData: 
-  password: hangx
+  password: <password>
 type: Opaque 
 ~~~
 
@@ -132,7 +132,7 @@ spec:
 建议在集群创建之前就决定好要不要开启密码认证。
 
 ~~~sh
-redis-cli -c -a hangx
+redis-cli -c -a <password>
 CLUSTER INFO
 ~~~
 
@@ -187,6 +187,6 @@ spec:
 改成NodePort之后，可以在集群外部访问集群内的Redis
 
 ~~~sh
-redis-cli -c -h 192.168.181.66 -p 31529 -a hangx
+redis-cli -c -h 192.168.181.66 -p 31529 -a <password>
 ~~~
 

@@ -491,7 +491,7 @@ class FabConnection:
     def conn(self):
         return self._conn
 
-demo = FabConnection(host='172.16.101.222',user='xj',password='king')
+demo = FabConnection(host='172.16.101.222',user='xj',password='<password>')
 demo.get('/home/xj/Desktop/dir_a','./')
 demo.put('./','/home/xj/Desktop/dir_cc')
 demo.run('ls -l')

@@ -592,7 +592,7 @@ services:
     environment:
       DATABASE_URL: "postgresql://llmproxy:dbpassword9090@db:5432/litellm"
       STORE_MODEL_IN_DB: "True" # allows adding models to proxy via UI
-      LITELLM_MASTER_KEY: litellm_password
+      LITELLM_MASTER_KEY: <litellm-master-key>
     depends_on:
       - db
     healthcheck:
@@ -644,7 +644,7 @@ docker logs -f litellm-litellm-1
 接下来通过主机 IP 的 4000 端口的 ui 路径即可访问 litellm，登录页面默认账号密码：
 
 - Username: `admin`
-- Password: `litellm_password`（即部署时配置的 `LITELLM_MASTER_KEY`）
+- Password: `<litellm-master-key>`（即部署时配置的 `LITELLM_MASTER_KEY`）
 - 登录后即可进入 LiteLLM 管理后台，左侧导航栏包含 AI Gateway（Virtual Keys、Playground、Models + Endpoints、Agentic、MCP Servers、Skills、Guardrails、Policies、Tools）、Observability（Usage、Logs、Guardrails Monitor）、Access Control（Teams、Internal Users、Organizations）等模块。
 
 ### 基础使用
@@ -688,13 +688,13 @@ docker logs -f litellm-litellm-1
 创建后需要记录生成的 key（离开页面后将无法再次查看）：
 
 ```
-Virtual Key: sk-cRyZdFtJ8WSDZxpjEAUxTw
+Virtual Key: <litellm-virtual-key>
 ```
 
 接下来使用 litellm 通过该 Key 访问已授权的模型（访问liteLLM的接口）：
 
 ```bash
-# curl -H "Authorization: Bearer sk-cRyZdFtJ8WSDZxpjEAUxTw" -X POST http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
+# curl -H "Authorization: Bearer <litellm-virtual-key>" -X POST http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
 ```
 
 ### 记录问答详情
@@ -723,7 +723,7 @@ Virtual Key: sk-cRyZdFtJ8WSDZxpjEAUxTw
 创建 Key 后，测试权限隔离是否正常。首先测试 test 团队的 key 是否可以访问 Qwen3 模型：
 
 ```bash
-curl -H "Authorization: Bearer sk-gPy_Dc2avf6sH8wWwu8VRw" -X POST http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
+curl -H "Authorization: Bearer <litellm-virtual-key>" -X POST http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
 ```
 
 ```json
@@ -754,7 +754,7 @@ curl -H "Authorization: Bearer sk-gPy_Dc2avf6sH8wWwu8VRw" -X POST http://127.0.0
 当前 key 只能访问当前 team 有权限的模型：
 
 ```bash
-curl -H "Authorization: Bearer sk-1k_6cjksNc0vo13LqZa40g" -X POST http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
+curl -H "Authorization: Bearer <litellm-virtual-key>" -X POST http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
 ```
 
 ```json
@@ -780,7 +780,7 @@ curl -H "Authorization: Bearer sk-1k_6cjksNc0vo13LqZa40g" -X POST http://127.0.0
 接下来发送请求，测试成本管控是否正常：
 
 ```bash
-curl -H "Authorization: Bearer sk-An1rHO3RWiA7LDh4jA8rtQ" -X POST http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "列举一下北京比较著名的景点有哪些？"}]}'
+curl -H "Authorization: Bearer <litellm-virtual-key>" -X POST http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "列举一下北京比较著名的景点有哪些？"}]}'
 ```
 
 在 **Usage** 页面可以按 Team 查看用量和使用详情，包括 Total Spend、Total Requests、Successful/Failed Requests、Daily Spend、Spend Per Team、Top Virtual Keys、Top Models 等维度的统计。在 **Teams** 列表中也可以看到每个团队的 Spend / Budget（如 `development` 团队 `$0.04 / $1.00`）。

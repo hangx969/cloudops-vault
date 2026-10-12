@@ -37,7 +37,7 @@ docker-compose -f portainer.yml up -d
 #rocky linux中,docker-compose变成了docker compose
 ~~~
 
-- 访问宿主机IP:9876端口(username: admin, passwd: 26bN87:KP>?TzW:)
+- 访问宿主机IP:9876端口(username: admin, passwd: `<password>`)
 - 点击local进行本地容器管理。更多文档参考:[Portainer官方文档](https://www.portainer.io/take-5)
 
 ## portainer添加environment

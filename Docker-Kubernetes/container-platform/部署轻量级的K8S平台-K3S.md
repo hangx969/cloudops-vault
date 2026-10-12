@@ -117,7 +117,7 @@ cat /var/lib/rancher/k3s/server/node-token
 
 ~~~sh
 #在agent节点上执行如下，把work节点加入k3s:
-curl -sfL http://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn K3S_URL=https://192.168.40.200:6443 K3S_TOKEN=K1061ead9dd84d99881259235b6a29779e71b2d65443248abecb6304fd6b53f0d9c::server:0b4d47cf632a46a077705c17365f6280  sh -
+curl -sfL http://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn K3S_URL=https://192.168.40.200:6443 K3S_TOKEN=<k3s-node-token>  sh -
 ~~~
 
 - 查看agent节点
@@ -414,9 +414,9 @@ EOF
 
 ~~~sh
 #master1
-curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh  | K3S_TOKEN=k3s_server_token INSTALL_K3S_MIRROR=cn INSTALL_K3S_EXEC="server" sh -s - --disable=traefik
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh  | K3S_TOKEN=<k3s-token> INSTALL_K3S_MIRROR=cn INSTALL_K3S_EXEC="server" sh -s - --disable=traefik
 #master2
-curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh | K3S_TOKEN=k3s_server_token K3S_URL=https://192.168.40.160:6443 INSTALL_K3S_MIRROR=cn INSTALL_K3S_EXEC="server"  sh -
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh | K3S_TOKEN=<k3s-token> K3S_URL=https://192.168.40.160:6443 INSTALL_K3S_MIRROR=cn INSTALL_K3S_EXEC="server"  sh -
 #master1获取token
 cat /var/lib/rancher/k3s/server/node-token
 #worker1加入集群

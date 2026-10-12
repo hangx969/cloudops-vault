@@ -895,7 +895,7 @@ kind: InitConfiguration
 bootstrapTokens:
 - groups:
   - system:bootstrappers:kubeadm:default-node-token
-  token: 7t2weq.bjbawausm0jaxury
+  token: <bootstrap-token>
   ttl: 24h0m0s
   usages:
   - signing

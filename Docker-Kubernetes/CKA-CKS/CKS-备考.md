@@ -776,7 +776,7 @@ systemctl restart kubelet
 - 不要在以下步骤中使用/修改先前创建的文件，如果需要，创建新的临时文件。
   - 在db namespace中创建一个名为test-workflow 的新secret，内容如下；
     username: thanos
-    password: u9YuWVpoVu7m
+    password: `<password>`
 
 - 最后，新建一个pod，可以通过卷访问secret test-workflow：
   - pod名： dev-pod
@@ -805,7 +805,7 @@ kubectl get secret db1-test -n db -o jsonpath='{.data.username}' | base64 -d > /
 kubectl get secret db1-test -n db -o jsonpath='{.data.password}' | base64 -d > /home/candidate/pass.txtpass.txt
 
 #创建新secret -- 文档搜secret kubectl --> 搜literal
-kubectl create secret generic test-workflow -n db --from-literal=username=thanos --from-literal=password=u9YuWVpoVu7m
+kubectl create secret generic test-workflow -n db --from-literal=username=thanos --from-literal=password=<password>
 ~~~
 
 ~~~yaml

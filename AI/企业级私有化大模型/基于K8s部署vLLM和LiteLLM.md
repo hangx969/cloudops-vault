@@ -979,7 +979,7 @@ kubectl get svc -n litellm
 
 ```bash
 kubectl get svc -n litellm
-curl -H "Authorization: Bearer sk-tvE6JKo-Q54_dkQIdXYnlg" -X POST http://127.0.0.1:31398/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
+curl -H "Authorization: Bearer <litellm-virtual-key>" -X POST http://127.0.0.1:31398/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
 ```
 
 ### 1.4.4 限流测试
@@ -1006,7 +1006,7 @@ LiteLLM 支持如下三种限流方案：
 测试每分钟请求数量限制：
 
 ```bash
-curl -H "Authorization: Bearer sk-tvE6JKo-Q54_dkQIdXYnlg" -X POST http://127.0.0.1:31398/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
+curl -H "Authorization: Bearer <litellm-virtual-key>" -X POST http://127.0.0.1:31398/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
 ```
 
 ```json
@@ -1024,7 +1024,7 @@ curl -H "Authorization: Bearer sk-tvE6JKo-Q54_dkQIdXYnlg" -X POST http://127.0.0
 同一个问题，连续问会直接返回结果（命中 Redis 缓存，无需重新推理）：
 
 ```bash
-curl -H "Authorization: Bearer sk-tvE6JKo-Q54_dkQIdXYnlg" -X POST http://127.0.0.1:31398/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己 2"}]}'
+curl -H "Authorization: Bearer <litellm-virtual-key>" -X POST http://127.0.0.1:31398/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己 2"}]}'
 ```
 
 流式返回示例（节选）：
