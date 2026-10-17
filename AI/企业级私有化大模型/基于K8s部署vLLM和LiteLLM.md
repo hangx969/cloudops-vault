@@ -25,13 +25,15 @@ k8s原生不支持调度GPU的，cpu、memory等资源是kubelet从主机上采�
 - 腾讯云： https://cloud.tencent.com/
 - 华为云： https://www.huaweicloud.com/
 
-rockylinux9.8，24GB显存，10MB公网固定带宽，100GB磁盘
+示例环境：Rocky Linux 9.8，24 GB 显存，100 GB 磁盘。申请后先用 `lspci -nn | grep -i nvidia` 确认实际 GPU 型号，再核对驱动和 vLLM 的硬件要求。
 
 ### 1.1.2 驱动安装
 
 下载地址： https://www.nvidia.com/en-us/drivers/unix/
 
-选择最新版下载即可（Linux x64/AMD64/EM64T 或 Linux aarch64 对应版本）。
+选择支持实际 GPU 型号和 CPU 架构的驱动，不能只按“最新版”选择。例如，Tesla V100 属于 Volta 架构，只支持到 R580 驱动分支，不能使用 `NVIDIA-Linux-x86_64-595.104.02.run`；当前官方 vLLM 要求 GPU 算力至少为 7.5，V100 的算力为 7.0，也不满足要求。遇到这种情况应先调整机器或确认兼容方案，再继续安装。
+
+参考：[NVIDIA 对 V100 驱动支持的说明](https://forums.developer.nvidia.com/t/latest-v100-driver/357228)、[vLLM GPU 硬件要求](https://docs.vllm.ai/en/latest/getting_started/installation/gpu/)。
 
 下载完成后，把安装包上传到 GPU 服务器，之后执行如下命令即可：
 
@@ -480,7 +482,7 @@ spec:
   template:
     spec:
       nodeSelector:
-        kubernetes.io/hostname: izuf62nmmrsj356g2ju67ez
+        kubernetes.io/hostname: MODEL_NODE_PLACEHOLDER
       restartPolicy: Never
       containers:
         - name: importer
@@ -530,10 +532,13 @@ spec:
 EOF
 ```
 
-创建导入 Job 并等待完成：
+创建导入 Job 并等待完成。单节点集群从节点标签读取实际主机名；多节点集群应指定保存了 `/data/models/Qwen3.5-4B` 源目录的节点，不能沿用其他机器的名称：
 
 ```bash
-kubectl apply -f model-import-job.yaml
+MODEL_NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.labels.kubernetes\.io/hostname}')
+sed "s/MODEL_NODE_PLACEHOLDER/${MODEL_NODE}/g" model-import-job.yaml \
+  | kubectl apply -f -
+unset MODEL_NODE
 kubectl wait --for=condition=complete \
   job/qwen35-4b-model-import -n models --timeout=30m
 ```
@@ -767,7 +772,7 @@ unset VLLM_API_KEY
 
 需要部署两个相互独立的 Redis Release：
 
-- `redis`：3 个 Redis + Sentinel Pod，用作 LiteLLM 缓存（`general_settings.cache`）。
+- `redis`：3 个 Redis + Sentinel Pod，用作 LiteLLM 缓存（`litellm_settings.cache` 和 `cache_params`）。
 - `redis-single`：单节点 Redis，用作 LiteLLM 路由限流（`router_settings`）。当前限流 Redis 按单节点方式接入；后续 LiteLLM 支持 Sentinel 后，可再评估共用缓存 Redis。
 
 > [!NOTE]
@@ -790,7 +795,7 @@ for secret_name in redis-sentinel-auth redis-standalone-auth; do
 done
 ```
 
-本机根盘约有 17 GiB 可用空间，低于 Longhorn 默认的 25% 最小剩余空间阈值，首次创建卷时会看到 `ReplicaSchedulingFailure: disks are unavailable`。对于这个单节点实验环境，将阈值调整为 10% 后再重新创建失败的空卷：
+先检查当前机器的可用磁盘空间和 Longhorn 磁盘调度状态。此前实验中根盘仅余约 17 GiB，低于 Longhorn 默认的 25% 最小剩余空间阈值，创建卷时出现过 `ReplicaSchedulingFailure: disks are unavailable`。下面是当时将阈值调整为 10% 的处理命令，新机器不要直接执行；若磁盘空间不足，应先确认扩容或其他处理方案：
 
 ```bash
 kubectl -n longhorn-system get settings.longhorn.io \
@@ -861,14 +866,14 @@ kubectl exec redis-node-0 -n litellm -c redis -- \
   'redis-cli --raw -h redis -p 26379 SENTINEL replicas mymaster | grep -c "^name$"'
 
 kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  -h redis -p 6379 SET litellm-sentinel-test ok
-kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  -h redis -p 6379 GET litellm-sentinel-test
-kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  -h redis -p 6379 DEL litellm-sentinel-test
+  env REDISCLI_AUTH="${REDIS_PASSWORD}" sh -ceu '
+    redis_master=$(redis-cli --raw -h redis -p 26379 \
+      SENTINEL get-master-addr-by-name mymaster | head -n 1)
+    test -n "${redis_master}"
+    redis-cli --raw -h "${redis_master}" -p 6379 SET litellm-sentinel-test ok
+    redis-cli --raw -h "${redis_master}" -p 6379 GET litellm-sentinel-test
+    redis-cli --raw -h "${redis_master}" -p 6379 DEL litellm-sentinel-test
+  '
 
 unset REDIS_PASSWORD
 ```
@@ -877,7 +882,7 @@ unset REDIS_PASSWORD
 
 - Sentinel：`redis.litellm.svc.cluster.local:26379`
 - Sentinel master set：`mymaster`
-- Redis 服务：`redis.litellm.svc.cluster.local:6379`
+- Redis 服务：`redis.litellm.svc.cluster.local:6379`，可能连接到副本；写入时应通过 Sentinel 发现当前 master。
 
 #### 单节点 Redis - 限流用
 
