@@ -31,7 +31,16 @@ rockylinux9.8，24GB显存，10MB公网固定带宽，100GB磁盘
 
 下载地址： https://www.nvidia.com/en-us/drivers/unix/
 
-选择最新版下载即可（Linux x64/AMD64/EM64T 或 Linux aarch64 对应版本）。
+先确认驱动版本支持目标 GPU，再选择对应的 CPU 架构（Linux x64/AMD64/EM64T 或 Linux aarch64）。本文实验使用 A10 和 `595.104.02` 驱动；不要在不同 GPU 型号上直接照搬驱动版本。
+
+先检查现有环境。已经安装的依赖、已经禁用的 nouveau 可以跳过；`dnf update` 不是安装驱动的必要条件。若当前内核与默认启动内核不同，需要为重启后的内核也安装驱动模块，避免重启后 `nvidia-smi` 失效：
+
+```bash
+uname -r
+grubby --default-kernel
+rpm -q kernel-devel
+lsmod | grep nouveau
+```
 
 下载完成后，把安装包上传到 GPU 服务器，之后执行如下命令即可：
 
@@ -155,12 +164,18 @@ EOF
 安装 Kubernetes 组件：
 
 ```bash
-yum install kubeadm-1.36.* kubelet-1.36.* kubectl-1.36.* -y
+yum install kubeadm-1.36.0 kubelet-1.36.0 kubectl-1.36.0 -y
 systemctl enable --now kubelet
 kubeadm config images pull \
   --image-repository registry.cn-hangzhou.aliyuncs.com/google_containers --kubernetes-version 1.36.0
 # 初始化集群
-kubeadm init --apiserver-advertise-address xxxx  --image-repository registry.cn-hangzhou.aliyuncs.com/google_containers --cri-socket "unix:///var/run/containerd/containerd.sock" --kubernetes-version 1.36.0
+NODE_IP="$(ip -4 -o addr show dev eth0 | awk '{print $4}' | cut -d/ -f1)"
+test -n "${NODE_IP}"
+kubeadm init --apiserver-advertise-address "${NODE_IP}" \
+  --image-repository registry.cn-hangzhou.aliyuncs.com/google_containers \
+  --cri-socket unix:///run/containerd/containerd.sock \
+  --kubernetes-version 1.36.0 \
+  --pod-network-cidr 192.168.0.0/16
 # 加入其它节点
 kubeadm join 192.168.181.134:6443 --token xxx \
     --discovery-token-ca-cert-hash sha256:xxx
@@ -183,13 +198,16 @@ git clone https://gitee.com/dukuan/k8s-ha-install.git
 cd k8s-ha-install/
 git checkout manual-installation-v1.36.x
 cd single/
-kubectl create -f .
+# 本文只需要 CNI 和 metrics-server，不批量安装目录中的 Dashboard 等额外组件。
+sed -i 's#quay.io/calico/#m.daocloud.io/quay.io/calico/#g' calico.yaml
+kubectl apply --server-side -f calico.yaml
+kubectl apply --server-side -f comp.yaml
 ```
 
 解除污点：
 
 ```bash
-kubectl taint node  node-role.kubernetes.io/control-plane- --all
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
 
 查看集群状态：
@@ -223,6 +241,7 @@ helm version
 
 ```bash
 kubectl create ns gpu-operator
+kubectl label --overwrite ns gpu-operator pod-security.kubernetes.io/enforce=privileged
 ```
 
 #### 1.2.2.2 部署 GPU Operator
@@ -237,8 +256,8 @@ helm repo add nvidia https://helm.ngc.nvidia.com/nvidia \
 下载安装包：
 
 ```bash
-helm pull nvidia/gpu-operator
-tar xf gpu-operator-*.tgz
+helm pull nvidia/gpu-operator --version v26.7.2
+tar xf gpu-operator-v26.7.2.tgz
 cd gpu-operator/
 ```
 
@@ -251,14 +270,13 @@ image:
   repository: m.daocloud.io/registry.k8s.io/nfd/node-feature-discovery
 ```
 
-如果服务器已经按照 1.1.2 安装了 NVIDIA 驱动，需要通过 `driver.enabled=false` 禁止 GPU Operator 重复安装驱动，避免覆盖现有驱动或产生版本冲突。当前 Kubernetes 使用 Containerd，因此同时明确指定 `operator.defaultRuntime=containerd`：
+如果服务器已经按照 1.1.2 安装了 NVIDIA 驱动，需要通过 `driver.enabled=false` 禁止 GPU Operator 重复安装驱动，避免覆盖现有驱动或产生版本冲突。本文固定使用 GPU Operator `v26.7.2`；该版本会识别节点上的 Containerd，Chart 已不再使用旧的 `operator.defaultRuntime` 参数：
 
 ```bash
 helm install gpu-operator . \
   -n gpu-operator \
   --create-namespace \
-  --set driver.enabled=false \
-  --set operator.defaultRuntime=containerd
+  --set driver.enabled=false
 ```
 
 查看 Pod 状态：
@@ -308,7 +326,7 @@ spec:
   restartPolicy: OnFailure
   containers:
   - name: cuda-vectoradd
-    image: "nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda11.7.1-ubuntu20.04"
+    image: "nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda12.5.0-ubuntu22.04"
     resources:
       limits:
         nvidia.com/gpu: 1
@@ -323,6 +341,8 @@ kubectl create -f test.yaml
 
 ```bash
 kubectl logs cuda-vectoradd
+# 确认日志包含 Test PASSED 后删除临时测试 Pod
+kubectl delete pod cuda-vectoradd
 ```
 
 ### 1.2.3 动态存储配置
@@ -407,13 +427,12 @@ metadata:
 spec:
   containers:
   - name: volume-test
-    image: registry.cn-beijing.aliyuncs.com/dotbalo/nginx:1.15.12
+    image: m.daocloud.io/docker.io/library/busybox:1.36.1
     imagePullPolicy: IfNotPresent
+    command: ["sh", "-c", "sleep 3600"]
     volumeMounts:
     - name: volv
-      mountPath: /usr/share/nginx/html
-    ports:
-    - containerPort: 80
+      mountPath: /data
   volumes:
   - name: volv
     persistentVolumeClaim:
@@ -425,11 +444,19 @@ EOF
 kubectl create -f longhorn-pod-test.yaml
 ```
 
-写入数据测试：
+写入、读取并验证 Pod 重建后的持久化。以下 PVC 仅用于本次测试，不应存放业务数据；测试完成后删除 Pod 和专用测试 PVC：
 
 ```bash
-kubectl get po
-kubectl exec -ti volume-test -- bash
+kubectl wait --for=condition=Ready pod/volume-test --timeout=5m
+kubectl exec volume-test -- sh -ceu \
+  'printf LONGHORN_OK > /data/test.txt; sync; test "$(cat /data/test.txt)" = LONGHORN_OK'
+kubectl delete pod volume-test
+kubectl create -f longhorn-pod-test.yaml
+kubectl wait --for=condition=Ready pod/volume-test --timeout=5m
+kubectl exec volume-test -- sh -ceu \
+  'test "$(cat /data/test.txt)" = LONGHORN_OK; echo LONGHORN_PERSISTENCE_OK'
+kubectl delete pod volume-test
+kubectl delete pvc longhorn-redis-pvc
 ```
 
 ## 1.3 模型部署
@@ -480,7 +507,7 @@ spec:
   template:
     spec:
       nodeSelector:
-        kubernetes.io/hostname: izuf62nmmrsj356g2ju67ez
+        kubernetes.io/hostname: MODEL_NODE_PLACEHOLDER
       restartPolicy: Never
       containers:
         - name: importer
@@ -533,7 +560,11 @@ EOF
 创建导入 Job 并等待完成：
 
 ```bash
-kubectl apply -f model-import-job.yaml
+# 单节点实验：从实际节点标签读取 hostname，不要照搬其他 ECS 的节点名。
+MODEL_NODE="$(kubectl get nodes -o jsonpath='{.items[0].metadata.labels.kubernetes\.io/hostname}')"
+test -n "${MODEL_NODE}"
+sed "s/MODEL_NODE_PLACEHOLDER/${MODEL_NODE}/g" model-import-job.yaml \
+  | kubectl apply -f -
 kubectl wait --for=condition=complete \
   job/qwen35-4b-model-import -n models --timeout=30m
 ```
@@ -767,8 +798,8 @@ unset VLLM_API_KEY
 
 需要部署两个相互独立的 Redis Release：
 
-- `redis`：3 个 Redis + Sentinel Pod，用作 LiteLLM 缓存（`general_settings.cache`）。
-- `redis-single`：单节点 Redis，用作 LiteLLM 路由限流（`router_settings`）。当前限流 Redis 按单节点方式接入；后续 LiteLLM 支持 Sentinel 后，可再评估共用缓存 Redis。
+- `redis`：3 个 Redis + Sentinel Pod，用作 LiteLLM 响应缓存（`litellm_settings.cache` 和 `cache_params`）。
+- `redis-single`：单节点 Redis，用作 LiteLLM 路由限流（`router_settings`）和跨 Pod 协调。本文将它与响应缓存分开配置。
 
 > [!NOTE]
 > 本文是单节点 K8s 集群。3 个 Sentinel Pod 可以处理 Redis 进程或 Pod 故障，但都运行在同一台 ECS 上，无法提供节点级高可用；Longhorn 卷副本数同样应保持为 `1`。
@@ -782,7 +813,7 @@ for secret_name in redis-sentinel-auth redis-standalone-auth; do
   if ! kubectl get secret "${secret_name}" -n litellm >/dev/null 2>&1; then
     password_file=$(mktemp)
     chmod 600 "${password_file}"
-    openssl rand -hex 32 > "${password_file}"
+    openssl rand -hex 32 | tr -d '\n' > "${password_file}"
     kubectl create secret generic "${secret_name}" -n litellm \
       --from-file=redis-password="${password_file}"
     shred -u "${password_file}"
@@ -790,7 +821,7 @@ for secret_name in redis-sentinel-auth redis-standalone-auth; do
 done
 ```
 
-本机根盘约有 17 GiB 可用空间，低于 Longhorn 默认的 25% 最小剩余空间阈值，首次创建卷时会看到 `ReplicaSchedulingFailure: disks are unavailable`。对于这个单节点实验环境，将阈值调整为 10% 后再重新创建失败的空卷：
+只有出现磁盘调度失败时才检查以下设置。之前的实验节点根盘仅剩约 17 GiB，低于 Longhorn 默认的 25% 最小剩余空间阈值，创建卷时出现了 `ReplicaSchedulingFailure: disks are unavailable`。磁盘空间充足的新节点不需要降低阈值；遇到这种情况应先确认剩余容量并优先扩容，下面的 `10%` 仅是经确认后的实验环境示例，不是必做步骤：
 
 ```bash
 kubectl -n longhorn-system get settings.longhorn.io \
