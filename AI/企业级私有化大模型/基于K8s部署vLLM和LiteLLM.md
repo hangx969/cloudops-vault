@@ -204,6 +204,14 @@ kubectl apply --server-side -f calico.yaml
 kubectl apply --server-side -f comp.yaml
 ```
 
+镜像代理返回 `502` 时，先确认同版本官方镜像是否能访问，不要直接换成其他版本。例如本次上海节点可以从 Quay 拉取 Calico controller，使用以下命令回退到官方地址：
+
+```bash
+kubectl set image deployment/calico-kube-controllers -n kube-system \
+  calico-kube-controllers=quay.io/calico/kube-controllers:v3.32.1
+kubectl rollout status deployment/calico-kube-controllers -n kube-system --timeout=5m
+```
+
 解除污点：
 
 ```bash
@@ -298,6 +306,8 @@ kubectl describe node | grep Allocatable: -A 10
 ```
 
 **重启后 GPU 资源变为 `0` 的处理：** 如果 `nvidia-device-plugin` 日志出现 `couldn't initialize inotify: too many open files`，说明主机的 inotify 实例数已达到上限。先确认限制和当前用量，再提高限制并重建 device-plugin Pod：
+
+`fs.inotify.max_user_instances` 限制的是同一用户可创建的 inotify 实例数。在没有启用用户命名空间隔离的常见配置下，多个以 root 运行的系统服务和容器会共同消耗宿主机 UID 0 的额度。这与 GPU 显存无关，也不能仅凭 `too many open files` 就认定是 `ulimit -n` 太小；应结合日志触发点、inotify 用量和进程文件描述符限制判断。下面的 FD 统计用于辅助排查，不是精确的去重实例数。
 
 ```bash
 sysctl fs.inotify.max_user_instances
@@ -599,6 +609,7 @@ kubectl get pvc qwen35-4b-pvc -n models
 
 - 创建 `qwen35-vllm.yaml`，在同一个多文档 YAML 中定义 Secret、Deployment 和 Service。Secret 中只保留 `VLLM_API_KEY_PLACEHOLDER` 占位符，应用时在内存中替换，真实 API Key 不写入文章或 YAML 文件。
 - 镜像入口点已经是 `vllm serve`，因此通过 `args` 传入参数。vLLM 0.23.0 弃用了 `--model`，模型路径必须作为 `args` 的第一个位置参数。
+- 本地模型通过 PVC 挂载，并设置 `HF_HUB_OFFLINE=1`、`TRANSFORMERS_OFFLINE=1`，避免启动时重新从网络下载模型。GPU 设备交给 Device Plugin 分配，不硬编码 `CUDA_VISIBLE_DEVICES`。
 - 单节点只有一块 GPU，且 PVC 为 `ReadWriteOnce`，Deployment 使用 `Recreate`，避免 RollingUpdate 时新旧 Pod 争用同一块 GPU 和 PVC：
 
 ```yaml
@@ -632,7 +643,7 @@ spec:
     spec:
       containers:
         - name: qwen3-5-4b
-          image: registry.cn-beijing.aliyuncs.com/dotbalo/vllm-openai:latest
+          image: registry.cn-beijing.aliyuncs.com/dotbalo/vllm-openai@sha256:3a1e7f5904e1a1192a02aa0086ceaffc33985d7044c7bb25b3a43d61bdbe3ac0
           imagePullPolicy: IfNotPresent
           args:
             - "/data/modelscope/Qwen/Qwen3.5-4B" # PVC 挂载点下的模型目录
@@ -656,14 +667,10 @@ spec:
               value: "C.UTF-8"
             - name: LC_ALL
               value: "C.UTF-8"
-            - name: CUDA_VISIBLE_DEVICES
-              value: "0"
-            - name: NVIDIA_VISIBLE_DEVICES
-              value: "all"
-            - name: VLLM_USE_MODELSCOPE
-              value: "true"
-            - name: MODELSCOPE_CACHE
-              value: "/data/modelscope"
+            - name: HF_HUB_OFFLINE
+              value: "1"
+            - name: TRANSFORMERS_OFFLINE
+              value: "1"
             - name: VLLM_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -761,6 +768,7 @@ kubectl logs deployment/qwen3-5-4b-deployment -n models --tail=100
 模型访问测试。NodePort 由 Kubernetes 动态分配，不要写死示例端口；`enable_thinking=false` 用于让这次连通性测试只返回最终答案：
 
 ```bash
+NODE_IP="$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')"
 NODE_PORT="$(kubectl get service qwen3-5-4b-service \
   -n models \
   -o jsonpath='{.spec.ports[0].nodePort}')"
@@ -768,7 +776,7 @@ VLLM_API_KEY="$(kubectl get secret vllm-api-key \
   -n models \
   -o jsonpath='{.data.api-key}' | base64 -d)"
 
-curl -sS "http://127.0.0.1:${NODE_PORT}/v1/chat/completions" \
+curl -sS "http://${NODE_IP}:${NODE_PORT}/v1/chat/completions" \
   -H "Authorization: Bearer ${VLLM_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -876,32 +884,18 @@ kubectl get sts,pod,svc,pvc -n litellm \
 验证 Sentinel master、quorum、replica 数量和读写；测试键会在最后删除，不需要创建临时测试 Pod：
 
 ```bash
-REDIS_PASSWORD=$(kubectl get secret redis-sentinel-auth -n litellm \
-  -o jsonpath='{.data.redis-password}' | base64 -d)
-
-kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  -h redis -p 26379 SENTINEL get-master-addr-by-name mymaster
-
-kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  -h redis -p 26379 SENTINEL ckquorum mymaster
-
-kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" sh -c \
-  'redis-cli --raw -h redis -p 26379 SENTINEL replicas mymaster | grep -c "^name$"'
-
-kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  -h redis -p 6379 SET litellm-sentinel-test ok
-kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  -h redis -p 6379 GET litellm-sentinel-test
-kubectl exec redis-node-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  -h redis -p 6379 DEL litellm-sentinel-test
-
-unset REDIS_PASSWORD
+kubectl exec redis-node-0 -n litellm -c redis -- sh -ceu '
+  export REDISCLI_AUTH="$(cat "$REDIS_PASSWORD_FILE")"
+  redis-cli --raw -h redis -p 26379 SENTINEL ckquorum mymaster
+  master=$(redis-cli --raw -h redis -p 26379 \
+    SENTINEL get-master-addr-by-name mymaster | head -n 1)
+  test -n "$master"
+  printf "Sentinel master: %s\n" "$master"
+  redis-cli --raw -h redis -p 26379 SENTINEL replicas mymaster | grep -c "^name$"
+  redis-cli --raw -h "$master" SET litellm-sentinel-test ok
+  redis-cli --raw -h "$master" GET litellm-sentinel-test
+  redis-cli --raw -h "$master" DEL litellm-sentinel-test
+'
 ```
 
 供 LiteLLM 使用的集群内地址为：
@@ -909,6 +903,8 @@ unset REDIS_PASSWORD
 - Sentinel：`redis.litellm.svc.cluster.local:26379`
 - Sentinel master set：`mymaster`
 - Redis 服务：`redis.litellm.svc.cluster.local:6379`
+
+`redis:6379` 的 Service 可能命中 replica。写入应使用 Sentinel 发现的 master 地址，LiteLLM 响应缓存也应按 Sentinel 方式连接。
 
 #### 单节点 Redis - 限流用
 
@@ -938,79 +934,349 @@ helm status redis-single -n litellm
 kubectl get sts,pod,svc,pvc -n litellm \
   -l app.kubernetes.io/instance=redis-single
 
-REDIS_PASSWORD=$(kubectl get secret redis-standalone-auth -n litellm \
-  -o jsonpath='{.data.redis-password}' | base64 -d)
-
-kubectl exec redis-single-master-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  SET litellm-rate-limit-test ok
-kubectl exec redis-single-master-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  GET litellm-rate-limit-test
-kubectl exec redis-single-master-0 -n litellm -c redis -- \
-  env REDISCLI_AUTH="${REDIS_PASSWORD}" redis-cli --raw \
-  DEL litellm-rate-limit-test
-
-unset REDIS_PASSWORD
+kubectl exec redis-single-master-0 -n litellm -c redis -- sh -ceu '
+  export REDISCLI_AUTH="$(cat "$REDIS_PASSWORD_FILE")"
+  redis-cli --raw SET litellm-rate-limit-test ok
+  redis-cli --raw GET litellm-rate-limit-test
+  redis-cli --raw DEL litellm-rate-limit-test
+'
 ```
 
 供 LiteLLM 限流使用的集群内地址为 `redis-single-master.litellm.svc.cluster.local:6379`。
 
 ### 1.4.2 高可用 Postgresql 部署
 
-在 Kubernetes 集群中按照高可用 PG 数据库：
+使用 Bitnami `postgresql-ha` Chart `16.3.2`，部署 3 个 PostgreSQL/repmgr 实例和 2 个 Pgpool。数据库名为 `litellm`，每个 PostgreSQL PVC 为 `8Gi`，使用单副本 Longhorn。
+
+> [!WARNING]
+> 本次经确认使用 `bitnamilegacy` 的 PostgreSQL `17.6.0` 和 Pgpool `4.6.3` 镜像，仅用于实验。这些公开旧镜像不再获得安全更新，生产环境应选用仍在维护的方案。所有实例都在同一台 ECS 上，不能提供节点级高可用。
+
+先生成认证 Secret。密码不带尾部换行，也不写入 Helm values；已有 Secret 不会被重复生成的密码覆盖：
 
 ```bash
-tar xf postgresql-ha.tar.gz
-cd postgresql-ha/
+kubectl create namespace litellm --dry-run=client -o yaml | kubectl apply --server-side -f -
+if ! kubectl get secret postgresql-ha-auth -n litellm >/dev/null 2>&1; then
+  secret_dir=$(mktemp -d)
+  for key in password repmgr-password admin-password sr-check-password; do
+    openssl rand -hex 32 | tr -d '\n' > "${secret_dir}/${key}"
+  done
+  kubectl create secret generic postgresql-ha-auth -n litellm \
+    --from-file="${secret_dir}"
+  for key in password repmgr-password admin-password sr-check-password; do
+    shred -u "${secret_dir}/${key}"
+  done
+  rmdir "${secret_dir}"
+fi
 ```
 
-查看状态：
+保存为 `postgresql-ha-values.yaml`。单节点使用软反亲和性，不能设置必须分散到不同节点的硬反亲和性：
+
+```yaml
+global:
+  imageRegistry: m.daocloud.io/docker.io
+  security:
+    allowInsecureImages: true
+postgresql:
+  image:
+    repository: bitnamilegacy/postgresql-repmgr
+    tag: 17.6.0-debian-12-r2
+    digest: sha256:9336b076c7f846043872a9eacf8496967c5c3ba9028c80dcd8a81a148a8cfa65
+  replicaCount: 3
+  podAntiAffinityPreset: soft
+  username: postgres
+  database: litellm
+  existingSecret: postgresql-ha-auth
+pgpool:
+  image:
+    repository: bitnamilegacy/pgpool
+    tag: 4.6.3-debian-12-r0
+    digest: sha256:663b1cbe74bd10ff963ef43e8cc5dfc4032e11c10c6e72297b6c312434fdef17
+  replicaCount: 2
+  podAntiAffinityPreset: soft
+  existingSecret: postgresql-ha-auth
+persistence:
+  enabled: true
+  storageClass: longhorn
+  size: 8Gi
+volumePermissions:
+  enabled: false
+metrics:
+  enabled: false
+```
+
+下载 Chart 并部署；离线准备时，可将相同的 `.tgz` 和 values 文件上传后直接使用：
 
 ```bash
-kubectl get po -n litellm
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update bitnami
+helm pull bitnami/postgresql-ha --version 16.3.2
+helm upgrade --install pg ./postgresql-ha-16.3.2.tgz \
+  -n litellm -f postgresql-ha-values.yaml
+
+kubectl rollout status statefulset/pg-postgresql-ha-postgresql -n litellm --timeout=15m
+kubectl rollout status deployment/pg-postgresql-ha-pgpool -n litellm --timeout=15m
+kubectl get sts,deploy,pod,svc,pvc -n litellm
 ```
 
-链接测试：
+通过 Pgpool 连接数据库。密码在 Pod 内读取挂载的 Secret 文件，不作为 `kubectl exec` 的参数传入：
 
 ```bash
-kubectl exec -ti pg-postgresql-ha-pgpool-74f76c59fd-gkgs9 -n litellm -- bash
-I have no name!@pg-postgresql-ha-pgpool-74f76c59fd-gkgs9:/$ psql -U postgres -h pg-postgresql-ha-pgpool
-Password for user postgres: postgres_litellm
-postgres=# \l
-                                  List of databases
-   Name   |  Owner   | Encoding | Locale Provider |  Collate   |   Ctype    | ...
-----------+----------+----------+------------------+------------+------------+-----
- litellm  | postgres | UTF8     | libc             | en_US.UTF-8 | en_US.UTF-8 |
+kubectl exec pg-postgresql-ha-postgresql-0 -n litellm -c postgresql -- bash -ceu '
+  export PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")"
+  psql -v ON_ERROR_STOP=1 -U postgres -h pg-postgresql-ha-pgpool -d litellm \
+    -c "SELECT current_database(), version();"
+'
 ```
+
+再分别查看 3 个实例的实时角色和复制状态。`pg_is_in_recovery()` 为 `f` 的是 primary，为 `t` 的是 standby；primary 的 `pg_stat_replication` 应显示 2 个 `streaming` 连接。这里使用 SQL 验证，避免旧镜像中直接 `kubectl exec repmgr` 时因 UID 缺少 passwd 映射而出现 `could not get current user name`：
+
+```bash
+for ordinal in 0 1 2; do
+  echo "postgresql-${ordinal}"
+  kubectl exec "pg-postgresql-ha-postgresql-${ordinal}" -n litellm -c postgresql -- bash -ceu '
+    export PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")"
+    psql -U postgres -d postgres \
+      -c "SELECT pg_is_in_recovery();" \
+      -c "SELECT application_name, state, sync_state FROM pg_stat_replication;"
+  '
+done
+```
+
+LiteLLM 使用的数据库入口为 `pg-postgresql-ha-pgpool.litellm.svc.cluster.local:5432`。
 
 ### 1.4.3 部署 LiteLLM
 
-部署 LiteLLM：
+部署 2 个 LiteLLM `v1.105.1` Pod，共用 PostgreSQL 数据库、Sentinel 响应缓存和独立 Redis 路由限流实例。模型后端使用 1.3.2 的集群内 Service，不再填写示例 IP 或 API Key。
+
+先创建 `litellm-auth`，并把模型服务的 API Key 复制到 `litellm` 命名空间。Secret 不能跨命名空间直接引用；真实密钥只提交给 Kubernetes，不写入文章或部署 YAML。`LITELLM_SALT_KEY` 用于加密数据库中的凭据，部署后不要随意轮换：
 
 ```bash
-kubectl create -f litellm-deploy.yaml -n litellm
+if ! kubectl get secret litellm-auth -n litellm >/dev/null 2>&1; then
+  secret_dir=$(mktemp -d)
+  db_password=$(kubectl get secret postgresql-ha-auth -n litellm \
+    -o jsonpath='{.data.password}' | base64 -d)
+  printf 'postgresql://postgres:%s@pg-postgresql-ha-pgpool.litellm.svc.cluster.local:5432/litellm' \
+    "${db_password}" > "${secret_dir}/DATABASE_URL"
+  unset db_password
+  printf 'sk-%s' "$(openssl rand -hex 32)" > "${secret_dir}/LITELLM_MASTER_KEY"
+  printf 'sk-%s' "$(openssl rand -hex 32)" > "${secret_dir}/LITELLM_SALT_KEY"
+  printf admin > "${secret_dir}/UI_USERNAME"
+  openssl rand -hex 24 | tr -d '\n' > "${secret_dir}/UI_PASSWORD"
+  kubectl create secret generic litellm-auth -n litellm --from-file="${secret_dir}"
+  for key in DATABASE_URL LITELLM_MASTER_KEY LITELLM_SALT_KEY UI_USERNAME UI_PASSWORD; do
+    shred -u "${secret_dir}/${key}"
+  done
+  rmdir "${secret_dir}"
+fi
+
+if ! kubectl get secret vllm-api-key -n litellm >/dev/null 2>&1; then
+  kubectl get secret vllm-api-key -n models -o json \
+    | jq 'del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.managedFields,.metadata.annotations) | .metadata.namespace="litellm"' \
+    | kubectl apply -f -
+fi
 ```
 
-查看状态：
+保存以下配置为 `litellm-config.yaml`。响应缓存位于 `litellm_settings.cache_params`，不要写成 `general_settings.cache`；Sentinel 自身和 Redis 数据连接都需要密码。路由限流和跨 Pod 协调使用独立的单节点 Redis：
 
-```bash
-kubectl get po -n litellm
+```yaml
+model_list:
+  - model_name: Qwen3.5-4B
+    litellm_params:
+      model: openai/Qwen3.5-4B
+      api_base: http://qwen3-5-4b-service.models.svc.cluster.local:8080/v1
+      api_key: os.environ/VLLM_API_KEY
+litellm_settings:
+  cache: true
+  cache_params:
+    type: redis
+    service_name: mymaster
+    sentinel_nodes:
+      - [redis-node-0.redis-headless.litellm.svc.cluster.local, 26379]
+      - [redis-node-1.redis-headless.litellm.svc.cluster.local, 26379]
+      - [redis-node-2.redis-headless.litellm.svc.cluster.local, 26379]
+    sentinel_password: os.environ/REDIS_SENTINEL_PASSWORD
+    password: os.environ/REDIS_SENTINEL_PASSWORD
+    ttl: 600
+router_settings:
+  redis_host: redis-single-master.litellm.svc.cluster.local
+  redis_port: 6379
+  redis_password: os.environ/REDIS_PASSWORD
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  database_connection_pool_limit: 10
+  coordination_redis:
+    host: redis-single-master.litellm.svc.cluster.local
+    port: 6379
+    password: os.environ/REDIS_PASSWORD
 ```
 
-访问测试：
+创建 ConfigMap：
 
 ```bash
-kubectl get svc -n litellm
+kubectl create configmap litellm-config -n litellm \
+  --from-file=config.yaml=litellm-config.yaml \
+  --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-登录 LiteLLM 后台后，接下来就可以添加之前部署的模型服务，和基础课程添加过程一致，将 **API Base** 填写为 K8s Service 地址（如 `http://qwen3-5-4b-service.models:8080/v1`），API Key 填写为 `xxxx`。
+先单独执行数据库迁移，避免两个 LiteLLM Pod 同时修改表结构。保存为 `litellm-migrate.yaml`；迁移 Job 和服务使用相同的镜像 digest：
 
-使用 LiteLLM 调用模型测试：
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: litellm-db-migrate
+  namespace: litellm
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ghcr.io/berriai/litellm@sha256:b7b9e2c306343721802253d0dd9436b9634a2eb4e14da7c7cf06c5c7b7530802 # v1.105.1
+          imagePullPolicy: IfNotPresent
+          args: [--skip_server_startup]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-auth
+                  key: DATABASE_URL
+            - name: DISABLE_SCHEMA_UPDATE
+              value: "false"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+```
 
 ```bash
-kubectl get svc -n litellm
-curl -H "Authorization: Bearer <litellm-virtual-key>" -X POST http://127.0.0.1:31398/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B","stream": true, "messages": [{"role": "user", "content": "介绍下你自己"}]}'
+kubectl apply -f litellm-migrate.yaml
+kubectl wait --for=condition=complete job/litellm-db-migrate -n litellm --timeout=15m
+```
+
+保存以下内容为 `litellm-deploy.yaml`。服务 Pod 禁止自动更新数据库 schema，通过 Secret 注入 API Key 和认证信息：
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: litellm
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+        - name: litellm
+          image: ghcr.io/berriai/litellm@sha256:b7b9e2c306343721802253d0dd9436b9634a2eb4e14da7c7cf06c5c7b7530802 # v1.105.1
+          imagePullPolicy: IfNotPresent
+          args: [--config, /app/config.yaml, --port, "4000", --num_workers, "1"]
+          ports:
+            - name: http
+              containerPort: 4000
+          envFrom:
+            - secretRef:
+                name: litellm-auth
+          env:
+            - name: VLLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vllm-api-key
+                  key: api-key
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-standalone-auth
+                  key: redis-password
+            - name: REDIS_SENTINEL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-sentinel-auth
+                  key: redis-password
+            - name: STORE_MODEL_IN_DB
+              value: "True"
+            - name: DISABLE_SCHEMA_UPDATE
+              value: "true"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          startupProbe:
+            httpGet:
+              path: /health/liveliness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health/liveliness
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: litellm-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm-service
+  namespace: litellm
+spec:
+  selector:
+    app: litellm
+  ports:
+    - name: http
+      port: 4000
+      targetPort: http
+  type: NodePort
+```
+
+部署并检查：
+
+```bash
+kubectl apply -f litellm-deploy.yaml
+kubectl rollout status deployment/litellm -n litellm --timeout=15m
+kubectl get pods,svc -n litellm
+# 确认迁移和服务启动成功后清理临时迁移 Job
+kubectl delete job litellm-db-migrate -n litellm
+```
+
+使用实际节点内网 IP 和动态 NodePort 访问。管理后台入口为 `http://<节点内网IP>:<NodePort>/ui`，用户名为 `admin`，密码保存在 `litellm-auth` 的 `UI_PASSWORD` 中；后台创建的虚拟 Key 可用于后续调用。模型 API Base 已在 ConfigMap 中配置，API Key 来自 `vllm-api-key`，无需再填写 `xxxx`。
+
+```bash
+NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+LITELLM_NODE_PORT=$(kubectl get svc litellm-service -n litellm -o jsonpath='{.spec.ports[0].nodePort}')
+read -rs -p 'LiteLLM virtual key: ' LITELLM_VIRTUAL_KEY; echo
+curl -fsS "http://${NODE_IP}:${LITELLM_NODE_PORT}/v1/chat/completions" \
+  -H "Authorization: Bearer ${LITELLM_VIRTUAL_KEY}" \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"Qwen3.5-4B","stream":false,"temperature":0,"max_tokens":32,"chat_template_kwargs":{"enable_thinking":false},"messages":[{"role":"user","content":"只回复：K8S_LITELLM_OK"}]}'
+unset LITELLM_VIRTUAL_KEY
 ```
 
 ### 1.4.4 限流测试
