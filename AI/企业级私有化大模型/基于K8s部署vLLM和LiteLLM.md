@@ -1413,20 +1413,41 @@ HAMi可以在多个容器和工作负载之间实现设备共享，解决AI算�
 
 官方文档： https://project-hami.io/zh/docs/installation/prerequisites
 
-HAMI 管理 GPU 机器，需要先给 GPU 机器添加 `gpu=on` 的标签：
+以下命令针对本文的单节点 A10 环境。先给 GPU 节点添加 `gpu=on` 标签：
 
 ```bash
-kubectl label nodes {nodeid} gpu=on
+GPU_NODE="$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')"
+kubectl label node "${GPU_NODE}" gpu=on --overwrite
 ```
 
-HAMI 的安装依赖当前 K8s 的版本，所有先获取当前的 K8s 版本：
+HAMi 使用的 kube-scheduler 镜像版本需要匹配集群版本：
 
 ```bash
 kubectl version
 ```
 
-安装 HAMI：
-- HAMi 需要替换 GPU Operator 自带的设备插件：禁用后 Operator 会删除该插件的 DaemonSet/Pod，驱动、Toolkit 和 DCGM 保留
+HAMi 和 GPU Operator 的设备插件不能同时管理同一节点的 `nvidia.com/gpu`。首次切换前，先停掉本文的单副本 vLLM，再关闭 GPU Operator 的设备插件；驱动、Toolkit 和 DCGM 保留。完成后续测试，在 1.5.5 恢复模型服务。已经完成切换的集群不要重复停机安装。
+
+先备份当前 Helm 的全部生效值，再用同版本 Chart 更新，避免丢失之前修改过的镜像仓库配置。`--no-hooks` 仅用于这次同版本、只关闭设备插件的更新，不应直接套用于版本升级：
+
+```bash
+kubectl scale deployment/qwen3-5-4b-deployment -n models --replicas=0
+kubectl wait --for=delete pod -n models -l app=qwen3-5-4b --timeout=3m
+
+helm get values gpu-operator -n gpu-operator --all -o yaml \
+  > gpu-operator.before-hami.values.yaml
+helm upgrade gpu-operator nvidia/gpu-operator \
+  --version v26.7.2 -n gpu-operator \
+  -f gpu-operator.before-hami.values.yaml \
+  --set devicePlugin.enabled=false \
+  --no-hooks --wait --timeout 5m
+
+kubectl get clusterpolicy cluster-policy \
+  -o jsonpath='{.spec.devicePlugin.enabled}{"\n"}'
+kubectl get daemonset -n gpu-operator
+```
+
+确认设备插件已关闭，且原 `nvidia-device-plugin-daemonset` 已退出，再安装 HAMi：
 
 ```bash
 helm repo add hami-charts https://project-hami.github.io/HAMi/
@@ -1435,34 +1456,61 @@ helm pull hami-charts/hami --version 2.9.0 --untar
 cd hami
 
 K8S_VERSION="$(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
+GPU_NODE="$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')"
 
 helm install hami . -n kube-system \
   --set-string scheduler.kubeScheduler.image.tag="${K8S_VERSION}" \
+  --set-string scheduler.nodeName="${GPU_NODE}" \
   --set-string scheduler.extender.image.registry=m.daocloud.io/docker.io \
   --set-string scheduler.patch.image.registry=m.daocloud.io/docker.io \
-  --set-string scheduler.patch.imageNew.registry=m.daocloud.io/docker.io \
+  --set-string scheduler.patch.imageNew.registry=registry.cn-hangzhou.aliyuncs.com \
+  --set-string scheduler.patch.imageNew.repository=google_containers/kube-webhook-certgen \
+  --set-string scheduler.patch.imageNew.tag=v1.1.1 \
+  --set devicePlugin.enabled=true \
   --set-string devicePlugin.image.registry=m.daocloud.io/docker.io \
   --set-string devicePlugin.monitor.image.registry=m.daocloud.io/docker.io \
+  --set-string devicePlugin.runtimeClassName=nvidia-legacy \
+  --set devicePlugin.gpuOperatorToolkitReady.enabled=true \
+  --set devicePlugin.deviceSplitCount=10 \
+  --set devicePlugin.deviceMemoryScaling=1 \
+  --set devicePlugin.deviceCoreScaling=1 \
   --set-string mockDevicePlugin.image.registry=m.daocloud.io/docker.io \
   --wait --timeout 10m
 ```
 
+本机部署时需要保留的兼容配置：
+
+- `nvidia-legacy`：本机使用 GPU Operator 26.7.2。使用 `nvidia` RuntimeClass 时，按 GPU UUID 分配的容器曾报 `unresolvable CDI devices management.nvidia.com/gpu=GPU-...`；改用已有的 `nvidia-legacy` 后正常。这里只选择容器运行时，不关闭集群的 CDI，也不修改驱动或 Toolkit。
+- `scheduler.nodeName`：仅将 HAMi 调度器自身固定到当前单节点，避免 Chart 2.9.0 的硬反亲和规则阻塞滚动更新。多节点环境应重新评估此设置；业务 GPU Pod 不要设置 `nodeName`，否则会绕过 HAMi 调度。
+- 证书 Job 使用阿里云 `kube-webhook-certgen:v1.1.1`，其镜像清单摘要已与原镜像核对一致，避免原 DaoCloud 路径返回 502。
+- `deviceSplitCount=10` 表示每张物理卡最多提供 10 个逻辑分配份额；显存和算力缩放均为 `1`，本次不做超卖。
+
 查看启动状态：
 
 ```bash
-kubectl get pods -n kube-system | grep hami
+kubectl rollout status deployment/hami-scheduler -n kube-system --timeout=3m
+kubectl rollout status daemonset/hami-device-plugin -n kube-system --timeout=3m
+kubectl get pods -n kube-system -l app.kubernetes.io/name=hami
 ```
 
 查看注册的 GPU 资源信息：
 
 ```bash
-kubectl describe node | grep nvidia.com/gpu:
-nvidia.com/gpu: 10  # 一个GPU卡变成10个vGPU了
+kubectl get node "${GPU_NODE}" \
+  -o jsonpath='{.status.allocatable.nvidia\.com/gpu}{"\n"}'
+```
+
+本文单张 A10 输出 `10`。这不是 10 张物理卡，也不是把显存平均切成了 10 份；每个 Pod 实际使用的显存和算力由 `gpumem`、`gpucores` 决定。
+
+查看物理卡信息：
+
+```bash
+nvidia-smi --query-gpu=name,uuid,memory.total --format=csv
 ```
 
 ### 1.5.2 GPU 调度测试
 
-创建测试 Pod：
+创建测试 Pod。沿用已缓存的 vLLM 镜像，并显式申请 1 GiB 显存、10% 算力配额，避免测试任务占整卡。首次切换时 vLLM 仍保持停止；已经完成 1.5.5 的集群，也可以在有剩余配额时运行此测试。
 
 ```bash
 tee 1-gpu-test.yaml <<'EOF'
@@ -1470,109 +1518,257 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: hami-gpu-test
+  namespace: models
   labels:
     app: hami-gpu-test
 spec:
+  schedulerName: hami-scheduler
+  runtimeClassName: nvidia-legacy
+  restartPolicy: Never
   containers:
     - name: hami-gpu-test
       imagePullPolicy: IfNotPresent
-      image: registry.cn-beijing.aliyuncs.com/dotbalo/vllm-openai:latest
-      command:
-        - sh
-        - -c
-        - nvidia-smi
-  restartPolicy: OnFailure
-  env:
-    - name: TZ
-      value: "Asia/Shanghai"
-    - name: LANG
-      value: "C.UTF-8"
-    - name: LC_ALL
-      value: "C.UTF-8"
-  resources:
-    limits:
-      nvidia.com/gpu: 1 # 这里就是申请的虚拟卡了
+      image: registry.cn-beijing.aliyuncs.com/dotbalo/vllm-openai@sha256:3a1e7f5904e1a1192a02aa0086ceaffc33985d7044c7bb25b3a43d61bdbe3ac0
+      command: ["nvidia-smi"]
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+          nvidia.com/gpumem: 1024
+          nvidia.com/gpucores: 10
 EOF
+kubectl create -f 1-gpu-test.yaml
+kubectl wait --for=jsonpath='{.status.phase}'=Succeeded \
+  pod/hami-gpu-test -n models --timeout=3m
 ```
 
 查看日志：
 
 ```bash
-kubectl logs -f hami-gpu-test
+kubectl logs hami-gpu-test -n models
+kubectl get pod hami-gpu-test -n models \
+  -o jsonpath='{.spec.schedulerName}{"\n"}{.metadata.annotations.hami\.io/vgpu-devices-allocated}{"\n"}'
+kubectl delete pod hami-gpu-test -n models
 ```
 
 注意：
-- 上述分配了 1 个 vGPU，但是为指定显存和核心数，所以会独占一个显卡，和无虚拟化一致。
-- 针对GPU调度，一般都是设置request和limit一样的。只写limit，意思是request和limit一样的。
+
+- Pod 中的 `nvidia.com/gpu: 1` 表示申请访问一张物理 GPU、消耗其一个逻辑份额，不代表固定大小的“十分之一张卡”。本机只写 `gpu: 1` 而不指定显存和算力时，会按整卡申请，不能实现共享。
+- `resources` 必须放在容器下面，不能与 `containers` 平级；环境变量同样属于容器字段。
+- GPU 扩展资源的 request 和 limit 应相同；只写 limit 时，Kubernetes 会将其作为 request。
+- `nvidia-smi` 用于检查驱动、设备可见性；隔离是否生效，还要结合下面的 CUDA 可见显存和超额分配测试判断。
 
 ### 1.5.3 分配指定显存
 
-所以需要控制每个显卡使用的显存大小，用多少申请多少，可以添加 `gpumem` 参数：
+用 `nvidia.com/gpumem` 指定每张卡的显存额度，单位是 MiB，值写整数，不加 `Gi` 后缀。例如：
 
 ```yaml
 resources:
   limits:
-    nvidia.com/gpu: 2
-    nvidia.com/gpumem: 3000
+    nvidia.com/gpu: 1
+    nvidia.com/gpumem: 1024
+    nvidia.com/gpucores: 10
 ```
 
-以上代表分配两个显卡，每个显卡分配 3000Mi 显存。创建后查看日志：
+本机只有一张 A10，因此不能写 `gpu: 2`。多卡机器上的 `gpu: 2, gpumem: 3000` 才表示访问两张不同的物理卡，每张分配 3000 MiB。Node 上显示的 10 个逻辑份额不改变这个约束。
 
+创建两只持续运行的测试 Pod，每只申请 1024 MiB / 10% 算力配额，验证它们可以共用一张卡。测试会执行 CUDA 矩阵乘法，并尝试申请 1536 MiB，预期被 1024 MiB 限制拒绝。镜像中使用 `python3`，不是 `python`：
+
+```bash
+tee hami-share-test.py <<'PY'
+import json
+import os
+import time
+import torch
+
+x = torch.ones((1024, 1024), device="cuda")
+y = x @ x
+torch.cuda.synchronize()
+assert y[0, 0].item() == 1024.0
+
+rejected = False
+try:
+    oversized = torch.empty(1536 * 1024 * 1024, dtype=torch.uint8, device="cuda")
+except torch.OutOfMemoryError:
+    rejected = True
+assert rejected, "HAMi memory limit not enforced"
+
+print(json.dumps({
+    "gpu_uuid": os.environ.get("NVIDIA_VISIBLE_DEVICES"),
+    "visible_memory_mib": torch.cuda.get_device_properties(0).total_memory // (1024 ** 2),
+    "matmul": y[0, 0].item(),
+    "over_limit_rejected": rejected,
+}), flush=True)
+time.sleep(600)
+PY
+
+TEST_CODE="$(<hami-share-test.py)"
+for POD_NAME in hami-share-a hami-share-b; do
+  jq --arg name "${POD_NAME}" --arg code "${TEST_CODE}" '
+    .metadata.name = $name |
+    .spec.terminationGracePeriodSeconds = 5 |
+    .spec.containers[0].command = ["python3", "-u", "-c", $code]
+  ' < <(kubectl create -f 1-gpu-test.yaml --dry-run=client -o json) \
+    | kubectl create -f -
+done
+
+kubectl wait --for=condition=Ready -n models \
+  pod/hami-share-a pod/hami-share-b --timeout=3m
+kubectl logs hami-share-a -n models
+kubectl logs hami-share-b -n models
+kubectl get pod hami-share-a hami-share-b -n models \
+  -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.annotations.hami\.io/vgpu-devices-allocated}{"\n"}{end}'
 ```
-nvidia-smi
+
+Pod Ready 只表示进程已启动，还应等待两份日志都输出 JSON：两只 Pod 的 GPU UUID 相同，`visible_memory_mib` 都为 `1024`，`matmul` 为 `1024.0`，`over_limit_rejected` 为 `true`。测试完成后及时清理，避免占用配额：
+
+```bash
+kubectl delete pod hami-share-a hami-share-b -n models
+```
+
+负向测试：下面的 Pod 申请 32768 MiB，超过本机 A10 的 24564 MiB，不应被调度。检查到 `FailedScheduling`、Pod 仍为 Pending 且未绑定节点后删除：
+
+```bash
+kubectl create -f 1-gpu-test.yaml --dry-run=client -o json \
+  | jq '.metadata.name = "hami-too-much-memory" |
+        .spec.containers[0].resources.limits["nvidia.com/gpumem"] = "32768"' \
+  | kubectl create -f -
+kubectl wait --for=condition=PodScheduled=false \
+  pod/hami-too-much-memory -n models --timeout=1m
+kubectl describe pod hami-too-much-memory -n models
+kubectl delete pod hami-too-much-memory -n models
 ```
 
 注意：
-- `nvidia.com/gpu` 和 `nvidia.com/gpumem` 不能超过物理机真实显卡数量和显存大小。
-- 显存大小也可以按照百分比分配：`nvidia.com/gpumem-percentage: 50`（但是不推荐）。
+
+- 本文没有开启显存超卖，同卡上所有活动任务的显存申请总量不能超过卡的可分配显存；算力申请总量也不能超过 `100`。
+- `nvidia.com/gpumem-percentage: 50` 可申请半张卡的显存，但不能与 `gpumem` 同时配置。本文使用固定 MiB 值，便于核算。
+- `gpucores: 10` 是 HAMi 软件算力配额，不是 MIG 硬件分区，也不保证实测吞吐恰好等于整卡的 10%；本节验证调度、CUDA 运算和显存限制，不作性能承诺。
 
 ### 1.5.4 指定显卡类型调度
 
-平台HAMI 支持不同显卡级别的调度，比如某个任务需要 A100，可以添加如下注释：
+HAMi 支持用 Pod annotation 选择 GPU 型号。本文机器是 A10，使用白名单 `A10`：
 
 ```yaml
 metadata:
   annotations:
-    nvidia.com/use-gputype: "A10,V100" # 多种类型逗号分割
-    # nvidia.com/nouse-gputype: "1080,2080" # 指定黑名单
+    nvidia.com/use-gputype: "A10"
+    # nvidia.com/use-gputype: "A10,A100" # 多个允许的型号用逗号分隔
+    # nvidia.com/nouse-gputype: "V100" # 排除指定型号
 ```
 
-设备类型可以通过 `nvidia-smi` 命令查看：
+Deployment 中的 annotation 要放在 `spec.template.metadata.annotations`，只写在 Deployment 自身的 `metadata.annotations` 不会传给 Pod。GPU 型号筛选也不能绕过 vLLM 自身的硬件要求，例如 V100 仍不满足前文的 CC ≥ 7.5。
+
+先查看真实型号，再做正向、负向测试：
 
 ```bash
 nvidia-smi -L
-GPU 0: NVIDIA A10 Ada Generation
-GPU 1: NVIDIA A10 Ada Generation
 ```
+
+本机实际只有 `GPU 0: NVIDIA A10`，不是两张卡，也不是 Ada Generation。
+
+```bash
+kubectl create -f 1-gpu-test.yaml --dry-run=client -o json \
+  | jq '.metadata.name = "hami-type-a10" |
+        .metadata.annotations = {"nvidia.com/use-gputype": "A10"}' \
+  | kubectl create -f -
+kubectl wait --for=jsonpath='{.status.phase}'=Succeeded \
+  pod/hami-type-a10 -n models --timeout=3m
+kubectl logs hami-type-a10 -n models
+kubectl delete pod hami-type-a10 -n models
+
+kubectl create -f 1-gpu-test.yaml --dry-run=client -o json \
+  | jq '.metadata.name = "hami-type-a100" |
+        .metadata.annotations = {"nvidia.com/use-gputype": "A100"}' \
+  | kubectl create -f -
+kubectl wait --for=condition=PodScheduled=false \
+  pod/hami-type-a100 -n models --timeout=1m
+kubectl describe pod hami-type-a100 -n models
+kubectl delete pod hami-type-a100 -n models
+```
+
+预期 A10 测试成功；A100 测试保持 Pending、未绑定节点，并出现 `FailedScheduling`。仅看到 Pending 不足以证明型号筛选生效，应结合事件及 HAMi 调度器日志确认原因。
 
 ### 1.5.5 VLLM 测试
 
-修改之前的 vllm 启动文件，添加显存配置：
+在已有 Deployment 上做局部更新，保留模型 PVC、Secret、镜像、探针和 Service。本文配置为 20 GiB 显存、80% 算力配额，给其他小任务留出资源；`--gpu-memory-utilization 0.95` 按容器可见的 20 GiB 计算，vLLM 的目标显存预算约为 19 GiB，并非物理卡显存的 95%。
 
-```yaml
-resources:
-  limits:
-    nvidia.com/gpu: 1
-    nvidia.com/gpumem: 20480
-  requests:
-    nvidia.com/gpu: 1
-    nvidia.com/gpumem: 20480
-```
-
-修改显存使用率为 0.95：
-
-```yaml
-- "--gpu_memory_utilization"
-- "0.95"
-```
-
-查看启动状态：
+单卡服务继续使用 `Recreate`，更新时会短暂不可用。先保存当前配置，再创建战略合并补丁；容器按名称匹配，只更新列出的字段：
 
 ```bash
-kubectl get po -n models -owide
+kubectl get deployment qwen3-5-4b-deployment -n models -o json \
+  > qwen35-vllm.before-hami.json
+
+tee qwen35-vllm-hami.patch.yaml <<'EOF'
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        nvidia.com/use-gputype: "A10"
+    spec:
+      schedulerName: hami-scheduler
+      runtimeClassName: nvidia-legacy
+      containers:
+        - name: qwen3-5-4b
+          args:
+            - "/data/modelscope/Qwen/Qwen3.5-4B"
+            - "--port"
+            - "8080"
+            - "--served-model-name"
+            - "Qwen3.5-4B"
+            - "--gpu-memory-utilization"
+            - "0.95"
+            - "--max-model-len"
+            - "16384"
+            - "--max-num-batched-tokens"
+            - "16384"
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              nvidia.com/gpumem: 20480
+              nvidia.com/gpucores: 80
+            requests:
+              nvidia.com/gpu: 1
+              nvidia.com/gpumem: 20480
+              nvidia.com/gpucores: 80
+EOF
+
+kubectl patch deployment qwen3-5-4b-deployment -n models \
+  --type=strategic --patch-file=qwen35-vllm-hami.patch.yaml
+kubectl scale deployment/qwen3-5-4b-deployment -n models --replicas=1
+kubectl rollout status deployment/qwen3-5-4b-deployment -n models --timeout=15m
 ```
 
-查看显存占用：
+查看调度结果、注入的额度和容器可见显存：
+
 ```bash
-nvidia-smi
+POD="$(kubectl get pod -n models -l app=qwen3-5-4b -o jsonpath='{.items[0].metadata.name}')"
+kubectl get pod "${POD}" -n models \
+  -o jsonpath='{.spec.schedulerName}{"\n"}{.spec.runtimeClassName}{"\n"}{.metadata.annotations.hami\.io/vgpu-devices-allocated}{"\n"}'
+kubectl exec -n models "${POD}" -- sh -c \
+  'env | grep -E "^(CUDA_DEVICE_MEMORY_LIMIT|CUDA_DEVICE_SM_LIMIT|NVIDIA_VISIBLE_DEVICES)"'
+kubectl exec -n models "${POD}" -- python3 -c \
+  'import torch; print(torch.cuda.get_device_properties(0).total_memory // (1024 ** 2))'
+kubectl exec -n models "${POD}" -- nvidia-smi
+nvidia-smi --query-gpu=name,memory.total,memory.used --format=csv
 ```
+
+预期 scheduler 为 `hami-scheduler`，runtime 为 `nvidia-legacy`，分配注解包含 `NVIDIA,20480,80`，CUDA 可见显存为 `20480` MiB。宿主机仍能看到物理卡的完整显存。两者不是同一层的统计，不应混用。
+
+模型 Ready 后，重新执行 [[#1.3.2 部署模型|vLLM 调用验证]] 和 [[#1.4.3.5 管理后台与调用验证|LiteLLM 调用验证]]。还可重跑 1.5.3 的两只共享测试 Pod，同时调用模型：20 GiB 的模型加两只 1 GiB 测试任务应能共用同一张 A10；完成后删除测试 Pod，只保留模型服务。
+
+后续维护时，1.3.2 的 YAML 仍表示切换 HAMi 前的整卡配置。重新应用它会恢复整卡申请和 `0.9`，需要同步合并本节的 HAMi 配置，或重新应用补丁。
+
+若模型启动失败，先清理本节创建的测试 Pod，再回滚 Deployment；保留 HAMi、PVC 和 Secret，不重装驱动：
+
+```bash
+jq '{spec: .spec}' qwen35-vllm.before-hami.json \
+  > qwen35-vllm.rollback.json
+kubectl patch deployment qwen3-5-4b-deployment -n models \
+  --type=merge --patch-file=qwen35-vllm.rollback.json
+kubectl scale deployment/qwen3-5-4b-deployment -n models --replicas=1
+kubectl rollout status deployment/qwen3-5-4b-deployment -n models --timeout=15m
+```
+
+参数语义参考 [HAMi 2.9.0 设备配置与实现](https://github.com/Project-HAMi/HAMi/blob/v2.9.0/pkg/device/nvidia/device.go)；本机配置以以上实测命令为准。
