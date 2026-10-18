@@ -1114,11 +1114,14 @@ general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
   database_connection_pool_limit: 10
+  use_redis_transaction_buffer: true
   coordination_redis:
     host: redis-single-master.litellm.svc.cluster.local
     port: 6379
     password: os.environ/REDIS_PASSWORD
 ```
+
+`use_redis_transaction_buffer: true` 开启费用更新缓冲：各 Pod 先将费用更新写入 Redis，再由取得锁的 Pod 汇总后写入 PostgreSQL，减少并发更新同一记录的竞争。它与响应缓存分别配置，不能替代数据库。参见 [Redis transaction buffer 官方说明](https://docs.litellm.ai/docs/proxy/prod#redis-transaction-buffer)。
 
 创建 ConfigMap：
 
@@ -1132,7 +1135,17 @@ kubectl create configmap litellm-config -n litellm \
 
 #### 1.4.3.3 执行数据库迁移
 
-先单独执行数据库迁移，避免两个 LiteLLM Pod 同时修改表结构。保存为 `litellm-migrate.yaml`；迁移 Job 和服务使用相同的镜像 digest：
+PostgreSQL Helm chart 负责部署数据库、账号和高可用组件；LiteLLM 的业务表仍要由应用初始化。数据库迁移会按 LiteLLM 版本创建或更新表、字段、索引和约束，用于保存虚拟 Key、用户、团队、UI 添加的模型配置及费用记录。即使模型入口来自 ConfigMap，这些数据库功能仍需要匹配的表结构。模型权重和 ConfigMap 不在迁移范围内，这一步也不涉及 PostgreSQL 版本升级。
+
+表结构必须与应用版本匹配，但不一定要单独创建迁移 Job。当前 LiteLLM 默认在启动时运行 `prisma migrate deploy`。课程部署文件没有禁用启动时初始化，因此即使没有独立 Job，也可能完成部署。不过课件使用的 `main-stable` 未固定 digest，仅凭文件无法确定当时镜像的具体初始化方式，数据库也可能已经初始化。参见 [LiteLLM 官方迁移说明](https://docs.litellm.ai/docs/proxy/prod#use-prisma-migrate-deploy)。
+
+本文的两个服务 Pod 共用数据库，因此先由一个 Job 完成迁移，成功后再部署服务。Prisma 自带迁移锁，多 Pod 同时启动不等于一定会破坏数据库；单独执行主要是减少锁等待，并在迁移失败时停止后续发布。参见 [Prisma 迁移锁说明](https://docs.prisma.io/docs/orm/v6/prisma-migrate/workflows/development-and-production#advisory-locking)。参数分工如下：
+
+- 迁移 Job 设置 `DISABLE_SCHEMA_UPDATE=false`，允许更新表结构；`--skip_server_startup` 表示初始化后退出、不启动 HTTP 服务，不会跳过迁移。
+- 服务 Pod 设置 `DISABLE_SCHEMA_UPDATE=true`，不再自动修改表结构，但仍可正常读写模型、Key 和费用等业务数据，并非只读数据库。
+- 迁移 Job 和服务使用相同的镜像 digest，确保迁移文件与应用版本一致。
+
+保存以下内容为 `litellm-migrate.yaml`：
 
 ```yaml
 apiVersion: batch/v1
@@ -1170,6 +1183,10 @@ spec:
 kubectl apply -f litellm-migrate.yaml
 kubectl wait --for=condition=complete job/litellm-db-migrate -n litellm --timeout=15m
 ```
+
+首次使用空数据库或升级 LiteLLM 时，应先执行迁移；没有待执行的迁移时，`migrate deploy` 不会重复应用已完成的迁移。升级时用新版本镜像创建新的迁移 Job，不能把旧 Job 的 `Complete` 状态当作本次迁移结果。Pod 重启、扩缩容、修改 ConfigMap 中的模型地址或缓存参数，以及在 UI 新增模型或 Key，都不需要因此重新迁移。当前服务已禁用自动更新表结构，不能省略迁移步骤后直接部署到空库或升级版本。
+
+升级前先备份并确认兼容性。迁移不会重置数据库，但具体 SQL 仍可能改写数据或锁表；回滚 LiteLLM 镜像也不会自动回滚数据库结构。
 
 #### 1.4.3.4 部署 Deployment 和 Service
 
@@ -1335,7 +1352,7 @@ LiteLLM 支持如下三种限流方案：
 - **Guaranteed**：系统会严格进行限制，确保不超过设定的限制值
 - **Dynamic**：动态调整，系统根据实时负载、历史调用等状态，动态调整限制规则
 
-比如限制某个 Key，每分钟最大 Token 为 2000，请求数为 3：
+在比如限制某个 Key，每分钟最大 Token 为 2000，请求数为 3：
 
 - **TPM Limit**：`2000`
 - **TPM Rate Limit Type**：`Dynamic`
