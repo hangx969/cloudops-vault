@@ -805,8 +805,8 @@ unset VLLM_API_KEY
 
 参考文档：
 
-- LiteLLM 配置：https://docs.litellm.com.cn/docs/proxy/config_settings
-- Bitnami Redis Helm Chart：https://github.com/bitnami/charts/tree/main/bitnami/redis
+- LiteLLM 配置：  https://docs.litellm.com.cn/docs/proxy/config_settings
+- Bitnami Redis Helm Chart： https://github.com/bitnami/charts/tree/main/bitnami/redis
 
 需要部署两个相互独立的 Redis Release：
 
