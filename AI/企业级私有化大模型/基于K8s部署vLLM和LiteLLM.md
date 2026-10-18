@@ -1052,6 +1052,8 @@ LiteLLM 使用的数据库入口为 `pg-postgresql-ha-pgpool.litellm.svc.cluster
 
 部署 2 个 LiteLLM `v1.105.1` Pod，共用 PostgreSQL 数据库、Sentinel 响应缓存和独立 Redis 路由限流实例。模型后端使用 1.3.2 的集群内 Service，不再填写示例 IP 或 API Key。
 
+#### 1.4.3.1 认证 Secret 准备
+
 先创建 `litellm-auth`，并把模型服务的 API Key 复制到 `litellm` 命名空间。Secret 不能跨命名空间直接引用；真实密钥只提交给 Kubernetes，不写入文章或部署 YAML。`LITELLM_SALT_KEY` 用于加密数据库中的凭据，部署后不要随意轮换：
 
 ```bash
@@ -1079,6 +1081,8 @@ if ! kubectl get secret vllm-api-key -n litellm >/dev/null 2>&1; then
     | kubectl apply -f -
 fi
 ```
+
+#### 1.4.3.2 模型与缓存配置（ConfigMap）
 
 保存以下配置为 `litellm-config.yaml`。响应缓存位于 `litellm_settings.cache_params`，不要写成 `general_settings.cache`；Sentinel 自身和 Redis 数据连接都需要密码。路由限流和跨 Pod 协调使用独立的单节点 Redis：
 
@@ -1125,6 +1129,8 @@ kubectl create configmap litellm-config -n litellm \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
+#### 1.4.3.3 执行数据库迁移
+
 先单独执行数据库迁移，避免两个 LiteLLM Pod 同时修改表结构。保存为 `litellm-migrate.yaml`；迁移 Job 和服务使用相同的镜像 digest：
 
 ```yaml
@@ -1163,6 +1169,8 @@ spec:
 kubectl apply -f litellm-migrate.yaml
 kubectl wait --for=condition=complete job/litellm-db-migrate -n litellm --timeout=15m
 ```
+
+#### 1.4.3.4 部署 Deployment 和 Service
 
 保存以下内容为 `litellm-deploy.yaml`。服务 Pod 禁止自动更新数据库 schema，通过 Secret 注入 API Key 和认证信息：
 
@@ -1272,6 +1280,8 @@ kubectl get pods,svc -n litellm
 kubectl delete job litellm-db-migrate -n litellm
 ```
 
+#### 1.4.3.5 管理后台与调用验证
+
 使用实际节点内网 IP 和动态 NodePort 访问。管理后台入口为 `http://<节点内网IP>:<NodePort>/ui`，用户名为 `admin`，密码保存在 `litellm-auth` 的 `UI_PASSWORD` 中；后台创建的虚拟 Key 可用于后续调用。模型 API Base 已在 ConfigMap 中配置，API Key 来自 `vllm-api-key`，无需再填写 `xxxx`。
 
 ```bash
@@ -1284,6 +1294,31 @@ curl -fsS "http://${NODE_IP}:${LITELLM_NODE_PORT}/v1/chat/completions" \
   -d '{"model":"Qwen3.5-4B","stream":false,"temperature":0,"max_tokens":32,"chat_template_kwargs":{"enable_thinking":false},"messages":[{"role":"user","content":"只回复：K8S_LITELLM_OK"}]}'
 unset LITELLM_VIRTUAL_KEY
 ```
+
+#### 1.4.3.6 模型配置来源与更新维护
+
+本文的 `Qwen3.5-4B` 已通过 `litellm` 命名空间的 `litellm-config` ConfigMap 接入：`model_list` 定义模型，Deployment 将其中的 `config.yaml` 挂载到 `/app/config.yaml`，LiteLLM 启动时通过 `--config /app/config.yaml` 加载，无需再到 UI 添加同一份后端定义。
+
+ConfigMap 和 UI 是两种不同的模型配置来源：
+
+- ConfigMap 中的模型由配置文件管理，修改时应更新 `litellm-config.yaml` 和对应的 ConfigMap，不能通过 UI 直接修改这份文件。
+- 当前已开启 `STORE_MODEL_IN_DB=True`。通过 UI/API 添加或修改的数据库模型配置保存在 PostgreSQL 中，不会自动回写 ConfigMap；开启该参数也不会自动将 `model_list` 中的模型转为数据库管理。
+
+两种来源可以同时加载，但同一份后端定义应选择一种方式维护，避免在 UI 和 ConfigMap 中重复配置后产生不一致。参见 [LiteLLM 模型管理说明](https://docs.litellm.ai/docs/proxy/model_management)。
+
+当前 Deployment 使用 `subPath: config.yaml` 挂载配置文件。此类挂载不会自动接收 ConfigMap 更新，因此只执行 `kubectl apply` 更新 ConfigMap，不会让正在运行的 Pod 加载新配置；需要滚动重启 LiteLLM，让新 Pod 重新挂载文件并读取配置。参见 [Kubernetes ConfigMap 更新说明](https://kubernetes.io/docs/concepts/configuration/configmap/)。
+
+后续修改模型时，先更新完整的 `litellm-config.yaml`，保留现有缓存、路由及数据库配置，再在已配置目标集群管理员 kubeconfig 的 ECS 终端中执行：
+
+```bash
+kubectl create configmap litellm-config -n litellm \
+  --from-file=config.yaml=litellm-config.yaml \
+  --dry-run=client -o yaml | kubectl apply -f -
+kubectl rollout restart deployment/litellm -n litellm
+kubectl rollout status deployment/litellm -n litellm --timeout=15m
+```
+
+更新完成后，按 [[#1.4.3.5 管理后台与调用验证|管理后台与调用验证]] 重新确认模型可用。
 
 ### 1.4.4 限流测试
 
