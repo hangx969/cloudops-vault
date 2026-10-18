@@ -1282,7 +1282,7 @@ kubectl delete job litellm-db-migrate -n litellm
 
 #### 1.4.3.5 管理后台与调用验证
 
-使用实际节点内网 IP 和动态 NodePort 访问。管理后台入口为 `http://<节点内网IP>:<NodePort>/ui`，用户名为 `admin`，密码保存在 `litellm-auth` 的 `UI_PASSWORD` 中；后台创建的虚拟 Key 可用于后续调用。模型 API Base 已在 ConfigMap 中配置，API Key 来自 `vllm-api-key`，无需再填写 `xxxx`。
+使用实际节点内网 IP 和动态 NodePort 访问。管理后台入口为 `http://<节点内网IP>:<NodePort>/ui`，用户名为 `admin`，密码保存在 `litellm-auth` 的 `UI_PASSWORD` 中；后台创建的虚拟 Key 可用于后续调用。模型 API Base 已在 ConfigMap 中配置，API Key 来自 `vllm-api-key`。
 
 ```bash
 NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
