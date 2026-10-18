@@ -1571,7 +1571,7 @@ resources:
 
 本机只有一张 A10，因此不能写 `gpu: 2`。多卡机器上的 `gpu: 2, gpumem: 3000` 才表示访问两张不同的物理卡，每张分配 3000 MiB。Node 上显示的 10 个逻辑份额不改变这个约束。
 
-创建两只持续运行的测试 Pod，每只申请 1024 MiB / 10% 算力配额，验证它们可以共用一张卡。测试会执行 CUDA 矩阵乘法，并尝试申请 1536 MiB，预期被 1024 MiB 限制拒绝。镜像中使用 `python3`，不是 `python`：
+创建两只持续运行的测试 Pod，每只申请 1024 MiB / 10% 算力配额，验证它们可以共用一张卡。测试会执行 CUDA 矩阵乘法，并尝试申请 1536 MiB，预期被 1024 MiB 限制拒绝。
 
 ```bash
 tee hami-share-test.py <<'PY'
@@ -1619,13 +1619,13 @@ kubectl get pod hami-share-a hami-share-b -n models \
   -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.annotations.hami\.io/vgpu-devices-allocated}{"\n"}{end}'
 ```
 
-Pod Ready 只表示进程已启动，还应等待两份日志都输出 JSON：两只 Pod 的 GPU UUID 相同，`visible_memory_mib` 都为 `1024`，`matmul` 为 `1024.0`，`over_limit_rejected` 为 `true`。测试完成后及时清理，避免占用配额：
+Pod Ready 只表示进程已启动，还应等待两份日志都输出 JSON：两只 Pod 的 GPU UUID 相同，`visible_memory_mib` 都为 `1024`，`matmul` 为 `1024.0`，`over_limit_rejected` 为 `true`。日志中的 `HAMI-core ... OOM` 是主动申请超额显存触发的预期结果，不是模型服务故障。测试完成后及时清理，避免占用配额：
 
 ```bash
 kubectl delete pod hami-share-a hami-share-b -n models
 ```
 
-负向测试：下面的 Pod 申请 32768 MiB，超过本机 A10 的 24564 MiB，不应被调度。检查到 `FailedScheduling`、Pod 仍为 Pending 且未绑定节点后删除：
+负向测试：下面的 Pod 申请 32768 MiB，超过本机 A10 的 24564 MiB，不应被调度。检查到 `FailedScheduling` 和 `FilteringFailed: CardInsufficientMemory`，Pod 仍为 Pending 且未绑定节点后删除：
 
 ```bash
 kubectl create -f 1-gpu-test.yaml --dry-run=client -o json \
@@ -1686,7 +1686,7 @@ kubectl describe pod hami-type-a100 -n models
 kubectl delete pod hami-type-a100 -n models
 ```
 
-预期 A10 测试成功；A100 测试保持 Pending、未绑定节点，并出现 `FailedScheduling`。仅看到 Pending 不足以证明型号筛选生效，应结合事件及 HAMi 调度器日志确认原因。
+预期 A10 测试成功；A100 测试保持 Pending、未绑定节点，并出现 `FailedScheduling` 和 `FilteringFailed: CardTypeMismatch`。仅看到 Pending 不足以证明型号筛选生效，应结合事件及 HAMi 调度器日志确认原因。
 
 ### 1.5.5 VLLM 测试
 
@@ -1763,12 +1763,25 @@ nvidia-smi --query-gpu=name,memory.total,memory.used --format=csv
 若模型启动失败，先清理本节创建的测试 Pod，再回滚 Deployment；保留 HAMi、PVC 和 Secret，不重装驱动：
 
 ```bash
-jq '{spec: .spec}' qwen35-vllm.before-hami.json \
+jq '[{"op": "replace", "path": "/spec", "value": .spec}]' qwen35-vllm.before-hami.json \
   > qwen35-vllm.rollback.json
 kubectl patch deployment qwen3-5-4b-deployment -n models \
-  --type=merge --patch-file=qwen35-vllm.rollback.json
+  --type=json --patch-file=qwen35-vllm.rollback.json
 kubectl scale deployment/qwen3-5-4b-deployment -n models --replicas=1
 kubectl rollout status deployment/qwen3-5-4b-deployment -n models --timeout=15m
 ```
+
+本机验收记录（2026-10-18，K8s 1.36.0 / HAMi 2.9.0 / 单张 A10）：
+
+| 验证项 | 实测结果 |
+| --- | --- |
+| GPU 调度 | 测试 Pod 经 `hami-scheduler` 分配，`nvidia-smi` 正常执行 |
+| 显存共享与隔离 | 两只 Pod 与 vLLM 共用同一 GPU UUID；每只可见 1024 MiB，CUDA 矩阵乘法成功，1536 MiB 超额申请被拒绝 |
+| 容量与型号筛选 | 32768 MiB 申请被 `CardInsufficientMemory` 拒绝；A10 型号匹配成功，A100 被 `CardTypeMismatch` 拒绝 |
+| vLLM 配额 | `20480 MiB / 80`，显存使用率 `0.95`，模型 `1/1 Running`、0 次重启 |
+| 共享期间推理 | vLLM 直连及两个 LiteLLM 副本均返回 HTTP 200、完整短回复和 `finish_reason=stop` |
+| 清理与数据保留 | 临时测试 Pod 已全部删除，原模型 PVC 仍为 Bound；Secret、镜像和探针未改动 |
+
+本轮修改前的 Deployment、补丁及验收日志保存在 ECS 的 `/opt/vllm-stack/hami-lab.BIIZ85/`，目录仅 root 可访问。该目录是本机操作留档，不是重新部署所需的模型目录。
 
 参数语义参考 [HAMi 2.9.0 设备配置与实现](https://github.com/Project-HAMi/HAMi/blob/v2.9.0/pkg/device/nvidia/device.go)；本机配置以以上实测命令为准。
