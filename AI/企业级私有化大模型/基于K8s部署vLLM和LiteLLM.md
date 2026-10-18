@@ -26,9 +26,9 @@ k8s原生不支持调度GPU的，cpu、memory等资源是kubelet从主机上采�
 - 华为云： https://www.huaweicloud.com/
 
 选择 NVIDIA GPU 时，先检查计算能力（Compute Capability，CC）。[vLLM 官方 GPU 安装要求](https://docs.vllm.ai/en/stable/getting_started/installation/gpu/)明确要求：`GPU: compute capability 7.5 or higher`，即计算能力至少为 7.5。
-
+比如：
 - NVIDIA V100：CC 为 `7.0`，低于 `7.5`，不满足当前官方 vLLM 的最低要求，不能直接用于本文的部署方案。参见 [NVIDIA 旧款 GPU 计算能力表](https://developer.nvidia.com/cuda/gpus/legacy)。
-- 当前使用的 NVIDIA A10：CC 为 `8.6`，满足 `≥ 7.5` 的最低要求。参见 [NVIDIA GPU 计算能力表](https://developer.nvidia.com/cuda/gpus)。
+- NVIDIA A10：CC 为 `8.6`，满足 `≥ 7.5` 的最低要求。参见 [NVIDIA GPU 计算能力表](https://developer.nvidia.com/cuda/gpus)。
 
 CC 描述 GPU 硬件架构能力，不是显存大小，也不是 CUDA Toolkit 版本号；升级驱动或 CUDA 不会提高这项硬件能力。CC 达标后，还需检查模型显存需求，以及所用 vLLM 镜像与驱动的兼容性。
 
@@ -1406,6 +1406,9 @@ HAMi（异构AI计算虚拟化中间件）是一个用于管理K8s集群中异�
 
 HAMi可以在多个容器和工作负载之间实现设备共享，解决AI算力集群中GPU资源碎片化、利用率低的问题。支持多个厂商的GPU虚拟化，比如NVIDIA、华为、Intel、AMD、沐曦等。
 
+简单说明：
+![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20261018221525045.png)
+
 ### 1.5.1 HAMI 部署
 
 官方文档： https://project-hami.io/zh/docs/installation/prerequisites
@@ -1427,16 +1430,11 @@ kubectl version
 ```bash
 helm repo add hami-charts https://project-hami.github.io/HAMi/
 helm repo update hami-charts
-# 固定为课程目录中的 Chart 版本，解压后进入 Chart 目录
 helm pull hami-charts/hami --version 2.9.0 --untar
 cd hami
 
-# 使用 Kubernetes 服务端版本匹配 kube-scheduler 镜像 tag
 K8S_VERSION="$(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
 
-# kube-scheduler 沿用 Chart 中的阿里云仓库，正确的 tag 字段为 image.tag
-# 以下镜像 registry 与课程 values.yaml 保持一致
-# 每卡 10 份、显存和核心倍率均为 1 等其余配置沿用 Chart 2.9.0 默认值
 helm install hami . -n kube-system \
   --set-string scheduler.kubeScheduler.image.tag="${K8S_VERSION}" \
   --set-string scheduler.extender.image.registry=m.daocloud.io/docker.io \
