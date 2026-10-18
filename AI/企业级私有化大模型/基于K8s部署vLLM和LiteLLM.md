@@ -911,6 +911,7 @@ kubectl exec redis-node-0 -n litellm -c redis -- sh -ceu '
 `redis:6379` 的 Service 可能命中 replica。写入应使用 Sentinel 发现的 master 地址，LiteLLM 响应缓存也应按 Sentinel 方式连接。
 
 #### 单节点 Redis - 限流用
+限流用的Redis，liteLLM暂时不支持哨兵或者高可用，只能先部署单节点
 
 使用同一个 Chart 的 `standalone` 架构部署独立 Redis，数据 PVC 同样设置为 `1Gi`：
 
