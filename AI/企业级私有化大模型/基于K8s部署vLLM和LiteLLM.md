@@ -1404,7 +1404,7 @@ data: [DONE]
 
 HAMi（异构AI计算虚拟化中间件）是一个用于管理K8s集群中异构AI计算设备的开源平台，前身为8s-vGPU-scheduler(第四范式)，目前为CNCF正在孵化的开源项目。
 
-HAMi可以在多个容器和工作负载之间实现设备共享，解决AI算力集群中GPU资源碎片化、利用率低的问题。支持多个厂商的GPU虚拟化，比如NVIDIA、华为、Intel、AMD、沐曦de
+HAMi可以在多个容器和工作负载之间实现设备共享，解决AI算力集群中GPU资源碎片化、利用率低的问题。支持多个厂商的GPU虚拟化，比如NVIDIA、华为、Intel、AMD、沐曦等。
 
 ### 1.5.1 HAMI 部署
 
@@ -1426,10 +1426,26 @@ kubectl version
 
 ```bash
 helm repo add hami-charts https://project-hami.github.io/HAMi/
-helm pull hami-charts/hami
-# 解压安装包，修改镜像配置
-sed -i 's#docker.io#m.daocloud.io/docker.io#g' values.yaml
-helm install hami . --set scheduler.kubeScheduler.imageTag=v1.35.3 -n kube-system
+helm repo update hami-charts
+# 固定为课程目录中的 Chart 版本，解压后进入 Chart 目录
+helm pull hami-charts/hami --version 2.9.0 --untar
+cd hami
+
+# 使用 Kubernetes 服务端版本匹配 kube-scheduler 镜像 tag
+K8S_VERSION="$(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
+
+# kube-scheduler 沿用 Chart 中的阿里云仓库，正确的 tag 字段为 image.tag
+# 以下镜像 registry 与课程 values.yaml 保持一致
+# 每卡 10 份、显存和核心倍率均为 1 等其余配置沿用 Chart 2.9.0 默认值
+helm install hami . -n kube-system \
+  --set-string scheduler.kubeScheduler.image.tag="${K8S_VERSION}" \
+  --set-string scheduler.extender.image.registry=m.daocloud.io/docker.io \
+  --set-string scheduler.patch.image.registry=m.daocloud.io/docker.io \
+  --set-string scheduler.patch.imageNew.registry=m.daocloud.io/docker.io \
+  --set-string devicePlugin.image.registry=m.daocloud.io/docker.io \
+  --set-string devicePlugin.monitor.image.registry=m.daocloud.io/docker.io \
+  --set-string mockDevicePlugin.image.registry=m.daocloud.io/docker.io \
+  --wait --timeout 10m
 ```
 
 查看启动状态：
