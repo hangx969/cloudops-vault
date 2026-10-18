@@ -1500,7 +1500,7 @@ kubectl get node "${GPU_NODE}" \
   -o jsonpath='{.status.allocatable.nvidia\.com/gpu}{"\n"}'
 ```
 
-本文单张 A10 输出 `10`。这不是 10 张物理卡，也不是把显存平均切成了 10 份；每个 Pod 实际使用的显存和算力由 `gpumem`、`gpucores` 决定。
+本文单张 A10 输出 `10`。这不是 10 张物理卡，也不是把显存平均切成了 10 份；每个 Pod 的显存额度通过 `gpumem` 单独指定。
 
 查看物理卡信息：
 
@@ -1510,7 +1510,7 @@ nvidia-smi --query-gpu=name,uuid,memory.total --format=csv
 
 ### 1.5.2 GPU 调度测试
 
-创建测试 Pod。沿用已缓存的 vLLM 镜像，并显式申请 1 GiB 显存、10% 算力配额，避免测试任务占整卡。首次切换时 vLLM 仍保持停止；已经完成 1.5.5 的集群，也可以在有剩余配额时运行此测试。
+创建测试 Pod。沿用已缓存的 vLLM 镜像，并显式申请 1 GiB 显存，避免测试任务申请整卡显存。首次切换时 vLLM 仍保持停止；已经完成 1.5.5 的集群，也可以在有剩余显存额度时运行此测试。
 
 ```bash
 tee 1-gpu-test.yaml <<'EOF'
@@ -1534,7 +1534,6 @@ spec:
         limits:
           nvidia.com/gpu: 1
           nvidia.com/gpumem: 1024
-          nvidia.com/gpucores: 10
 EOF
 kubectl create -f 1-gpu-test.yaml
 kubectl wait --for=jsonpath='{.status.phase}'=Succeeded \
@@ -1552,7 +1551,7 @@ kubectl delete pod hami-gpu-test -n models
 
 注意：
 
-- Pod 中的 `nvidia.com/gpu: 1` 表示申请访问一张物理 GPU、消耗其一个逻辑份额，不代表固定大小的“十分之一张卡”。本机只写 `gpu: 1` 而不指定显存和算力时，会按整卡申请，不能实现共享。
+- Pod 中的 `nvidia.com/gpu: 1` 表示申请访问一张物理 GPU、消耗其一个逻辑份额，不代表固定大小的“十分之一张卡”。本机只写 `gpu: 1` 而不指定显存时，默认申请整卡显存；本节通过显式设置 `gpumem` 实现显存共享。
 - `resources` 必须放在容器下面，不能与 `containers` 平级；环境变量同样属于容器字段。
 - GPU 扩展资源的 request 和 limit 应相同；只写 limit 时，Kubernetes 会将其作为 request。
 - `nvidia-smi` 用于检查驱动、设备可见性；隔离是否生效，还要结合下面的 CUDA 可见显存和超额分配测试判断。
@@ -1566,12 +1565,11 @@ resources:
   limits:
     nvidia.com/gpu: 1
     nvidia.com/gpumem: 1024
-    nvidia.com/gpucores: 10
 ```
 
 本机只有一张 A10，因此不能写 `gpu: 2`。多卡机器上的 `gpu: 2, gpumem: 3000` 才表示访问两张不同的物理卡，每张分配 3000 MiB。Node 上显示的 10 个逻辑份额不改变这个约束。
 
-创建两只持续运行的测试 Pod，每只申请 1024 MiB / 10% 算力配额，验证它们可以共用一张卡。测试会执行 CUDA 矩阵乘法，并尝试申请 1536 MiB，预期被 1024 MiB 限制拒绝。
+创建两只持续运行的测试 Pod，每只申请 1024 MiB 显存，验证它们可以共用一张卡。测试会执行 CUDA 矩阵乘法，并尝试申请 1536 MiB，预期被 1024 MiB 限制拒绝。
 
 ```bash
 tee hami-share-test.py <<'PY'
@@ -1640,9 +1638,9 @@ kubectl delete pod hami-too-much-memory -n models
 
 注意：
 
-- 本文没有开启显存超卖，同卡上所有活动任务的显存申请总量不能超过卡的可分配显存；算力申请总量也不能超过 `100`。
+- 本文没有开启显存超卖，同卡上所有活动任务的显存申请总量不能超过卡的可分配显存。
 - `nvidia.com/gpumem-percentage: 50` 可申请半张卡的显存，但不能与 `gpumem` 同时配置。本文使用固定 MiB 值，便于核算。
-- `gpucores: 10` 是 HAMi 软件算力配额，不是 MIG 硬件分区，也不保证实测吞吐恰好等于整卡的 10%；本节验证调度、CUDA 运算和显存限制，不作性能承诺。
+- 本节只验证调度、CUDA 运算和显存限制，不验证算力隔离或性能。
 
 ### 1.5.4 指定显卡类型调度
 
@@ -1690,9 +1688,9 @@ kubectl delete pod hami-type-a100 -n models
 
 ### 1.5.5 VLLM 测试
 
-在已有 Deployment 上做局部更新，保留模型 PVC、Secret、镜像、探针和 Service。本文配置为 20 GiB 显存、80% 算力配额，给其他小任务留出资源；`--gpu-memory-utilization 0.95` 按容器可见的 20 GiB 计算，vLLM 的目标显存预算约为 19 GiB，并非物理卡显存的 95%。
+在已有 Deployment 上做局部更新，保留模型 PVC、Secret、镜像、探针和 Service。本文配置为 20 GiB 显存，给其他小任务留出显存空间，不设置显式算力配额；`--gpu-memory-utilization 0.95` 按容器可见的 20 GiB 计算，vLLM 的目标显存预算约为 19 GiB，并非物理卡显存的 95%。
 
-单卡服务继续使用 `Recreate`，更新时会短暂不可用。先保存当前配置，再创建战略合并补丁；容器按名称匹配，只更新列出的字段：
+单卡服务继续使用 `Recreate`，更新时会短暂不可用。先保存当前配置，再创建战略合并补丁；容器按名称匹配，`resources` 使用 `$patch: replace` 完整替换，避免已有的旧资源配额残留。若已额外配置 CPU、内存等资源，需要在下面的资源块中一并保留：
 
 ```bash
 kubectl get deployment qwen3-5-4b-deployment -n models -o json \
@@ -1724,14 +1722,13 @@ spec:
             - "--max-num-batched-tokens"
             - "16384"
           resources:
+            $patch: replace
             limits:
               nvidia.com/gpu: 1
               nvidia.com/gpumem: 20480
-              nvidia.com/gpucores: 80
             requests:
               nvidia.com/gpu: 1
               nvidia.com/gpumem: 20480
-              nvidia.com/gpucores: 80
 EOF
 
 kubectl patch deployment qwen3-5-4b-deployment -n models \
@@ -1747,41 +1744,13 @@ POD="$(kubectl get pod -n models -l app=qwen3-5-4b -o jsonpath='{.items[0].metad
 kubectl get pod "${POD}" -n models \
   -o jsonpath='{.spec.schedulerName}{"\n"}{.spec.runtimeClassName}{"\n"}{.metadata.annotations.hami\.io/vgpu-devices-allocated}{"\n"}'
 kubectl exec -n models "${POD}" -- sh -c \
-  'env | grep -E "^(CUDA_DEVICE_MEMORY_LIMIT|CUDA_DEVICE_SM_LIMIT|NVIDIA_VISIBLE_DEVICES)"'
+  'env | grep -E "^(CUDA_DEVICE_MEMORY_LIMIT|NVIDIA_VISIBLE_DEVICES)"'
 kubectl exec -n models "${POD}" -- python3 -c \
   'import torch; print(torch.cuda.get_device_properties(0).total_memory // (1024 ** 2))'
 kubectl exec -n models "${POD}" -- nvidia-smi
 nvidia-smi --query-gpu=name,memory.total,memory.used --format=csv
 ```
 
-预期 scheduler 为 `hami-scheduler`，runtime 为 `nvidia-legacy`，分配注解包含 `NVIDIA,20480,80`，CUDA 可见显存为 `20480` MiB。宿主机仍能看到物理卡的完整显存。两者不是同一层的统计，不应混用。
+预期 scheduler 为 `hami-scheduler`，runtime 为 `nvidia-legacy`，分配注解包含 `NVIDIA,20480,0`（默认不申请固定算力配额），CUDA 可见显存为 `20480` MiB。宿主机仍能看到物理卡的完整显存。两者不是同一层的统计，不应混用。
 
 模型 Ready 后，重新执行 [[#1.3.2 部署模型|vLLM 调用验证]] 和 [[#1.4.3.5 管理后台与调用验证|LiteLLM 调用验证]]。还可重跑 1.5.3 的两只共享测试 Pod，同时调用模型：20 GiB 的模型加两只 1 GiB 测试任务应能共用同一张 A10；完成后删除测试 Pod，只保留模型服务。
-
-后续维护时，1.3.2 的 YAML 仍表示切换 HAMi 前的整卡配置。重新应用它会恢复整卡申请和 `0.9`，需要同步合并本节的 HAMi 配置，或重新应用补丁。
-
-若模型启动失败，先清理本节创建的测试 Pod，再回滚 Deployment；保留 HAMi、PVC 和 Secret，不重装驱动：
-
-```bash
-jq '[{"op": "replace", "path": "/spec", "value": .spec}]' qwen35-vllm.before-hami.json \
-  > qwen35-vllm.rollback.json
-kubectl patch deployment qwen3-5-4b-deployment -n models \
-  --type=json --patch-file=qwen35-vllm.rollback.json
-kubectl scale deployment/qwen3-5-4b-deployment -n models --replicas=1
-kubectl rollout status deployment/qwen3-5-4b-deployment -n models --timeout=15m
-```
-
-本机验收记录（2026-10-18，K8s 1.36.0 / HAMi 2.9.0 / 单张 A10）：
-
-| 验证项 | 实测结果 |
-| --- | --- |
-| GPU 调度 | 测试 Pod 经 `hami-scheduler` 分配，`nvidia-smi` 正常执行 |
-| 显存共享与隔离 | 两只 Pod 与 vLLM 共用同一 GPU UUID；每只可见 1024 MiB，CUDA 矩阵乘法成功，1536 MiB 超额申请被拒绝 |
-| 容量与型号筛选 | 32768 MiB 申请被 `CardInsufficientMemory` 拒绝；A10 型号匹配成功，A100 被 `CardTypeMismatch` 拒绝 |
-| vLLM 配额 | `20480 MiB / 80`，显存使用率 `0.95`，模型 `1/1 Running`、0 次重启 |
-| 共享期间推理 | vLLM 直连及两个 LiteLLM 副本均返回 HTTP 200、完整短回复和 `finish_reason=stop` |
-| 清理与数据保留 | 临时测试 Pod 已全部删除，原模型 PVC 仍为 Bound；Secret、镜像和探针未改动 |
-
-本轮修改前的 Deployment、补丁及验收日志保存在 ECS 的 `/opt/vllm-stack/hami-lab.BIIZ85/`，目录仅 root 可访问。该目录是本机操作留档，不是重新部署所需的模型目录。
-
-参数语义参考 [HAMi 2.9.0 设备配置与实现](https://github.com/Project-HAMi/HAMi/blob/v2.9.0/pkg/device/nvidia/device.go)；本机配置以以上实测命令为准。
