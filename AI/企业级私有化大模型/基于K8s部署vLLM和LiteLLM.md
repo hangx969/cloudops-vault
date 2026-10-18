@@ -47,10 +47,9 @@ lsmod | grep nouveau
 ```bash
 # 安装依赖包
 dnf install gcc make kernel-devel wget -y
-# 升级系统
-dnf update -y
-# 重启服务器
-reboot
+# 按需升级系统，非安装驱动的必要步骤；升级内核后应先重启再安装匹配的驱动
+# dnf update -y
+# reboot
 # 禁用 Linux 驱动 nouveau
 grep "blacklist nouveau" /etc/modprobe.d/blacklist.conf || echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
 grep "options nouveau modeset=0" /etc/modprobe.d/blacklist.conf || echo "options nouveau modeset=0" >> /etc/modprobe.d/blacklist.conf
@@ -61,6 +60,13 @@ reboot
 lsmod | grep nouveau # 没有结果说明已经关闭
 # 安装驱动
 chmod +x NVIDIA-Linux-*.run && ./NVIDIA-Linux-*.run -q -s --no-dkms --no-x-check
+# 未先切换内核、且默认启动内核与当前内核不同时，补装重启后使用的模块
+NEXT_KERNEL="$(basename "$(grubby --default-kernel)" | sed 's/^vmlinuz-//')"
+if [ "${NEXT_KERNEL}" != "$(uname -r)" ]; then
+  dnf install "kernel-devel-${NEXT_KERNEL}" -y
+  bash NVIDIA-Linux-x86_64-595.104.02.run --silent --no-dkms --no-x-check \
+    --kernel-modules-only --kernel-name="${NEXT_KERNEL}"
+fi
 # 安装完成后，重启服务器
 reboot
 ```
@@ -305,7 +311,7 @@ kubectl get po -n gpu-operator
 kubectl describe node | grep Allocatable: -A 10
 ```
 
-**重启后 GPU 资源变为 `0` 的处理：** 如果 `nvidia-device-plugin` 日志出现 `couldn't initialize inotify: too many open files`，说明主机的 inotify 实例数已达到上限。先确认限制和当前用量，再提高限制并重建 device-plugin Pod：
+**重启后 GPU 资源变为 `0` 的处理：** 如果 `nvidia-device-plugin` 日志出现 `couldn't initialize inotify: too many open files`，优先检查主机的 inotify 实例上限。本次重启后上限为 `128`、相关 FD 统计约为 `131`；提高到 `1024` 并重建插件 Pod 后，GPU 可分配数恢复为 `1`。先确认限制和当前用量，再执行调整：
 
 `fs.inotify.max_user_instances` 限制的是同一用户可创建的 inotify 实例数。在没有启用用户命名空间隔离的常见配置下，多个以 root 运行的系统服务和容器会共同消耗宿主机 UID 0 的额度。这与 GPU 显存无关，也不能仅凭 `too many open files` 就认定是 `ulimit -n` 太小；应结合日志触发点、inotify 用量和进程文件描述符限制判断。下面的 FD 统计用于辅助排查，不是精确的去重实例数。
 
@@ -735,28 +741,26 @@ spec:
   type: NodePort # 非必须
 ```
 
-生成随机 API Key，在标准输出管道中替换占位符并直接提交给 API Server。由于生成的是十六进制字符串，可以安全地作为 `sed` 替换值；不要直接执行 `kubectl apply -f qwen35-vllm.yaml`，否则会把占位符保存为真实密钥：
+首次部署时生成随机 API Key；重复执行时复用已有 Secret，不自动轮换。通过管道替换占位符并直接提交给 API Server，不把真实密钥写入 YAML 文件。本文生成的是十六进制字符串，可以安全地作为 `sed` 替换值；不要直接执行 `kubectl apply -f qwen35-vllm.yaml`，否则会把占位符保存为真实密钥：
 
 ```bash
-DEPLOYMENT_EXISTS=false
-kubectl get deployment qwen3-5-4b-deployment -n models >/dev/null 2>&1 \
-  && DEPLOYMENT_EXISTS=true
-
-VLLM_API_KEY="$(openssl rand -hex 32)"
+if kubectl get secret vllm-api-key -n models >/dev/null 2>&1; then
+  VLLM_API_KEY="$(kubectl get secret vllm-api-key -n models \
+    -o jsonpath='{.data.api-key}' | base64 -d)"
+else
+  VLLM_API_KEY="$(openssl rand -hex 32)"
+fi
+test -n "${VLLM_API_KEY}"
 sed "s/VLLM_API_KEY_PLACEHOLDER/${VLLM_API_KEY}/g" qwen35-vllm.yaml \
   | kubectl apply -f -
 unset VLLM_API_KEY
-
-# 现有部署轮换 Secret 后，必须重建 Pod 才能读取新的环境变量
-if [ "${DEPLOYMENT_EXISTS}" = true ]; then
-  kubectl rollout restart deployment/qwen3-5-4b-deployment -n models
-fi
-unset DEPLOYMENT_EXISTS
 
 kubectl rollout status deployment/qwen3-5-4b-deployment \
   -n models \
   --timeout=15m
 ```
+
+后续若显式轮换 API Key，需要同步更新 `litellm` 命名空间中的同名 Secret，并重启 vLLM 和 LiteLLM Deployment；已启动 Pod 的环境变量不会自动读取新值。
 
 查看启动状态：
 
@@ -1094,8 +1098,8 @@ litellm_settings:
       - [redis-node-0.redis-headless.litellm.svc.cluster.local, 26379]
       - [redis-node-1.redis-headless.litellm.svc.cluster.local, 26379]
       - [redis-node-2.redis-headless.litellm.svc.cluster.local, 26379]
-    sentinel_password: os.environ/REDIS_SENTINEL_PASSWORD
-    password: os.environ/REDIS_SENTINEL_PASSWORD
+    sentinel_password: os.environ/CACHE_SENTINEL_PASSWORD
+    password: os.environ/CACHE_SENTINEL_PASSWORD
     ttl: 600
 router_settings:
   redis_host: redis-single-master.litellm.svc.cluster.local
@@ -1112,6 +1116,8 @@ general_settings:
 ```
 
 创建 ConfigMap：
+
+这里使用自定义环境变量 `CACHE_SENTINEL_PASSWORD`。在 `v1.105.1` 中，保留名称 `REDIS_SENTINEL_PASSWORD` 会被所有 Redis 客户端读取；与单节点 Redis 共存时，可能触发 `Redis.__init__() got an unexpected keyword argument 'sentinel_password'`。通过 `cache_params` 显式引用自定义变量，可以避免把 Sentinel 参数带入单节点客户端。
 
 ```bash
 kubectl create configmap litellm-config -n litellm \
@@ -1198,7 +1204,7 @@ spec:
                 secretKeyRef:
                   name: redis-standalone-auth
                   key: redis-password
-            - name: REDIS_SENTINEL_PASSWORD
+            - name: CACHE_SENTINEL_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: redis-sentinel-auth
