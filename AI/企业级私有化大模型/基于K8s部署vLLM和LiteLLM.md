@@ -1522,8 +1522,9 @@ resources:
 nvidia-smi
 ```
 
-注意：`nvidia.com/gpu` 和 `nvidia.com/gpumem` 不能超过物理机真实显卡数量和显存大小。
-显存大小也可以按照百分比分配：`nvidia.com/gpumem-percentage: 50`。
+注意：
+- `nvidia.com/gpu` 和 `nvidia.com/gpumem` 不能超过物理机真实显卡数量和显存大小。
+- 显存大小也可以按照百分比分配：`nvidia.com/gpumem-percentage: 50`（但是不推荐）。
 
 ### 1.5.4 指定显卡类型调度
 
@@ -1532,7 +1533,7 @@ nvidia-smi
 ```yaml
 metadata:
   annotations:
-    nvidia.com/use-gputype: "A100,V100" # 多种类型逗号分割
+    nvidia.com/use-gputype: "A10,V100" # 多种类型逗号分割
     # nvidia.com/nouse-gputype: "1080,2080" # 指定黑名单
 ```
 
@@ -1552,10 +1553,10 @@ GPU 1: NVIDIA A10 Ada Generation
 resources:
   limits:
     nvidia.com/gpu: 1
-    nvidia.com/gpumem: 30720
+    nvidia.com/gpumem: 20480
   requests:
     nvidia.com/gpu: 1
-    nvidia.com/gpumem: 30720
+    nvidia.com/gpumem: 20480
 ```
 
 修改显存使用率为 0.95：
