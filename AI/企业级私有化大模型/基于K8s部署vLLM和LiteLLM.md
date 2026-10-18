@@ -25,6 +25,13 @@ k8s原生不支持调度GPU的，cpu、memory等资源是kubelet从主机上采�
 - 腾讯云： https://cloud.tencent.com/
 - 华为云： https://www.huaweicloud.com/
 
+选择 NVIDIA GPU 时，先检查计算能力（Compute Capability，CC）。[vLLM 官方 GPU 安装要求](https://docs.vllm.ai/en/stable/getting_started/installation/gpu/)明确要求：`GPU: compute capability 7.5 or higher`，即计算能力至少为 7.5。
+
+- NVIDIA V100：CC 为 `7.0`，低于 `7.5`，不满足当前官方 vLLM 的最低要求，不能直接用于本文的部署方案。参见 [NVIDIA 旧款 GPU 计算能力表](https://developer.nvidia.com/cuda/gpus/legacy)。
+- 当前使用的 NVIDIA A10：CC 为 `8.6`，满足 `≥ 7.5` 的最低要求。参见 [NVIDIA GPU 计算能力表](https://developer.nvidia.com/cuda/gpus)。
+
+CC 描述 GPU 硬件架构能力，不是显存大小，也不是 CUDA Toolkit 版本号；升级驱动或 CUDA 不会提高这项硬件能力。CC 达标后，还需检查模型显存需求，以及所用 vLLM 镜像与驱动的兼容性。
+
 rockylinux9.8，24GB显存，10MB公网固定带宽，100GB磁盘
 
 ### 1.1.2 驱动安装
@@ -1393,6 +1400,11 @@ data: [DONE]
 ```
 
 ## 1.5 GPU 虚拟化
+前面我们通过GPU operator实现了大模型申请GPU资源，但是这是独占模式。如果模型很小，卡很大，就会造成资源浪费。
+
+HAMi（异构AI计算虚拟化中间件）是一个用于管理K8s集群中异构AI计算设备的开源平台，前身为8s-vGPU-scheduler(第四范式)，目前为CNCF正在孵化的开源项目。
+
+HAMi可以在多个容器和工作负载之间实现设备共享，解决AI算力集群中GPU资源碎片化、利用率低的问题。支持多个厂商的GPU虚拟化，比如NVIDIA、华为、Intel、AMD、沐曦de
 
 ### 1.5.1 HAMI 部署
 
@@ -1498,7 +1510,7 @@ nvidia-smi
 
 ### 1.5.4 指定显卡类型调度
 
-HAMI 支持不同显卡级别的调度，比如某个任务需要 A100，可以添加如下注释：
+平台HAMI 支持不同显卡级别的调度，比如某个任务需要 A100，可以添加如下注释：
 
 ```yaml
 metadata:
