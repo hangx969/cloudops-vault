@@ -1426,6 +1426,7 @@ kubectl version
 ```
 
 安装 HAMI：
+- HAMi 需要替换 GPU Operator 自带的设备插件：禁用后 Operator 会删除该插件的 DaemonSet/Pod，驱动、Toolkit 和 DCGM 保留
 
 ```bash
 helm repo add hami-charts https://project-hami.github.io/HAMi/
@@ -1456,7 +1457,7 @@ kubectl get pods -n kube-system | grep hami
 
 ```bash
 kubectl describe node | grep nvidia.com/gpu:
-nvidia.com/gpu:     20 # 每个 GPU 卡*10
+nvidia.com/gpu: 10  # 一个GPU卡变成10个vGPU了
 ```
 
 ### 1.5.2 GPU 调度测试
@@ -1490,7 +1491,7 @@ spec:
       value: "C.UTF-8"
   resources:
     limits:
-      nvidia.com/gpu: 1
+      nvidia.com/gpu: 1 # 这里就是申请的虚拟卡了
 EOF
 ```
 
@@ -1500,11 +1501,13 @@ EOF
 kubectl logs -f hami-gpu-test
 ```
 
-上述分配了 1 个 vGPU，但是为指定显存和核心数，所以会独占一个显卡，和无虚拟化一致。
+注意：
+- 上述分配了 1 个 vGPU，但是为指定显存和核心数，所以会独占一个显卡，和无虚拟化一致。
+- 针对GPU调度，一般都是设置request和limit一样的。只写limit，意思是request和limit一样的。
 
 ### 1.5.3 分配指定显存
 
-假如需要控制每个显卡使用的显存大小，可以添加 `gpumem` 参数：
+所以需要控制每个显卡使用的显存大小，用多少申请多少，可以添加 `gpumem` 参数：
 
 ```yaml
 resources:
