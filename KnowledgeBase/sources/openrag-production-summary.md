@@ -7,7 +7,7 @@ tags:
   - architecture
 date: 2026-06-07
 sources:
-  - "[[AI/RAG/OpenRAG生产级知识库架构实战]]"
+  - "[[OpenRAG生产级知识库架构实战]]"
 aliases:
   - OpenRAG摘要
 ---
@@ -15,7 +15,7 @@ aliases:
 # OpenRAG 生产级知识库架构实战
 
 ## 元信息
-- **原始文档**：[[AI/RAG/OpenRAG生产级知识库架构实战]]
+- **原始文档**：[[OpenRAG生产级知识库架构实战]]
 - **领域**：AI / RAG / 企业级架构
 - **摄入日期**：2026-06-07
 

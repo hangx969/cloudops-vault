@@ -7,64 +7,64 @@ tags:
   - AI/cloudops-agent
 date: 2026-05-04
 sources:
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.0_必读｜智能 OnCall Agent 攻略]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.1_什么是大模型？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.2_什么是Prompt？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.3_什么是 Agent？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.4_什么是 Tool？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.5_什么是 Function Call？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.6_什么是MCP？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.7_什么是 Skills？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.8_什么是 RAG？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.9_什么是向量数据库？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.10_什么是Harness工程？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/2-项目全局和技术选型/2.1_背景：为什么要有智能 OnCall Agent项目？]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/2-项目全局和技术选型/2.2_整体架构：项目的宏观视野]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/2-项目全局和技术选型/2.3_选型分析：大模型应用开发框架]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/2-项目全局和技术选型/2.4_Java、Go、Python 三版本核心技术栈全解析]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.1_前置准备：知识库的需求、场景、价值分析]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.2_架构设计：RAG全流程解析]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.3_实战演练：RAG代码实战1(Go)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.4_实战演练：RAG召回实战2(Go)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.5_源码分析：RAG代码实战1(Java)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.6_源码分析：RAG召回实战2(Java)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.7_源码分析：RAG代码实战1(Python)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.8_源码分析：RAG召回实战2(Python)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.9_源码分析：API接口与Agent的整合]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/4-对话Agent方案设计和源码/4.1_前置准备：对话的需求、场景、价值分析]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/4-对话Agent方案设计和源码/4.2_架构设计：ReAct设计模式核心原理]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/4-对话Agent方案设计和源码/4.3_架构设计：对话Agent的核心流程解析]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/4-对话Agent方案设计和源码/4.4_源码分析：对话Agent代码实现(Go)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/4-对话Agent方案设计和源码/4.5_源码分析：对话Agent代码实现(Java)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/4-对话Agent方案设计和源码/4.6_源码分析：对话Agent代码实现(Python)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/4-对话Agent方案设计和源码/4.7源码分析：API接口与Agent的整合]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/5-运维Agent方案设计和源码/5.1_前置准备：运维的需求、场景、价值分析]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/5-运维Agent方案设计和源码/5.2_架构设计：Plan-Execute-Replan设计模式核心原理]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/5-运维Agent方案设计和源码/5.3_架构设计：运维Agent的核心流程解析]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/5-运维Agent方案设计和源码/5.4_源码分析：运维Agent代码实现(Go)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/5-运维Agent方案设计和源码/5.5_源码分析：运维Agent代码实现(Java)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/5-运维Agent方案设计和源码/5.6_源码分析：运维Agent代码实现(Python)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/5-运维Agent方案设计和源码/5.7_源码分析：API接口与Agent的整合]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/6-Tool和MCP设计思路和源码/6.1_方案设计：Tool 和 MCP 设计思路]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/6-Tool和MCP设计思路和源码/6.2_源码分析：Tool 和 MCP 代码实战]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/7-前后端接口设计与前端实现/7.1_后端接口：与前端交互的 API 接口设计]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/7-前后端接口设计与前端实现/7.2_前端实现：vibe coding 开发前端页面演示]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/8.1_环境准备教程]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/8.2_运行项目教程(Go)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/8.3_运行项目教程(Java)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/8.4_运行项目教程(Python)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/使用eino框架3分钟实现一个简单AI对话(Go)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/使用SpingAi框架3分钟实现一个简单AI对话(Java)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/使用langchain框架3分钟实现一个简单AI对话(Python)]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/使用goframe框架3分钟实现一个http接口（Go）]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/使用springboot框架3分钟实现一个http接口（Java）]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/使用fastapi框架3分钟实现一个http接口（Python）]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/9-简历/面试简历的写法]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/9-简历/如何介绍你的项目]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/9-简历/项目面试题]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/9-简历/面试亮点打造]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/9-简历/面经分享记录]]"
-  - "[[AI/RAG/CloudOps-Agent-项目/9-简历/常见问题汇总（持续更新中）]]"
+  - "[[1.0_必读｜智能 OnCall Agent 攻略]]"
+  - "[[1.1_什么是大模型？]]"
+  - "[[1.2_什么是Prompt？]]"
+  - "[[1.3_什么是 Agent？]]"
+  - "[[1.4_什么是 Tool？]]"
+  - "[[1.5_什么是 Function Call？]]"
+  - "[[1.6_什么是MCP？]]"
+  - "[[1.7_什么是 Skills？]]"
+  - "[[1.8_什么是 RAG？]]"
+  - "[[1.9_什么是向量数据库？]]"
+  - "[[1.10_什么是Harness工程？]]"
+  - "[[2.1_背景：为什么要有智能 OnCall Agent项目？]]"
+  - "[[2.2_整体架构：项目的宏观视野]]"
+  - "[[2.3_选型分析：大模型应用开发框架]]"
+  - "[[2.4_Java、Go、Python 三版本核心技术栈全解析]]"
+  - "[[3.1_前置准备：知识库的需求、场景、价值分析]]"
+  - "[[3.2_架构设计：RAG全流程解析]]"
+  - "[[3.3_实战演练：RAG代码实战1(Go)]]"
+  - "[[3.4_实战演练：RAG召回实战2(Go)]]"
+  - "[[3.5_源码分析：RAG代码实战1(Java)]]"
+  - "[[3.6_源码分析：RAG召回实战2(Java)]]"
+  - "[[3.7_源码分析：RAG代码实战1(Python)]]"
+  - "[[3.8_源码分析：RAG召回实战2(Python)]]"
+  - "[[3.9_源码分析：API接口与Agent的整合]]"
+  - "[[4.1_前置准备：对话的需求、场景、价值分析]]"
+  - "[[4.2_架构设计：ReAct设计模式核心原理]]"
+  - "[[4.3_架构设计：对话Agent的核心流程解析]]"
+  - "[[4.4_源码分析：对话Agent代码实现(Go)]]"
+  - "[[4.5_源码分析：对话Agent代码实现(Java)]]"
+  - "[[4.6_源码分析：对话Agent代码实现(Python)]]"
+  - "[[4.7源码分析：API接口与Agent的整合]]"
+  - "[[5.1_前置准备：运维的需求、场景、价值分析]]"
+  - "[[5.2_架构设计：Plan-Execute-Replan设计模式核心原理]]"
+  - "[[5.3_架构设计：运维Agent的核心流程解析]]"
+  - "[[5.4_源码分析：运维Agent代码实现(Go)]]"
+  - "[[5.5_源码分析：运维Agent代码实现(Java)]]"
+  - "[[5.6_源码分析：运维Agent代码实现(Python)]]"
+  - "[[5.7_源码分析：API接口与Agent的整合]]"
+  - "[[6.1_方案设计：Tool 和 MCP 设计思路]]"
+  - "[[6.2_源码分析：Tool 和 MCP 代码实战]]"
+  - "[[7.1_后端接口：与前端交互的 API 接口设计]]"
+  - "[[7.2_前端实现：vibe coding 开发前端页面演示]]"
+  - "[[8.1_环境准备教程]]"
+  - "[[8.2_运行项目教程(Go)]]"
+  - "[[8.3_运行项目教程(Java)]]"
+  - "[[8.4_运行项目教程(Python)]]"
+  - "[[使用eino框架3分钟实现一个简单AI对话(Go)]]"
+  - "[[使用SpingAi框架3分钟实现一个简单AI对话(Java)]]"
+  - "[[使用langchain框架3分钟实现一个简单AI对话(Python)]]"
+  - "[[使用goframe框架3分钟实现一个http接口（Go）]]"
+  - "[[使用springboot框架3分钟实现一个http接口（Java）]]"
+  - "[[使用fastapi框架3分钟实现一个http接口（Python）]]"
+  - "[[面试简历的写法]]"
+  - "[[如何介绍你的项目]]"
+  - "[[项目面试题]]"
+  - "[[面试亮点打造]]"
+  - "[[面经分享记录]]"
+  - "[[常见问题汇总（持续更新中）]]"
 aliases:
   - CloudOps-Agent摘要
 ---
@@ -101,7 +101,7 @@ aliases:
 
 ### Ch1：AI 基础概念（11 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/1-AI名词/1.0_必读｜智能 OnCall Agent 攻略]]
+- **起始文档**：[[1.0_必读｜智能 OnCall Agent 攻略]]
 - **核心内容**：全链路学习路径导读，以及 AI Agent 领域的核心概念扫盲，包括大模型、Prompt、Agent、Tool、Function Call、MCP、Skills、RAG、向量数据库、Harness 工程等术语的系统讲解。
 - **关键知识点**：
   - 四大学习阶段：认知筑基 -> 核心模块拆解 -> 落地实战演练 -> 面试求职冲刺
@@ -111,7 +111,7 @@ aliases:
 
 ### Ch2：项目全局与技术选型（4 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/2-项目全局和技术选型/2.1_背景：为什么要有智能 OnCall Agent项目？]]
+- **起始文档**：[[2.1_背景：为什么要有智能 OnCall Agent项目？]]
 - **核心内容**：项目诞生背景与核心价值、三大 Agent 的整体架构（接入层/业务层/服务层/存储层）、大模型应用开发框架选型分析，以及 Go/Java/Python 三版本核心技术栈的全面对比。
 - **关键知识点**：
   - 系统采用四层架构：接入层（API）、业务层（Agent 编排）、服务层（原子能力）、存储层（向量数据库）
@@ -120,7 +120,7 @@ aliases:
 
 ### Ch3：知识库 RAG 方案设计与源码（9 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/3-知识库RAG方案设计和源码/3.1_前置准备：知识库的需求、场景、价值分析]]
+- **起始文档**：[[3.1_前置准备：知识库的需求、场景、价值分析]]
 - **核心内容**：RAG 的完整流程设计（提问前链路：分片 -> Embedding -> 存储；提问后链路：召回 -> 重排 -> 生成），以及 Go/Java/Python 三种语言的 RAG 代码实战与 API 接口整合。
 - **关键知识点**：
   - 分片策略：按固定字数、按段落、按章节/标题、按页码等多种切分方式
@@ -130,7 +130,7 @@ aliases:
 
 ### Ch4：对话 Agent 方案设计与源码（7 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/4-对话Agent方案设计和源码/4.1_前置准备：对话的需求、场景、价值分析]]
+- **起始文档**：[[4.1_前置准备：对话的需求、场景、价值分析]]
 - **核心内容**：ReAct（Reasoning + Acting）设计模式的核心原理，对话 Agent 的完整流程解析（RAG 召回 -> 构建带上下文的 System Prompt -> ReAct 多轮交互 -> 输出答案），以及三种语言的源码实现。
 - **关键知识点**：
   - ReAct 的精髓是「思考 -> 行动 -> 观察 -> 再思考」的闭环循环
@@ -140,7 +140,7 @@ aliases:
 
 ### Ch5：运维 Agent 方案设计与源码（7 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/5-运维Agent方案设计和源码/5.1_前置准备：运维的需求、场景、价值分析]]
+- **起始文档**：[[5.1_前置准备：运维的需求、场景、价值分析]]
 - **核心内容**：Plan-Execute-Replan 多智能体协作模式的核心原理（Planner 规划、Executor 执行、Replanner 重规划），运维 Agent 的核心流程解析，以及三种语言的源码实现。
 - **关键知识点**：
   - 传统运维痛点：流程依赖经验、遇阻时无法灵活调整、信息散落在各系统需反复切换
@@ -150,7 +150,7 @@ aliases:
 
 ### Ch6：Tool 和 MCP 设计思路与源码（2 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/6-Tool和MCP设计思路和源码/6.1_方案设计：Tool 和 MCP 设计思路]]
+- **起始文档**：[[6.1_方案设计：Tool 和 MCP 设计思路]]
 - **核心内容**：Agent 所需 Tool 的设计分析与实现，包括 `query_prometheus_alerts`（告警查询）、`query_internal_docs`（知识库召回）、`get_current_time`（时间感知）、`query_log`（日志检索），以及通过 MCP 协议集成外部工具的设计思路。
 - **关键知识点**：
   - 四个核心 Tool 覆盖所有 Agent 需求，`query_internal_docs` 是通用支撑工具
@@ -159,7 +159,7 @@ aliases:
 
 ### Ch7：前后端接口设计与前端实现（2 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/7-前后端接口设计与前端实现/7.1_后端接口：与前端交互的 API 接口设计]]
+- **起始文档**：[[7.1_后端接口：与前端交互的 API 接口设计]]
 - **核心内容**：后端 API 接口设计（对话接口 `/api/chat`、知识库上传接口、运维 Agent 接口等），以及使用 Vibe Coding 方式开发前端页面的演示。
 - **关键知识点**：
   - 对话接口支持会话 ID 实现上下文记忆，使用 SSE 实现流式输出
@@ -168,7 +168,7 @@ aliases:
 
 ### Ch8：实战演练与运行项目（10 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/8-实战演练与运行项目/8.1_环境准备教程]]
+- **起始文档**：[[8.1_环境准备教程]]
 - **核心内容**：开发环境搭建（GoLand/IDEA/PyCharm 编辑器安装、Eino-Dev 插件配置），Go/Java/Python 三版本项目完整运行教程，以及三语言的快速入门小实战（3 分钟实现 AI 对话、3 分钟实现 HTTP 接口）。
 - **关键知识点**：
   - 环境准备覆盖三种语言的编辑器、运行时、依赖管理全流程
@@ -178,7 +178,7 @@ aliases:
 
 ### Ch9：面试求职冲刺（6 篇）
 
-- **起始文档**：[[AI/RAG/CloudOps-Agent-项目/9-简历/面试简历的写法]]
+- **起始文档**：[[面试简历的写法]]
 - **核心内容**：将项目经验转化为求职竞争力的全套指南，包括简历撰写技巧（Go/Java/Python 三版本示例）、项目介绍方法、高频面试题解析、面试亮点打造策略、面经分享与常见问题汇总。
 - **关键知识点**：
   - 简历项目描述需体现技术栈、个人职责与项目亮点三要素

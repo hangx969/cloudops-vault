@@ -133,9 +133,9 @@ date: 2026-10-03
 
 | 文件 | 标题 | Frontmatter | 双链 |
 |------|------|:-----------:|:----:|
-| [[AI/RAG/Confluence-Wiki-RAG知识库增强检索系统\|Confluence-Wiki-RAG知识库增强检索系统]] | 从 0 到 1 搭建 Confluence 内部 Wiki RAG 知识库增强检索系统 | ✅ | ❌ |
-| [[AI/RAG/OpenRAG生产级知识库架构实战\|OpenRAG生产级知识库架构实战]] | OpenRAG 生产级知识库架构实战：构建可治理、可扩展、可审计的企业级 RAG 平台 | ✅ | ❌ |
-| [[AI/RAG/RAG-PDF解析难点与主流方案\|RAG-PDF解析难点与主流方案]] | RAG：PDF 解析难在哪，主流方案是什么 | ✅ | ❌ |
+| [[Confluence-Wiki-RAG知识库增强检索系统\|Confluence-Wiki-RAG知识库增强检索系统]] | 从 0 到 1 搭建 Confluence 内部 Wiki RAG 知识库增强检索系统 | ✅ | ❌ |
+| [[OpenRAG生产级知识库架构实战\|OpenRAG生产级知识库架构实战]] | OpenRAG 生产级知识库架构实战：构建可治理、可扩展、可审计的企业级 RAG 平台 | ✅ | ❌ |
+| [[RAG-PDF解析难点与主流方案\|RAG-PDF解析难点与主流方案]] | RAG：PDF 解析难在哪，主流方案是什么 | ✅ | ❌ |
 
 ### AIOps/（2 篇）
 

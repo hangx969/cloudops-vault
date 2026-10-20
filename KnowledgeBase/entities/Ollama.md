@@ -5,7 +5,7 @@ tags:
   - ai/local-inference
 date: 2026-09-13
 sources:
-  - "[[AI/RAG/RAG-Agent-项目/2-工程篇/2.4-Ollama+DeepSeek本地部署（新人必看）]]"
+  - "[[2.4-Ollama+DeepSeek本地部署（新人必看）]]"
   - "[[基于docker部署vLLM和LiteLLM私有化大模型]]"
   - "[[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni]]"
 aliases:
@@ -41,7 +41,7 @@ Ollama 是面向开发者和个人用户的本地模型下载、管理与运行�
 
 ## 在本仓库中的覆盖
 
-- [[AI/RAG/RAG-Agent-项目/2-工程篇/2.4-Ollama+DeepSeek本地部署（新人必看）]]：Ollama 与 DeepSeek 的本地部署实践。
+- [[2.4-Ollama+DeepSeek本地部署（新人必看）]]：Ollama 与 DeepSeek 的本地部署实践。
 - [[基于docker部署vLLM和LiteLLM私有化大模型]]：本地体验与生产 Serving 的定位差异。
 - [[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni]]：与 vLLM、SGLang、vLLM-Omni 的完整选型对比。
 

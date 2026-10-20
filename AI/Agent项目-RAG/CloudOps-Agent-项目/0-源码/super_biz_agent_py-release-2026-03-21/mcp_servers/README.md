@@ -127,7 +127,7 @@ from tencentcloud.cls.v20201016 import cls_client
 - [FastMCP 文档](https://github.com/jlowin/fastmcp)
 - [MCP 协议](https://modelcontextprotocol.io/)
 - [LangGraph 文档](https://langchain-ai.github.io/langgraph/)
-- [主项目 README](AI/RAG/CloudOps-Agent-项目/0-源码/super_biz_agent_py-release-2026-03-21/README.md)
+- [主项目 README](AI/Agent项目-RAG/CloudOps-Agent-项目/0-源码/super_biz_agent_py-release-2026-03-21/README.md)
 
 ---
 

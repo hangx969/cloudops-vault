@@ -12,7 +12,7 @@ sources:
   - "[[Docker-Kubernetes/k8s-monitoring-logging/基于helm+operator部署ECK日志收集平台]]"
   - "[[Docker-Kubernetes/k8s-monitoring-logging/k8s日志管理-采集方案与审计日志]]"
   - "[[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力]]"
-  - "[[AI/RAG/RAG-Agent-项目/2-工程篇/2.1-RAG-Agent环境搭建指南（新人必看）Java 17、MySQL、Elasticsearch、Redis、MinIO、Kafka]]"
+  - "[[2.1-RAG-Agent环境搭建指南（新人必看）Java 17、MySQL、Elasticsearch、Redis、MinIO、Kafka]]"
 aliases:
   - Apache Kafka
 ---
@@ -57,7 +57,7 @@ Apache Kafka 是分布式消息队列与事件流平台，常用于日志收集�
 - [[Docker-Kubernetes/k8s-monitoring-logging/基于helm+operator部署ECK日志收集平台|基于helm+operator部署ECK日志收集平台]]：用 bitnami Chart 部署 ZooKeeper 与 Kafka，作为 Filebeat 与 Logstash 之间的缓冲
 - [[Docker-Kubernetes/k8s-monitoring-logging/k8s日志管理-采集方案与审计日志|K8s 日志：基础机制、六种采集方案与审计日志]]：大规模集群日志架构中以 Kafka 作为削峰缓冲层
 - [[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]：以 consumer group lag 为信号的 Kafka ScaledObject 示例
-- [[AI/RAG/RAG-Agent-项目/2-工程篇/2.1-RAG-Agent环境搭建指南（新人必看）Java 17、MySQL、Elasticsearch、Redis、MinIO、Kafka|RAG-Agent环境搭建指南]]：KRaft 模式下生成集群 ID、格式化存储目录并启动单节点 Kafka
+- [[2.1-RAG-Agent环境搭建指南（新人必看）Java 17、MySQL、Elasticsearch、Redis、MinIO、Kafka|RAG-Agent环境搭建指南]]：KRaft 模式下生成集群 ID、格式化存储目录并启动单节点 Kafka
 
 ## 知识空白
 

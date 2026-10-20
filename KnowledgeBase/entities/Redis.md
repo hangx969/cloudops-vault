@@ -12,7 +12,7 @@ sources:
   - "[[Docker-Kubernetes/kubeblocks/kubeblocks部署高可用harbor集群]]"
   - "[[AI/企业级私有化大模型/基于K8s部署vLLM和LiteLLM]]"
   - "[[Docker-Kubernetes/k8s-monitoring-logging/Kubernetes原生部署Prometheus与Grafana]]"
-  - "[[AI/RAG/RAG-Agent-项目/7-面试篇/7.5-RAG-Agent架构设计面试题预测]]"
+  - "[[7.5-RAG-Agent架构设计面试题预测]]"
 ---
 
 ## 简介
@@ -56,7 +56,7 @@ Redis 是高性能键值数据库，常用于缓存、消息队列、分布式�
 - [[Docker-Kubernetes/kubeblocks/kubeblocks部署高可用harbor集群|kubeblocks部署高可用harbor集群]]：KubeBlocks 创建 Sentinel 主备 Redis 集群，作为 Harbor 的外部 Redis
 - [[AI/企业级私有化大模型/基于K8s部署vLLM和LiteLLM|基于K8s部署vLLM和LiteLLM]]：Redis Sentinel 作为 LiteLLM 缓存，单节点 Redis 用于路由限流
 - [[Docker-Kubernetes/k8s-monitoring-logging/Kubernetes原生部署Prometheus与Grafana|Kubernetes原生部署Prometheus与Grafana]]：Redis 与 redis_exporter 在同一 Pod 部署，由 Prometheus 采集指标
-- [[AI/RAG/RAG-Agent-项目/7-面试篇/7.5-RAG-Agent架构设计面试题预测|RAG-Agent架构设计面试题预测]]：用缓存空值、TTL 随机化、Redisson 分布式锁应对缓存穿透、雪崩与击穿
+- [[7.5-RAG-Agent架构设计面试题预测|RAG-Agent架构设计面试题预测]]：用缓存空值、TTL 随机化、Redisson 分布式锁应对缓存穿透、雪崩与击穿
 
 ## 知识空白
 
