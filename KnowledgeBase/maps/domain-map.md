@@ -5,7 +5,7 @@ tags:
   - knowledgebase/navigation
 aliases:
   - Domain Map
-date: 2026-10-04
+date: 2026-10-20
 sources:
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查]]"
   - "[[AI/Obsidian/github-pages-quartz]]"
@@ -234,7 +234,7 @@ sources:
 |------|------|----------|------|
 | GPU-DeepLearning | 4 | [[GPU-DeepLearning/GPU-basics|GPU-basics]] | HPC、Docker |
 | Database | 3 | [[Database/MySQL入门|MySQL入门]]、[[Database/源码安装redis-6.2.6-centos7|源码安装redis-6.2.6-centos7]] | Python 运维 |
-| Middlewares | 3 | [[Middlewares/Kafka|Kafka]]、[[Middlewares/RabbitMQ|RabbitMQ]] | K8s 中间件部署 |
+| Middlewares | 3 | [[Middlewares/Kafka\|Kafka：入门、生产配置与 Kubernetes 排障]]、[[Middlewares/RabbitMQ\|RabbitMQ]] | 事件流、生产可靠性与 K8s 中间件部署 |
 | OS | 3 | [[OS/OS|OS]]、[[OS/计算机组成原理|计算机组成原理]] | 理论基础 |
 | Networking | 2 | [[Networking/计算机网络基础|计算机网络基础]]、[[Networking/HTTP基础|HTTP基础]] | 云网络基础 |
 | IaC | 16（含学习路线） | [[IaC/terraform/README\|Terraform 基础系列]]、[[KnowledgeBase/maps/terraform-map\|学习地图]] | 自动化运维 |
@@ -242,7 +242,7 @@ sources:
 | SoftwareTesting | 2 | [[SoftwareTesting/软件工程基础|软件工程基础]] | 软件工程 |
 | C++ | 1 | [[C++/C++LearningNotes|C++LearningNotes]] | 编程语言 |
 
-**来源摘要：** [[KnowledgeBase/sources/misc-domains-batch-summary|杂项领域批量摘要]]、[[KnowledgeBase/sources/iac-terraform-container-summary|Terraform 容器管理摘要]]
+**来源摘要：** [[KnowledgeBase/sources/misc-domains-batch-summary|杂项领域批量摘要]]、[[KnowledgeBase/sources/kafka-basics-production-summary|Kafka 入门与生产运维摘要]]、[[KnowledgeBase/sources/iac-terraform-container-summary|Terraform 容器管理摘要]]
 
 
 ## 🤖 AI · 企业级私有化大模型（增量）

@@ -3,7 +3,7 @@ title: 杂项领域（Database/Middlewares/OS/Networking/IaC/Git/C++/SoftwareTes
 tags:
   - knowledgebase/source
   - misc
-date: 2026-10-02
+date: 2026-10-20
 sources:
   - "[[Database/MGR部署MySQL5.7]]"
   - "[[Database/MySQL入门]]"
@@ -60,7 +60,7 @@ aliases:
 
 1. MySQL 高可用方案包括 MGR（原生组复制）、MMM（多主复制管理）、MHA（主从故障自动转移）；MGR 一主多从集群可结合 Keepalived + Nginx 实现读写分离与虚拟 IP 漂移。
 2. Redis 高可用有主从复制、Sentinel 哨兵、Redis Cluster 三种部署方案；源码安装需关注 bind、daemonize、requirepass 等配置参数。
-3. Kafka 核心架构为 Topic、Partition、Broker 与 Leader/Follower 副本机制，2.8.0 引入 KRaft 一致性算法替代 Zookeeper。
+3. Kafka 由 Topic、Partition、Broker、消费组和分区副本构成；可靠性需结合 ISR、minISR 与 Producer `acks`。2.8 引入早期 KRaft，3.3 起对新集群达到生产可用阶段，4.0 起移除了 ZooKeeper 模式。
 4. 操作系统四大特征为并发、共享（互斥共享/同时共享）、虚拟（时分/空分复用）、异步；库函数与系统调用的区别对应用户态与内核态；磁盘调度算法包括 FCFS、SSTF、SCAN（电梯算法）、LOOK、C-SCAN、C-LOOK。
 5. HTTP 1.0 为非持久连接，HTTP 1.1 引入持久连接（Keep-Alive）与 Pipeline；Cookie 通过 Set-Cookie 实现状态管理，范围请求支持断点续传。
 6. Terraform 的核心工作流为 Write → Plan → Apply，init 准备 Backend、模块与 Provider；State 跟踪资源身份，terraform-docs 提取模块接口。完整基础系列另见 Terraform 学习地图。
@@ -99,10 +99,13 @@ Redis 从源码编译到高可用部署的全面实践指南：
 
 #### [[Middlewares/Kafka|Kafka]]
 
-Kafka 消息队列的核心概念笔记：
-- 核心架构：Topic、Partition、Broker、Leader/Follower 副本机制
-- Zookeeper 在集群协调中的角色，以及 Kafka 2.8.0 引入 KRaft 一致性算法替代 Zookeeper
-- 适用场景：大数据量跨系统数据交互，与 Spark/Flink 组成通用大数据处理方案
+Kafka 入门与生产运维笔记：
+
+- 核心概念：Topic、Partition、Broker、Consumer Group、Offset、重复消费与重试。
+- 副本可靠性：ISR、minISR、Producer `acks`、安全选主、三副本生产基线及监控。
+- Kubernetes 排障：旧版 ZooKeeper 的成员身份、PVC、I/O、CIDR、DNS 和 Kafka Listener。
+- 版本边界：区分 ZooKeeper 与 KRaft；原 Strimzi 文中的通用生产配置已迁入本篇，部署步骤仍保留原处。
+- 逐篇摘要见 [[KnowledgeBase/sources/kafka-basics-production-summary]]。
 
 #### [[Middlewares/RabbitMQ|RabbitMQ]]
 
@@ -307,6 +310,6 @@ Database 和 OS 相关笔记中大量操作基于 CentOS 7.9 环境，包括 MyS
 
 ## 值得注意
 
-- 内容缺口：RabbitMQ 与 RocketMQ 原文各只有一条 Bilibili 视频链接，Kafka 也仅有简短概念笔记，消息队列部分尚缺实操内容。
+- 内容缺口：RabbitMQ 与 RocketMQ 原文仍各只有一条 Bilibili 视频链接；Kafka 已补齐入门、生产配置和 Kubernetes 排障，但文中新增示例未经过真实集群验收。
 - PicGo 图片不显示的排查：原文提醒不要将固定的 GitHub IP 地址长期写入 `hosts`，这些地址可能变化。
-- 环境与版本边界：MGR 部署基于三节点 CentOS 7.9 + MySQL 5.7，需使用 InnoDB 存储引擎并加载 `group_replication` 插件；Redis 为 CentOS 7 上源码编译的 6.2.6；Kafka 2.8.0 起支持移除 Zookeeper、引入 KRaft。
+- 环境与版本边界：MGR 部署基于三节点 CentOS 7.9 + MySQL 5.7，需使用 InnoDB 存储引擎并加载 `group_replication` 插件；Redis 为 CentOS 7 上源码编译的 6.2.6；Kafka 2.8 引入早期 KRaft，3.3 起对新集群达到生产可用阶段，4.0 起移除了 ZooKeeper 模式。

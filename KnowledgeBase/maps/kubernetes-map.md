@@ -8,6 +8,7 @@ aliases:
   - K8s Map
 date: 2026-10-20
 sources:
+  - "[[Middlewares/Kafka]]"
   - "[[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]"
   - "[[Docker-Kubernetes/k8s-installation-management/k8s-NodeSwap-配置与验证]]"
   - "[[Docker-Kubernetes/k8s-storage/分布式存储全景-架构与发展路线]]"
@@ -254,6 +255,9 @@ NFS Provisioner、CubeFS、[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数�
 
 ### 中间件部署（11 篇）
 MySQL(3)、Redis(2)、PostgreSQL、Kafka(Strimzi)、RabbitMQ HA、MongoDB、httpd、SpringCloud
+
+- [[Docker-Kubernetes/k8s-db-middleware/helm部署strimzi-kafka|Helm 部署 Strimzi Kafka]] — Operator、NodePool、认证与 Kafka UI 部署。
+- [[Middlewares/Kafka|Kafka：入门、生产配置与 Kubernetes 排障]] — 副本确认、生产基线，旧版 ZooKeeper 的身份、持久卷、I/O 与网络排障；[[KnowledgeBase/sources/kafka-basics-production-summary|来源摘要]]。
 
 ### 其他
 | 子目录 | 篇数 | 代表 |

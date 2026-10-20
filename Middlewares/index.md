@@ -4,6 +4,6 @@
 
 ## 关键文件
 
-- [[Middlewares/Kafka]] — Apache Kafka 分布式消息系统
+- [[Middlewares/Kafka]] — Kafka 入门、消费语义、副本可靠性、生产配置与 Kubernetes 排障
 - [[Middlewares/RabbitMQ]] — RabbitMQ 消息队列
 - [[Middlewares/RocketMQ]] — Apache RocketMQ 消息队列

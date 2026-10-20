@@ -4,7 +4,7 @@ tags:
   - knowledgebase/source
   - docker-kubernetes/k8s-db-middleware
   - docker-kubernetes/k8s-UI-tools
-date: 2026-10-11
+date: 2026-10-20
 sources:
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署Redis集群]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署mysql集群]]"
@@ -96,6 +96,7 @@ aliases:
   - 先部署 Cluster Operator，再创建 Kafka、Topic、User 等 CRD 资源
   - Kafka 核心概念：Broker、Topic、Partition、Producer、Consumer、Offset
   - Mirror Maker 用于跨集群数据复制和灾备
+  - 通用副本同步参数、事故说明和生产配置已迁入 [[Middlewares/Kafka]]；本篇保留 Strimzi、Helm 与 Kafka UI 部署，运维材料见 [[KnowledgeBase/sources/kafka-basics-production-summary]]。
 
 ### [[Docker-Kubernetes/k8s-db-middleware/helm部署rabbitmq-ha|Helm部署RabbitMQ HA]]
 

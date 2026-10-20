@@ -2337,3 +2337,12 @@ date: 2026-04-17
 - 按用户反馈和 humanizer-zh，将 [[AI/ClaudeCode/Claude Code 扩展体系#结构健壮性：每一步都有出口条件|结构健壮性]] 的概括句改为四条具体要求；用 A.md、B.md 说明引用最多一跳，明确不能依赖逐层链接自动加载，所需参考文档应直接由 SKILL.md 引用。
 - 单独列明 SKILL.md 主体不超过 500 行，超过时将详细说明、规则和长篇示例拆到 references/，主文件保留执行步骤、判断分支和参考文件入口。
 - 本次正文仅替换目标段落，40 个代码块、85 个标题、187 行表格及原有链接保持不变；MCP 全文回读一致，差异空白检查通过，日志仅追加。
+
+
+## [2026-10-20] ingest | Kafka 入门、生产配置与 Kubernetes 排障
+
+- 整合 [[Middlewares/Kafka]] 的原有笔记与 WAKEUP 技术的 ZooKeeper 迁移故障材料，按入门、消费语义、副本可靠性、生产配置、Kubernetes 排障和上线审查重排；保留操作命令、配置、案例数据和检查清单，并使用 humanizer-zh 润色。
+- 将 [[Docker-Kubernetes/k8s-db-middleware/helm部署strimzi-kafka]] 中的生产避坑、副本同步参数、生产环境标准配置和默认配置审查章节迁入 Kafka 主文；原部署正文完整保留，补充主文入口，未修改原始剪藏。
+- 依据正文所列 Kafka、ZooKeeper 和 Kubernetes 官方资料，校正消费者与副本、acks/minISR、KRaft 版本、emptyDir 生命周期、myid 映射、PVC/PV 删除行为及会话超时含义；补齐 Headless Service、成员配置与独立持久卷，区分原案例叙述、可推导风险与未实测示例。
+- 原示意图通过 PicGo CLI 的 GitHub Plus 插件上传至现有图床，HTTP/MIME 及 SHA-256 一致性检查通过；保留图中历史标记的阅读边界说明。同步 [[KnowledgeBase/sources/kafka-basics-production-summary]]、[[KnowledgeBase/entities/Kafka]]、[[KnowledgeBase/concepts/高可用架构]]、两份批量摘要、领域与 Kubernetes 地图、[[KnowledgeBase/INDEX]] 和 [[Middlewares/index]]。
+- 11 个正文与导航文件经 Obsidian MCP 全文回读并与工作区比对一致；新增 wikilink 目标检查、14 个代码块围栏、5 份 YAML 解析、7 个 Shell 块语法、ZooKeeper 选择器/挂载/成员对应、四组章节迁移与任务范围差异空白检查通过。日志仅追加；未执行集群部署、生产消费或故障切换，界面工具未找到运行中的 Obsidian，阅读视图未核验。

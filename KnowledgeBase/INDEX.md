@@ -90,7 +90,6 @@ date: 2026-10-20
 | [[KnowledgeBase/entities/Dragonfly|Dragonfly]] | 面向云原生与 AI 基础设施的 P2P 镜像和大文件分发系统 |
 | [Redis](entities/Redis.md) | 高性能键值数据库（stub） |
 | [GitLab](entities/GitLab.md) | DevOps 全生命周期平台（stub） |
-| [Kafka](entities/Kafka.md) | 分布式消息队列/事件流平台（stub） |
 | [Loki](entities/Loki.md) | 轻量级日志聚合系统（stub） |
 | [MySQL](entities/MySQL.md) | 开源关系型数据库（stub） |
 | [[KnowledgeBase/entities/NVIDIA|NVIDIA]] | GPU 硬件厂商，覆盖 Tensor Core 精度与 NVFP4 相关内容 |
@@ -108,6 +107,8 @@ date: 2026-10-20
 | [[KnowledgeBase/entities/Ollama|Ollama]] | 面向本地开发、Demo 与 PoC 的模型下载、管理和运行工具 |
 | [[KnowledgeBase/entities/vLLM|vLLM]] | 高吞吐 LLM Serving Runtime，覆盖 KV Cache、并行推理与 OpenAI 兼容 API |
 | [[KnowledgeBase/entities/ModelScope|ModelScope]] | 模型与数据集平台，可作为国内模型下载及离线资产准备入口 |
+
+- [[KnowledgeBase/entities/Kafka|Kafka]] — 事件流与消费语义、副本可靠性、生产配置、ZooKeeper/KRaft 及 Kubernetes 排障。
 
 - [[KnowledgeBase/entities/Cluster Autoscaler|Cluster Autoscaler]] — 基于 Pod 调度需求扩容节点组，并在满足迁移条件时安全缩容。
 
@@ -341,6 +342,8 @@ date: 2026-10-20
 | [HPC-Cloud-GPU](sources/hpc-cloud-gpu-batch-summary.md) | 15 | Slurm 调度/PBS/GPU 管理、云原生/微服务/ServiceMesh、GPU 硬件/CUDA/驱动 |
 
 ### 杂项领域（已摄入 ✅）
+
+- [[KnowledgeBase/sources/kafka-basics-production-summary|Kafka 入门、生产配置与 Kubernetes 排障]] — 整合主文、迁出的生产章节、参数校正和旧版 ZooKeeper 故障排查。
 
 | 页面 | 覆盖文档数 | 摘要 |
 |------|:---------:|------|
