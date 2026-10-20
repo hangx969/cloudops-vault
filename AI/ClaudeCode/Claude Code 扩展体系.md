@@ -14,7 +14,7 @@ aliases:
 
 # Claude Code 扩展体系
 
-Claude Code 的核心竞争力不只是对话和代码生成，更在于它的**四层扩展机制**。这四层机制各有定位，组合起来构成一个可编排、可沉淀、可分发的智能工作流系统。
+Claude Code 除了对话和代码生成，还提供 MCP、Skills、Slash Commands 和 Plugin 四层扩展机制，用于编排、复用和分发工作流。
 
 | 层级 | 机制 | 本质 | 触发方式 | 注入方式 |
 |------|------|------|---------|---------|
@@ -23,15 +23,13 @@ Claude Code 的核心竞争力不只是对话和代码生成，更在于它的**
 | 3 | **Slash Commands** | 手动触发的工作流 | 手动（`/命令名`） | user message |
 | 4 | **Plugin** | 打包分发容器 | — | 包含以上所有 |
 
-**一句话总结**：MCP 是"手"（操作外部世界），Skills 是"肌肉记忆"（自动响应），Slash Commands 是"快捷键"（手动触发），Plugin 是"安装包"（打包分发）。
-
-单个 Skill 是能力，多个 Skill 编排是流程，Skill + MCP + SubAgent 是智能体。
+单个 Skill 提供一项能力，多个 Skill 可编排成流程；结合 MCP 和 SubAgent，可构建智能体。
 
 ---
 
 # 一、MCP（Model Context Protocol）
 
-MCP 是连接 AI 模型与外部工具、数据源的标准化桥梁协议。通过 MCP Server，Claude Code 可以调用文件系统、数据库、API、浏览器等外部资源。
+MCP 是连接 AI 模型与外部工具、数据源的标准协议。通过 MCP Server，Claude Code 可以访问文件系统、数据库、API 和浏览器等资源。
 
 - **协议模型**：Client（Claude Code）↔ Server（MCP 进程），通过 stdio 通信
 - **安装方式**：`claude mcp add <name> -- <command>` 或在 JSON 配置文件中声明
@@ -43,11 +41,11 @@ MCP 是连接 AI 模型与外部工具、数据源的标准化桥梁协议。通
 
 ### context7
 
-**场景**：查最新框架文档（Next.js 15、React 19）、API 参数和用法确认、库的最佳实践和陷阱、版本迁移指南。
+**场景**：查询最新框架文档（Next.js 15、React 19）、确认 API 参数和用法、了解库的最佳实践、常见问题与版本迁移方法。
 
 用个人 GitHub 账号登录：[https://context7.com/](https://context7.com/)
 
-**VSCode 扩展**：在扩展界面搜 `@mcp context7`，选择安装。配置文件 JSON 中添加 API Key：
+**VSCode 扩展**：在扩展界面搜索 `@mcp context7` 并安装，再在 JSON 配置中添加 API Key：
 
 ```json
 "servers": {
@@ -76,7 +74,7 @@ claude mcp add context7 -- npx -y @upstash/context7-mcp --api-key ""
 
 ### atlassian
 
-用 Docker 方式安装。安装完成之后，在家目录配置文件中添加进去 Docker 命令和 token，启动 colima 就能自动连接 MCP。
+通过 Docker 运行。在家目录的配置文件中加入 Docker 命令和 token，启动 colima 后即可连接 MCP。
 
 ```json
 "mcpServers": {
@@ -137,11 +135,11 @@ claude mcp add context7 -- npx -y @upstash/context7-mcp --api-key ""
 claude mcp add mcp-sequentialthinking-tools -- npx -y mcp-sequentialthinking-tools
 ```
 
-**场景**：复杂技术选型（微服务 vs 单体、数据库选型）、架构设计决策（分层、模块边界、扩展性）、疑难 bug 根因分析（多因素交叉、隐蔽逻辑）、性能优化策略规划。
+**场景**：复杂技术选型（微服务 vs 单体、数据库选型）、架构决策（分层、模块边界、扩展性）、疑难 bug 分析（多因素交叉、隐蔽逻辑）、性能优化规划。
 
-**实战案例**："分析为什么我们的订单服务在高峰期会超时,考虑数据库、缓存、网络、并发锁、GC 等所有可能因素"
+**实战案例**：“分析为什么我们的订单服务在高峰期会超时，考虑数据库、缓存、网络、并发锁、GC 等所有可能因素。”
 
-**效果**：会给出完整的推理链：假设 → 验证 → 排除 → 聚焦 → 验证 → 结论，而不是直接猜一个答案。
+**效果**：输出完整的分析过程：假设 → 验证 → 排除 → 聚焦 → 验证 → 结论。
 
 ---
 
@@ -155,7 +153,7 @@ claude mcp add mcp-sequentialthinking-tools -- npx -y mcp-sequentialthinking-too
 claude mcp add memory -- npx -y @modelcontextprotocol/server-memory
 ```
 
-**场景**：记住项目约定（命名规范、错误码、配置路径）、记住团队踩过的坑（某个库的 bug、某个配置的坑）、记住重要决策（为什么选这个方案、权衡了什么）。
+**场景**：记住项目约定（命名规范、错误码、配置路径）、团队遇到的问题（库的 bug、配置陷阱）和重要决策（选择原因与权衡）。
 
 **实战案例**：
 
@@ -184,7 +182,7 @@ Git规范:
 "
 ```
 
-验证：下次问问题时，看 Claude 是否会自动调用这些规范。
+验证：下次提问时，检查 Claude 是否自动调用了这些规范。
 
 ---
 
@@ -198,7 +196,7 @@ claude mcp add playwright -- npx -y @executeautomation/playwright-mcp-server
 
 **场景**：竞品监控、批量截图、自动化测试、数据抓取
 
-**案例**："打开这 5 个竞品官网,截图首页和定价页,保存到 `./analysis/`"
+**案例**：“打开这 5 个竞品官网，截图首页和定价页，保存到 `./analysis/`。”
 
 ---
 
@@ -218,10 +216,10 @@ claude mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem /pat
 ---
 
 ### github
-Claude Code 通过官方 GitHub MCP Server 接入 GitHub，可读取/操作 PR、Issue 等。两种配置方式：
+Claude Code 可通过官方 GitHub MCP Server 读取或操作 PR、Issue。支持两种配置方式：
 
 **方式 A：远程 HTTP（推荐）**
-- 无需 Docker，GitHub 官方托管，配置最简单
+- 无需 Docker，由 GitHub 官方托管，配置最简单
 - 前提：能访问 `api.githubcopilot.com`；GHES（私有部署）不支持
 ```bash
 claude mcp add-json github '{"type":"http","url":"https://api.githubcopilot.com/mcp","headers":{"Authorization":"Bearer YOUR_GITHUB_PAT"}}'
@@ -229,7 +227,7 @@ claude mcp add-json github '{"type":"http","url":"https://api.githubcopilot.com/
 ```
 
 **方式 B：本地 Docker**
-- Token 只在本机流转，不经过任何远程中转；GHES 场景下唯一选择
+- Token 只在本机流转，不经过远程中转；GHES 场景只能用此方式
 - 前提：本机需要 Docker 且保持运行
 ```bash
 claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=YOUR_GITHUB_PAT -- docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server
@@ -239,13 +237,13 @@ claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=YOUR_GITHUB_PAT -- docker 
 
 **验证**：`claude mcp list` / `claude mcp get github`
 
-**选型建议**：默认用方式 A，图省心；如果是 GHES 私有部署或公司网络封锁 `api.githubcopilot.com`，切换方式 B。
+**选型建议**：默认使用配置更简单的方式 A；GHES 私有部署或公司网络无法访问 `api.githubcopilot.com` 时，改用方式 B。
 
 ---
 
 ### exa
 
-智能搜索（需要官网 key），依赖 axios 包。
+智能搜索服务，需要官网 key，依赖 axios 包。
 
 - GitHub：[exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server)
 - Exa API Key：[https://dashboard.exa.ai/home](https://dashboard.exa.ai/home)
@@ -254,14 +252,14 @@ claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=YOUR_GITHUB_PAT -- docker 
 claude mcp add exa -e EXA_API_KEY="" -- npx -y exa-mcp-server
 ```
 
-**场景**：需要搜索最新信息、技术博客、开源项目时，比普通搜索引擎更精准。
+**场景**：搜索最新信息、技术博客和开源项目，检索结果比普通搜索引擎更精准。
 
 **优势**：
 
-- **语义理解更强（Neural Search）**：你可以用自然语言描述你想要的内容（例如："找一篇关于 Transformer 架构的通俗易懂的教程"），它能理解"通俗易懂"和"教程"的含义，而不是只搜这两个词
-- **返回结构化数据（Clean Data）**：传统搜索引擎返回的是充满了广告、SEO 废话和复杂 HTML 的网页。Exa 会清洗内容，直接返回**干净的文本**或**结构化数据**，这大大减少了 AI 处理杂乱信息的负担，减少了"幻觉"
-- **强大的过滤功能**：它允许你按**域名**（如只搜 github.com）、**日期**、**内容类型**（如 PDF、代码）进行精确过滤
-- **不仅是搜索，还能"内容相似推荐"**：你可以给它一个链接，让它找出"与这个网页内容相似的其他网页"，这对于做调研非常有用
+- **语义理解（Neural Search）**：支持自然语言检索。例如，搜索“关于 Transformer 架构的通俗易懂的教程”时，会理解“通俗易懂”和“教程”的含义，而不只是匹配字面关键词
+- **结构化结果（Clean Data）**：清除网页中的广告、SEO 文案和复杂 HTML，返回干净文本或结构化数据，大幅减少 AI 处理杂乱信息的负担与幻觉
+- **精确过滤**：可按域名（如只搜 github.com）、日期、内容类型（如 PDF、代码）筛选结果
+- **相似内容检索**：提供一个网页链接，查找内容相似的其他网页，便于调研
 
 ---
 
@@ -273,7 +271,7 @@ claude mcp add exa -e EXA_API_KEY="" -- npx -y exa-mcp-server
 claude mcp add deepwiki -- npx -y mcp-deepwiki
 ```
 
-**场景**：聚合某个库的完整文档站点，比 context7 更全面但速度慢一些。
+**场景**：聚合某个库的完整文档站点，覆盖比 context7 更全面，但速度较慢。
 
 ---
 
@@ -282,20 +280,20 @@ claude mcp add deepwiki -- npx -y mcp-deepwiki
 > [!info] 仓库
 > [jgraph/drawio-mcp](https://github.com/jgraph/drawio-mcp)
 
-Draw.io 的这个 MCP 工具（`drawio-mcp`），走了一条非常聪明的路子。它不是自己在后台"画"一张图，而是**把 AI 生成的逻辑（Mermaid、CSV、XML）瞬间转换成 Draw.io 的专用链接**。
+Draw.io 的 MCP 工具（`drawio-mcp`）将 AI 生成的 Mermaid、CSV、XML 数据转换为 Draw.io 专用链接，在浏览器中打开可编辑的图表。
 
-简单来说，流程变成了这样：
+流程如下：
 
-1. 你告诉 AI："画个 OAuth2 流程图"
+1. 向 AI 提出需求，例如“画个 OAuth2 流程图”
 2. AI 生成结构化数据
 3. MCP 工具把数据压缩、编码
-4. 浏览器自动弹出一个 Draw.io 编辑页面，图已经画好了，每一个节点都能拖、能改、能换色
+4. 浏览器自动打开 Draw.io 编辑页面，可拖动节点、修改内容和配色
 
-根据 GitHub 上的官方文档，这个 MCP Server 目前支持三种核心模式：
+根据 GitHub 官方文档，这个 MCP Server 目前支持三种模式：
 
-- **Mermaid 转图 (`open_drawio_mermaid`)**：这是最常用的。AI 写 Mermaid 逻辑最强，Draw.io 负责渲染和二次编辑，绝配
-- **CSV 转图 (`open_drawio_csv`)**：适合画组织架构图、网络拓扑图。你扔给 AI 一堆人员名单和汇报关系，它能瞬间生成树状图
-- **XML 原生格式 (`open_drawio_xml`)**：如果你有现成的 Draw.io XML 数据，或者让 AI 学习了 XML 结构，可以直接生成最复杂的图表
+- **Mermaid 转图 (`open_drawio_mermaid`)**：最常用，由 AI 编写 Mermaid，Draw.io 负责渲染和后续编辑
+- **CSV 转图 (`open_drawio_csv`)**：适合组织架构图、网络拓扑图，可根据人员名单和汇报关系生成树状图
+- **XML 原生格式 (`open_drawio_xml`)**：支持现有 Draw.io XML，也可让 AI 按其结构生成最复杂的图表
 
 **安装**：
 
@@ -310,9 +308,9 @@ Draw.io 的这个 MCP 工具（`drawio-mcp`），走了一条非常聪明的路�
 }
 ```
 
-**使用**：使用 draw.io MCP 工具 `open_drawio_mermaid` 制作展示 OAuth2 流程的时序图
+**使用**：调用 draw.io MCP 工具 `open_drawio_mermaid`，制作 OAuth2 流程时序图
 
-**导出**：export 成 xml 格式，在 Confluence page 上创建一个 draw.io diagram
+**导出**：导出为 xml，再在 Confluence 页面创建 draw.io diagram
 
 ---
 
@@ -321,7 +319,7 @@ Draw.io 的这个 MCP 工具（`drawio-mcp`），走了一条非常聪明的路�
 > [!info] 文档
 > [Datadog MCP Server Setup](https://docs.datadoghq.com/bits_ai/mcp_server/setup/?tab=claudecode)
 
-**场景**：在 Claude Code 中直接查询 Datadog 的日志、指标、Trace、Dashboard、Monitor、Incident 等可观测性数据，支持 16 个产品 Toolset 按需加载。
+**场景**：在 Claude Code 中查询 Datadog 日志、指标、Trace、Dashboard、Monitor、Incident 等数据，支持 16 个产品 Toolset 按需加载。
 
 **Claude Code 配置**：
 
@@ -348,7 +346,7 @@ claude mcp add datadog --scope user -- ~/.local/bin/datadog_mcp_cli
 }
 ```
 
-**认证方式**：默认使用 OAuth 2.0（远程 HTTP 连接时自动触发浏览器登录）。如果无法走 OAuth 流程（如服务器环境），可以通过 API Key + Application Key 以 HTTP Header 方式认证：
+**认证方式**：远程 HTTP 连接默认使用 OAuth 2.0，自动打开浏览器登录。无法使用 OAuth 时（如服务器环境），可通过 HTTP Header 传入 API Key 和 Application Key：
 
 ```json
 {
@@ -366,12 +364,12 @@ claude mcp add datadog --scope user -- ~/.local/bin/datadog_mcp_cli
 ```
 
 > [!tip] 安全建议
-> 建议使用 [Service Account](https://docs.datadoghq.com/account_management/org_settings/service_accounts/) 创建的 scoped API Key 和 Application Key，仅赋予所需权限。
+> 建议通过 [Service Account](https://docs.datadoghq.com/account_management/org_settings/service_accounts/) 创建 scoped API Key 和 Application Key，只授予所需权限。
 
 > [!warning] 权限
-> 需要 Datadog 用户角色具备 `mcp_read` 和 `mcp_write` 权限（Standard Role 默认包含）。除此之外还需要对应资源的标准权限（如读 Monitor 需要 Monitors Read）。如使用自定义角色，需在 [Organization Settings > Roles](https://app.datadoghq.com/organization-settings/roles) 中手动勾选 **MCP Read** 和 **MCP Write**。
+> Datadog 用户角色需具备 `mcp_read` 和 `mcp_write` 权限（Standard Role 默认包含），以及对应资源的权限，例如读取 Monitor 需要 Monitors Read。自定义角色需在 [Organization Settings > Roles](https://app.datadoghq.com/organization-settings/roles) 中勾选 **MCP Read** 和 **MCP Write**。
 
-**Toolset 机制**：Datadog MCP 支持按产品域选择性加载工具集，通过 URL query 参数 `toolsets` 控制，节省 context window 空间：
+**Toolset 机制**：通过 URL query 参数 `toolsets` 按产品域选择工具集，节省 context window：
 
 ```bash
 # 默认只加载 core 工具集
@@ -515,13 +513,11 @@ Skills（技能）是自动触发的能力包，2025 年 10 月发布。
 > [!info] 官方文档
 > [Claude Code Skills](https://code.claude.com/docs/zh-CN/skills)
 
-**和 MCP 的区别**：Skills 的范围更大，Skills 可以调用 MCP。Skills 还可以包含 Python 脚本，功能更灵活丰富。
+**和 MCP 的区别**：Skills 的范围更大，既能调用 MCP，也能包含 Python 脚本。
 
-简单说，**Skills 就是给 Claude 安装的"专业技能包"**。
+一个 Skill 是包含技能描述、脚本和示例代码等内容的文件夹。
 
-**技术上**，一个 Skill 就是一个文件夹，里面包含技能的描述、相关脚本、示例代码等等。
-
-比如你搞了一个 `SKILL.md` 文件，里面放了 AI 生成 PPT 固定流程的指令。你给 Claude 说：帮我生成 PPT，这个 Skill 就能激活。你就不需要每次都把你的要求写出来。
+例如，在 `SKILL.md` 中写入生成 PPT 的固定流程后，向 Claude 提出“帮我生成 PPT”即可激活，无需每次重复说明要求。
 
 ---
 
@@ -529,12 +525,12 @@ Skills（技能）是自动触发的能力包，2025 年 10 月发布。
 
 ### 痛点 1：重复劳动
 
-- **之前**：每次都像教小孩一样解释规则（"用现在时""50 字以内""说 what 和 why"）
-- **现在**：打包成 Skill，说一句话自动应用
+- **之前**：每次都要重复说明规则（“用现在时”“50 字以内”“说 what 和 why”）
+- **现在**：将规则打包成 Skill，一句话即可自动应用
 
 ### 痛点 2：团队协作混乱
 
-- **场景**：10 个人用 10 种方式让 Claude 生成文档，格式五花八门
+- **场景**：10 个人用 10 种方式生成文档，格式不统一
 - **解决**：
   1. 把 Skill 提交到项目代码库：`.claude/skills/company-doc-generator/`
   2. 团队成员 `git pull` 后自动同步
@@ -542,16 +538,16 @@ Skills（技能）是自动触发的能力包，2025 年 10 月发布。
 
 ### 痛点 3：知识无法沉淀
 
-- **之前**：老员工调试 API 的技巧藏在脑子里
-- **现在**：写成 Skill，新人克隆代码立刻获得团队智慧
+- **之前**：老员工调试 API 的经验难以传给新人
+- **现在**：将经验写成 Skill，新人克隆代码即可复用
 
 ---
 
 ## 渐进式披露机制（Progressive Disclosure）
 
-这个设计是 Skills 高效的核心。Anthropic 官方术语叫 **Progressive Disclosure**："Claude loads information in stages as needed, rather than consuming context upfront."（按需分阶段加载，而不是一次性占满上下文）。
+Anthropic 将这种按需分阶段加载的方式称为 **Progressive Disclosure**："Claude loads information in stages as needed, rather than consuming context upfront."（按需分阶段加载，而不是一次性占满上下文）。
 
-本质原因：大模型的注意力是稀缺资源，**塞进 context 的每一个 token 都在和当前任务争抢模型的关注度**。如果启动时就把所有可能用到的工作流、模板、示例全塞进上下文，模型处理实际请求时反而抓不到重点。
+上下文和模型注意力有限。启动时载入所有工作流、模板和示例，会分散模型对当前任务的关注。
 
 ### 官方三层加载机制
 
@@ -565,15 +561,15 @@ Skills（技能）是自动触发的能力包，2025 年 10 月发布。
 
 - `name`：最多 **64 字符**，只能小写字母+数字+连字符，不能含 "anthropic" 或 "claude"
 - `description`：最多 **1024 字符**，必须非空，不能含 XML 标签
-- `SKILL.md` 主体：控制在 **500 行以内**，接近这个规模就把详细文档、示例和模板拆出去。行数是编写时的拆分标准，不能与 token 数或中文字数固定换算，也不是运行时的硬性截断限制
+- `SKILL.md` 主体：控制在 **500 行以内**，接近这一规模就拆出详细文档、示例和模板。行数是拆分参考，不能与 token 数或中文字数固定换算，也不是运行时的硬性截断限制
 
 500 行和下文的一跳引用原则来自 [Anthropic Skill 编写最佳实践](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#progressive-disclosure-patterns)。
 
-这解释了为什么 Anthropic 鼓励装**多个细分 Skill** 而不是一个臃肿 Skill——50 个 Skill 的 Level 1 总共也才 5K token。
+Anthropic 因此鼓励安装多个细分 Skill。50 个 Skill 的 Level 1 合计约 5K token。
 
 ### SKILL.md 的定位：分层引用网络的根节点
 
-`SKILL.md` 是执行入口，也是按需加载资源的索引。按职责将 Skill 分成三层，避免触发信息、执行流程和参考资料混在一起：
+`SKILL.md` 是执行入口和资源索引。Skill 分为三层，分别负责触发、执行和按需提供资料：
 
 | 层级 | 负责什么 | 放什么内容 |
 |------|----------|------------|
@@ -581,12 +577,12 @@ Skills（技能）是自动触发的能力包，2025 年 10 月发布。
 | `SKILL.md` 主体 | 执行主逻辑 | 工作流骨架、决策分支、步骤出口条件，以及何时读取哪个资源 |
 | 支持资源 | 提供执行时才需要的细节 | `references/` 放参考文档，`scripts/` 放脚本，`assets/` 放模板等资源 |
 
-第三层是资源层的统称，不要求把脚本和模板都塞进 `references/`。主文件保留流程和资源入口，参考文档说明相关细节，避免多处重复维护同一套规则。
+第三层统称支持资源，脚本和模板无需都放入 `references/`。主文件保留流程和资源入口，参考文档提供细节，避免重复维护规则。
 
-凡是"细节填充"——具体的规则案例、模板正文、长篇示例、参考代码——一律不进主文件，全部下沉到 Level 3 的引用文件。**主文件不需要装下所有内容，只需要装下"地图"**。
+规则案例、模板正文、长篇示例和参考代码统一放入 Level 3 引用文件，主文件只保留流程与索引。
 
 > [!tip] 主文件保留执行入口
-> 可以在 `SKILL.md` 中提供 quick start，再指向表单处理、API 参考等详细文档。判断是否拆分，要看流程是否清楚、细节是否按需加载，不能只看文件短不短。
+> 在 `SKILL.md` 中提供 quick start，再指向表单处理、API 参考等详细文档。拆分时关注流程是否清楚、细节是否按需加载，不只看文件长短。
 
 ### SKILL.md 拆分判断标准
 
@@ -597,11 +593,11 @@ Skills（技能）是自动触发的能力包，2025 年 10 月发布。
 | > 500 行 | 超出本指南的篇幅目标 | 将详细文档、示例和模板拆到支持资源，主文件保留决策和执行步骤 |
 
 **拆分优先级**：
-1. **第一刀**：先把**示例和模板**下沉（长但低频访问，最吃 token）
-2. **第二刀**：把**详细规则**拆成 `references/rules.md`，主文件只留一句"风格规则见 references/rules.md"
-3. **第三刀**：把**长流程**封装成脚本，模型 bash 调用即可
+1. 先拆出**示例和模板**：篇幅长、访问频率低，占用 token 多
+2. 再将**详细规则**拆到 `references/rules.md`，主文件只留“风格规则见 references/rules.md”
+3. 将**长流程**封装成脚本，供模型通过 bash 调用
 
-**不要拆的**：决策树——哪个工作流处理哪种请求、判断分支怎么走，这是主文件的命根子，拆出去模型读完主文件就不知道下一步该干嘛。
+**保留决策树**：主文件应写清哪种请求对应哪个工作流、各分支如何处理，模型读完才知道下一步做什么。
 
 ### 好引用 vs 坏引用
 
@@ -616,15 +612,15 @@ Skills（技能）是自动触发的能力包，2025 年 10 月发布。
 详见 references/style-guide.md。
 ```
 
-好引用告诉模型"为什么去看、看哪几条"，模型可以判断是否真的需要读；坏引用只扔一个文件名，模型要么不读跳过、要么每次全文读浪费 token。
+好的引用说明读取目的和检查重点，模型据此判断是否需要读取；只给文件名，模型要么跳过，要么每次全文读取，浪费 token。
 
-**执行所需的引用链最多一跳**：从 `SKILL.md` 直接指向所需资源，避免把必读资料藏在子文件的下一层引用中。例如，若 `references/A.md` 依赖 `references/B.md`，应在 `SKILL.md` 中直接列出 A、B 的用途和读取条件，避免形成 `SKILL.md → A.md → B.md` 的必读链；循环引用也应消除。
+**执行所需的引用链最多一跳**：由 `SKILL.md` 直接索引资源，避免把必读资料藏在下一层。例如，`references/A.md` 依赖 `references/B.md` 时，应在 `SKILL.md` 中分别写明 A、B 的用途和读取条件，避免形成 `SKILL.md → A.md → B.md` 的必读链，也要消除循环引用。
 
-Agent 会按需读取文件，不能假定它会递归展开每条链接。深层引用可能只被预览或遗漏；一跳原则用于降低漏读风险，并不意味着 Agent 在技术上无法继续读取下一层文件。
+Agent 按需读取文件，不保证递归展开链接。深层引用可能只被预览或遗漏；一跳原则用于减少漏读，并非技术上无法继续读取。
 
 ### 实战演进案例
 
-一个写作 SKILL 文件的三版迭代：
+一个写作 SKILL 文件经过三版迭代：
 
 | 指标 | V1（单文件 1900 行） | V3（主文件 612 行 + 引用） |
 |------|---------------------|--------------------------|
@@ -633,26 +629,26 @@ Agent 会按需读取文件，不能假定它会递归展开每条链接。深�
 | "写错风格"频率 | 每 20 次约 1 次 | 几乎归零 |
 | 维护成本（改一条规则） | 全文件找位置 | 单子文件改 |
 
-V1 的核心问题：把所有写作规则、文风指南、案例分析、模板、配图规范、上传脚本说明全塞进一个 SKILL.md，远超 500 行的篇幅目标。不同类型文章（公众号/算法/知乎）的规则混在一起互相干扰。V3 虽然已有改善，但主文件仍有 612 行，按本指南还应继续拆分。
+V1 将写作规则、文风指南、案例分析、模板、配图规范和上传脚本说明集中在一个 SKILL.md 中，远超 500 行的篇幅目标；公众号、算法、知乎等不同类型文章的规则相互干扰。V3 已有改善，但主文件仍有 612 行，还应继续拆分。
 
-V3 的做法：主文件只放触发条件 + 10 步工作流骨架 + 引用索引，其余下沉：
+V3 主文件只保留触发条件、10 步工作流和引用索引，其余拆出：
 - 文风规范 → `references/style-guide.md`
 - 历史范本 → `references/article_*.md`
 - 代码逻辑 → `scripts/*.py`
 - 配置数据 → `config/*.json`
 
-**Skill 间的 handoff 设计**：文章 SKILL 走到最后一步需要生成视频时，不把视频生成的细节塞进自己的主文件，而是复制视频模板副本、注入 input.md、然后**显式把控制权交给视频 SKILL**。每个 Skill 只懂自己那一摊事，靠"路标"互相衔接。
+**Skill 间的 handoff 设计**：写作 SKILL 最后需要生成视频时，先复制视频模板、注入 input.md，再显式交给视频 SKILL。写作主文件无需包含视频生成细节，各 Skill 只处理自己的任务，通过交接衔接流程。
 
 ---
 
 ## 组成结构
 
-一个 Skill 文件夹通常包含这几部分：
+Skill 文件夹通常包含：
 
-- **SKILL.md**：核心文件。用 YAML 写元数据（名字、描述），用 Markdown 写详细的指令，告诉 Claude 在什么情况下、以及如何使用这个 Skill
+- **SKILL.md**：核心文件，以 YAML 定义名称、描述等元数据，以 Markdown 编写使用条件和执行指令
 - **scripts/**：存放可执行的 Python、Shell 脚本
-- **references/**：存放参考文档（如 API 文档、数据库 Schema、公司政策等），作为给 Claude 看的知识库
-- **assets/**：存放资源文件（如 PPT 模板、Logo、项目脚架等），供 Claude 在执行任务时直接使用
+- **references/**：参考文档，如 API 文档、数据库 Schema、公司政策，供 Claude 按需读取
+- **assets/**：PPT 模板、Logo、项目脚架等资源，供执行时使用
 
 ---
 
@@ -662,7 +658,7 @@ V3 的做法：主文件只放触发条件 + 10 步工作流骨架 + 引用索�
 
 - 个人 Skills：`~/.claude/skills/`
 - 项目 Skills：`.claude/skills/`
-- 创建一个子目录和 skill 同名即可，在子目录中创建 `SKILL.md`
+- 创建与 skill 同名的子目录，并在其中创建 `SKILL.md`
 
 **Marketplace 安装**：
 
@@ -678,7 +674,7 @@ V3 的做法：主文件只放触发条件 + 10 步工作流骨架 + 引用索�
 
 **打包与分享**：
 
-Claude 可以打包 skill 变成一个 `xxx.skill` 文件，可以分享给其他人安装。
+Claude 可将 skill 打包为 `xxx.skill` 文件，分享给其他人安装。
 
 ```sh
 # 打包
@@ -696,7 +692,7 @@ python3 /path/to/skill-creator/scripts/package_skill.py \
 
 ### 第一层：工程化单点突破（把说明书变技能包）
 
-把最烦人的重复劳动自动化。少写废话提示词，让 Claude 自动识别场景。
+将重复操作封装为技能，让 Claude 自动识别场景，减少重复编写提示词。
 
 #### 简单测试：Pre-commit Review
 
@@ -727,7 +723,7 @@ pre-commit-check
 `smart-code-review`：
 
 > [!success] 效果
-> 以前代码审查靠人工挑毛病，经常遗漏关键问题。现在说"review 这个 PR"，自动按文件类型做专项检查，该找的坑一个不漏。团队线上事故率下降 60%。
+> 人工审查经常遗漏关键问题。提出“review 这个 PR”后，Skill 自动按文件类型专项检查，不遗漏应检查的问题。团队线上事故率下降 60%。
 
 ```markdown
 # 名称
@@ -761,7 +757,7 @@ smart-code-review
 `dependency-upgrade-check`：
 
 > [!success] 效果
-> 以前升级依赖全靠运气，升了才知道炸不炸。现在每次升级前先跑一遍评估，该注意的点全列出来，升级有底气。
+> 将依赖评估放在升级之前，完整列出注意事项，避免升级后才发现问题。
 
 ~~~markdown
 # 触发
@@ -798,14 +794,14 @@ smart-code-review
 
 ### 第二层：编排型工作流（参数化 + 链式调用）
 
-一个技能适配多项目，多个技能串成流水线。
+一个技能适配多个项目，多个技能串联成流水线。
 
 #### 案例：生产事故应急响应
 
 `incident-response`：
 
 > [!success] 效果
-> 以前线上出问题，团队一片慌乱，排查靠经验靠猜。现在说"线上订单服务挂了"，5 分钟内给出完整分析 + 3 套止损方案。平均故障恢复时间从 45 分钟降到 12 分钟。
+> 线上故障原先依赖经验排查。提出“线上订单服务挂了”后，5 分钟内输出完整分析和 3 套止损方案。平均故障恢复时间从 45 分钟降到 12 分钟。
 
 ~~~markdown
 # 触发
@@ -859,7 +855,7 @@ smart-code-review
 #### 案例：技术债追踪助手
 
 > [!success] 效果
-> 不再是"想起来就还"，而是每周有明确的 3 个小目标。结合 SonarQube 等专业工具，Skill 负责排优先级和生成报告。
+> 每周明确 3 个技术债处理目标，结合 SonarQube 等工具，由 Skill 排定优先级并生成报告。
 
 `tech-debt-tracker`：
 
@@ -890,13 +886,13 @@ Markdown周报:
 
 ### 高级：版本治理 + 回滚
 
-**目标**：把 Skills 当团队资产，能升级、能回退、可审计。
+**目标**：将 Skills 作为团队资产管理，支持升级、回退和审计。
 
 **落地做法**：
 
-1. 小范围灰度两版，对比"查出率、耗时、误报率"
-2. 确定没问题再全量，有问题立即回滚
-3. 预期效果：两周内误报率从 18% 压到 6%
+1. 小范围灰度两版，比较查出率、耗时和误报率
+2. 确认无误后全量使用，发现问题立即回滚
+3. 预期效果：两周内误报率从 18% 降至 6%
 
 ```
 team-skills/
@@ -910,17 +906,17 @@ team-skills/
 
 ## Skill 创建指南：四项检查
 
-创建或修改 Skill 时，分别检查触发准确性、结构健壮性、安全可靠性和持续改进。分层与拆分方法见 [[#SKILL.md 的定位：分层引用网络的根节点]] 和 [[#SKILL.md 拆分判断标准]]，下面补充具体的编写与验收做法。
+创建或修改 Skill 时，检查触发准确性、结构健壮性、安全可靠性和持续改进。分层与拆分方法见 [[#SKILL.md 的定位：分层引用网络的根节点]] 和 [[#SKILL.md 拆分判断标准]]。
 
 ### 触发准确性：description 写清使用边界
 
 `description` 包含三要素：
 
 1. **触发词**：用户会怎样表达需求，例如“review PR”“审查代码”“检查提交”。
-2. **使用条件**：什么任务和上下文适合激活，例如已有指定 PR 或待提交的代码变更。
-3. **跳过条件**：哪些相近请求不应激活，例如只解释代码审查概念，或要求直接编写功能。
+2. **使用条件**：适合激活的任务和上下文，例如已有指定 PR 或待提交的代码变更。
+3. **跳过条件**：不应激活的相近请求，例如只解释代码审查概念，或要求直接编写功能。
 
-保留简短的能力概述，避免只堆关键词；脚本名、命令、工具调用顺序和内部算法等实现细节放在主体或支持资源中。这样模型选 Skill 时能识别任务边界，不必提前理解整个实现。
+用简短的能力概述说明任务边界，不只堆关键词。脚本名、命令、工具调用顺序和内部算法等实现细节放在主体或支持资源中，模型选 Skill 时无需先理解实现。
 
 ```yaml
 name: reviewing-code
@@ -932,7 +928,14 @@ description: >-
 
 ### 结构健壮性：每一步都有出口条件
 
-遵守前文的三层分工、500 行篇幅目标和一跳引用原则。主体中的每个步骤还要写明动作、产出，以及何时继续、停止或转入其他分支。只写“检查”“处理”“验证”，Agent 很难判断任务做到什么程度才算完成。
+结构健壮性要落实到四项：
+
+1. **三层职责分开**：`description` 负责何时触发，`SKILL.md` 主体负责执行步骤，`references/` 等支持资源存放详细资料，避免混写。
+2. **每一步都有出口条件**：写清动作、产出，以及何时继续、停止或转入其他分支。只写“检查”“处理”“验证”，Agent 难以判断何时完成。
+3. **引用链最多一跳**：`SKILL.md` 引用 `references/A.md` 后，A.md 不应再通过引用 `references/B.md` 来提供下一步必读内容。如果需要 B.md，应直接在 `SKILL.md` 中引用它。Agent 按需读取文件，不会仅因 A.md 中有链接就自动加载 B.md，因此不能依赖 `SKILL.md → A.md → B.md` 这样的逐层引用。
+4. **`SKILL.md` 主体不超过 500 行**：超过就把详细说明、规则和长篇示例拆到 `references/`，主体只保留执行步骤、判断分支和参考文件入口。
+
+步骤的产出和出口条件可以按下表编写：
 
 | 步骤示例 | 预期产出 | 出口条件与失败处理 |
 |----------|----------|--------------------|
@@ -941,35 +944,35 @@ description: >-
 | 执行操作 | 实际执行结果 | 前置检查和所需确认通过后执行；失败时报告原因，按预设重试上限处理或停止 |
 | 验收交付 | 结果、检查证据与未完成项 | 满足验收标准才标记完成；未通过时进入修正分支或说明阻塞 |
 
-出口条件既包括成功条件，也包括失败、输入不足和需要用户决定的情况，防止流程静默跳步或无限重试。
+出口条件应涵盖成功、失败、输入不足和需要用户决定的情况，防止静默跳步或无限重试。
 
 ### 安全可靠性：参数化、确认门与反模式
 
-**避免硬编码敏感信息和环境绑定值**。真实 token、用户 ID、账号等不能写入 Skill 主体、参考文档或配套脚本；凭据从环境变量或凭据管理系统读取，用户 ID 等标识通过参数或运行时查询获得。示例使用占位符，避免将某次运行的身份和配置带入其他任务。
+**避免硬编码敏感信息和环境绑定值**。Skill 主体、参考文档和配套脚本不能写入真实 token、用户 ID、账号等。凭据从环境变量或凭据管理系统读取，标识通过参数或运行时查询获取；示例使用占位符，避免泄露或跨环境误用。
 
-**为不可逆或高影响操作设置 Confirmation Gate**。发布、删除、覆盖重要文件等操作，先完成读取、草拟和必要校验，再展示目标、具体变更或执行命令、影响范围及可用的回退办法；获得用户明确确认后才执行。确认应针对可审阅的结果，不能只问一句“是否继续”。
+**为不可逆或高影响操作设置 Confirmation Gate**。发布、删除、覆盖重要文件前，先完成读取、草拟和必要校验，再展示目标、具体变更或命令、影响范围及可用的回退办法，获得用户明确确认后执行。确认应针对可审阅的结果，不能只问“是否继续”。
 
-写文件是否需要单独确认，要看写入的影响和已有授权：临时文件、草稿或用户已明确要求的可回滚编辑，可以按授权执行；会覆盖重要内容、对外发布或超出授权范围的写入，应在执行前停在确认门。不要把所有文件写入都视为不可逆操作，也不要让确认门阻断生成草稿和展示差异的准备工作。
+文件写入是否需要单独确认，取决于影响和已有授权。临时文件、草稿或用户已明确要求的可回滚编辑，可按授权执行；覆盖重要内容、对外发布或超出授权范围的写入，须先经过确认门。写文件不一定不可逆，生成草稿和展示差异也不应被确认门阻断。
 
-在 Skill 中保留显式的反模式清单，并说明原因，例如：
+在 Skill 中列出明确的反模式并解释原因，例如：
 
-- 不把凭据、真实用户 ID 等写死在正文、参考文件、脚本或示例中，避免泄露和跨环境误用。
-- 不把“讨论方案”“生成草稿”推断为执行授权，避免在用户尚未审阅时产生实际变更。
-- 不跳过失败步骤继续宣称完成，也不把工具查不到的信息补成确定事实；应报告失败和证据缺口。
-- 不在操作失败后擅自扩大权限、变更范围或绕过确认门，避免把局部失败升级为更大影响。
+- 不在正文、参考文件、脚本或示例中写死凭据、真实用户 ID 等，避免泄露和跨环境误用。
+- 不把“讨论方案”“生成草稿”当作执行授权，避免未经审阅就产生实际变更。
+- 不跳过失败步骤后宣称完成，不把工具查不到的信息补成确定事实；应报告失败和证据缺口。
+- 不因操作失败而擅自扩大权限、范围或绕过确认门，避免扩大影响。
 
 ### 持续改进：对比 Eval，并解释 WHY
 
-每次修改 Skill 后，都跑 `with-skill` 与 `without-skill` 的对比 Eval，检查新增规则是否带来实际收益：
+每次修改 Skill 后，运行 `with-skill` 与 `without-skill` 对比 Eval，检查新增规则的实际收益：
 
-1. 固定测试任务、输入、模型、工具权限和评分标准，分别运行启用与不启用该 Skill 的两组测试。
-2. 单独检查触发准确性：用“应该触发”“不应触发”和容易混淆的边界请求，观察误触发与漏触发。
-3. 比较任务通过率、输出质量、越权或漏步骤情况，以及耗时和 token 成本；保留输入、输出和检查证据。
-4. 修改后重跑同一组用例，并补充新发现的边界案例。改进已有 Skill 时，还可加入旧版本对照，判断新规则是否引入退化。
+1. 固定任务、输入、模型、工具权限和评分标准，分别运行启用与不启用该 Skill 的两组测试。
+2. 单独测试触发：覆盖应该触发、不应触发及容易混淆的边界请求，检查误触发和漏触发。
+3. 比较任务通过率、输出质量、越权或漏步骤情况、耗时和 token 成本，保留输入、输出和检查证据。
+4. 修改后重跑同一组用例，并补充新发现的边界案例。改进已有 Skill 时，可增加旧版本对照，检查是否退化。
 
-`with-skill` 与 `without-skill` 用于判断 Skill 相比模型原有能力增加了什么；新旧版本对照用于判断这次修改改善了什么。不能用一次成功演示代替对比评估。
+`with-skill` 与 `without-skill` 检验 Skill 相对模型原有能力的增益；新旧版本对照检验本次修改的效果。一次成功演示不能替代对比评估。
 
-**WHY 优先于堆叠 ALWAYS / NEVER**：解释规则解决什么问题、适用条件和例外，帮助 Agent 在边界情形下判断。例如，“覆盖文件前先展示差异，因为未审阅的覆盖可能丢失用户已有内容”，比只写“永远先确认”更清楚。安全边界仍需明确，原因说明与反模式清单共同约束行为。
+**WHY 优先于堆叠 ALWAYS / NEVER**：说明规则要解决的问题、适用条件和例外，帮助 Agent 判断边界。例如，“覆盖文件前先展示差异，因为未审阅的覆盖可能丢失用户已有内容”，比“永远先确认”更清楚。安全边界仍须明确，并结合原因说明和反模式清单约束行为。
 
 对比评估和解释规则原因的做法可参见 [Anthropic 官方 skill-creator](https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md)。
 
@@ -982,7 +985,7 @@ description: >-
 
 ### 问题：写出来 ≠ 用得稳
 
-LLM 不是传统程序——你写下的"规则"，模型读到的可能只是"参考意见"。典型现象：Demo 阶段效果好，真实任务就出问题；对话一长，行为越来越飘；Skill 一多，路由边界越来越模糊。
+LLM 可能只把文本规则当作参考。常见问题是：Demo 阶段表现好，真实任务却出问题；对话变长后行为偏移；Skill 增多后触发边界模糊。
 
 ### 7 类系统性失效模式
 
@@ -997,11 +1000,11 @@ LLM 不是传统程序——你写下的"规则"，模型读到的可能只是"�
 | 7 | **幻觉填充** | 工具没查到结果，不说"没查到"，而是凭记忆"补一个像样的答案" |
 
 > [!warning] 连锁触发
-> 这些模式会互相放大：输出膨胀 → 上下文被挤满 → 约束衰减 → 工具漂移 + 步骤跳过 + 幻觉填充。
+> 这些模式会相互放大：输出膨胀 → 上下文被占满 → 约束衰减 → 工具漂移、步骤跳过和幻觉填充。
 
 ### Skill Craft 质检工具
 
-Skill Craft 是面向 Claude Skill 的质量工程工具，覆盖 Skill 的完整生命周期：
+Skill Craft 是 Claude Skill 质量工程工具，覆盖完整生命周期：
 
 | 模式 | 作用 |
 |------|------|
@@ -1013,13 +1016,13 @@ Skill Craft 是面向 Claude Skill 的质量工程工具，覆盖 Skill 的完�
 **3 层评估体系**：
 
 1. **8 个结构模块**：触发条件（触发/不触发/歧义处理）、行为准则、工具优先级、输出约束、流程 Checkpoint、依赖链、子 Agent 委派规则、幻觉防护
-2. **7 类反模式风险**：结构是否真的能防住对应的失效模式
+2. **7 类反模式风险**：检查结构能否防住对应的失效模式
 3. **3 条完整性原则**：
-   - **可计数验收**：不写"逐个处理"，写"处理数必须等于总数"
-   - **Checkpoint 阻断**：每步有中间输出，防止模型一口气跳到最后
-   - **失败路径定义**：必须定义 else 分支，因为没写 else 时模型默认 skip
+   - **可计数验收**：将“逐个处理”改为“处理数必须等于总数”
+   - **Checkpoint 阻断**：每步提供中间输出，防止跳到最后
+   - **失败路径定义**：必须定义 else 分支，未定义时模型会默认跳过
 
-**fix 模式的关键**：修完后做 4 类关联检查——引用方、对称方、消费方、同层结构是否都同步更新。最常见的坑不是"改错了"，而是"只改了这一处，还有三处应该一起改"。
+**fix 模式的关键**：修复后检查引用方、对称方、消费方、同层结构这 4 类关联，确保相关位置同步更新，避免只修一处而遗漏其他位置。
 
 **安装与使用**：
 
@@ -1035,12 +1038,10 @@ cp -r skill-craft ~/.claude/skills/
 
 # 三、Slash Commands（斜杠命令）
 
-这是一个简单但极其好用的工具，用于手动标准化。
-
-斜杠命令是手动触发的工作流快捷方式，存在 `.claude/commands/` 目录。
+斜杠命令将标准化工作流封装为手动触发的快捷方式，保存在 `.claude/commands/` 目录。
 
 - **本质**：纯 Markdown 定义的多步骤流程，输入 `/命令名` 手动触发
-- **API 注入**：作为用户消息扩展，而非系统提示工具（这是与 Skills 的核心区别）
+- **API 注入**：作为用户消息扩展，区别于 Skills 的系统提示注入
 
 命令内部可以：
 
@@ -1064,7 +1065,7 @@ cp -r skill-craft ~/.claude/skills/
 
 ## 入门：/powerup 交互式引导
 
-输入 `/powerup` 启动官方提供的交互式功能发现课程。逐个功能引导体验（Shift+Tab 切换权限、`/goal` 自主执行、`/branch` 并行分支等），建议每个新用户都跑一遍。
+输入 `/powerup` 启动官方交互式功能发现课程，逐项体验 Shift+Tab 权限切换、`/goal` 自主执行、`/branch` 并行分支等功能，建议新用户运行一次。
 
 ---
 
@@ -1078,7 +1079,7 @@ cp -r skill-craft ~/.claude/skills/
 | `/compact` | 压缩对话历史，释放上下文空间 | 可带指令：`/compact 丢掉debug信息，但保留迁移方案的讨论` |
 | `/clear` | 清空对话重新开始（保留 CLAUDE.md 配置） | 完成一个完整模块或对话方向需要大调整时使用 |
 
-**使用策略**：修 bug 或小改动用 `/compact` 续命，完成完整模块或方向大调整时用 `/clear` 重启。
+**使用策略**：修 bug 或小改动时用 `/compact` 压缩上下文；完成一个模块或大幅调整方向时，用 `/clear` 重启。
 
 ### 会话管理
 
@@ -1141,7 +1142,7 @@ cp -r skill-craft ~/.claude/skills/
 
 ## 三个隐藏关键词
 
-这三个不是斜杠命令，而是在正常对话中嵌入的特殊关键词：
+这三个特殊关键词直接嵌入正常对话，无需使用斜杠命令：
 
 | 关键词 | 效果 | 适用场景 |
 |--------|------|---------|
@@ -1149,10 +1150,10 @@ cp -r skill-craft ~/.claude/skills/
 | **ultracode** | 触发 Workflow 运行，启动多个子 Agent 并行工作 | 大规模扫描任务（如全项目 API 安全漏洞审查） |
 | **ultraplan** | 规划任务交给云端 Claude Code on the web 处理 | 复杂规划任务，本地终端保持空闲继续做其他事 |
 
-**用法**：直接在提示中嵌入即可，不需要额外语法——`ultrathink 分析这段代码的并发问题`。
+**用法**：直接写入提示，无需额外语法，例如 `ultrathink 分析这段代码的并发问题`。
 
 > [!tip] 日常高频五件套
-> `/compact` 管上下文、`/resume` 管会话、`/code-review` 管代码质量、Shift+Tab 管权限、ultrathink 管推理深度。先把这五个用熟，其余按需查。
+> 先熟悉这五项：`/compact` 管理上下文，`/resume` 恢复会话，`/code-review` 检查代码质量，Shift+Tab 切换权限，ultrathink 调整推理深度；其他功能按需查阅。
 
 ---
 
@@ -1167,7 +1168,7 @@ cp -r skill-craft ~/.claude/skills/
 
 ## 自定义斜杠命令
 
-除了内置命令，Claude Code 支持在 `.claude/commands/` 目录下自定义命令，将团队工作流标准化为一键触发。
+除内置命令外，还可在 `.claude/commands/` 目录定义团队工作流，通过一条命令触发。
 
 ### 典型场景
 
@@ -1184,7 +1185,7 @@ cp -r skill-craft ~/.claude/skills/
 
 ### 示例 1：版本发布
 
-**定义命令**：建文件 `.claude/commands/release.md`
+**定义命令**：创建文件 `.claude/commands/release.md`
 
 ```markdown
 # 版本发布流程
@@ -1200,7 +1201,7 @@ cp -r skill-craft ~/.claude/skills/
 
 **使用**：直接输入 `/release`
 
-**效果**：整个团队按统一流程走,不会漏步骤。版本发布出错率从 15% 降到 0。
+**效果**：团队按统一流程发布，不遗漏步骤。版本发布出错率从 15% 降到 0。
 
 ### 示例 2：带确认步骤的发版
 
@@ -1224,13 +1225,13 @@ cp -r skill-craft ~/.claude/skills/
 不要自动执行,每步输出命令,等用户确认。
 ```
 
-验证：输入 `/release`，看是否触发完整流程。
+验证：输入 `/release`，检查是否触发完整流程。
 
 ---
 
 # 四、Plugin（插件）
 
-Plugin（插件）是应用级打包容器，用来打包其他四个工具。
+Plugin（插件）是应用级容器，用于打包其他四个工具。
 
 一个 Plugin 可以包含：
 
@@ -1244,15 +1245,15 @@ Plugin（插件）是应用级打包容器，用来打包其他四个工具。
 
 ## 适合场景
 
-1. 团队标准化工具打包、快速分享工作流、一键安装完整套件
-2. 临时用一次，快速试试某个功能
+1. 打包团队标准工具、分享工作流，一键安装完整套件
+2. 临时试用某项功能
 
 ## 缺点
 
-装太多会卡，而且大部分功能都重复。
+安装过多会卡顿，大部分功能也重复。
 
 > [!tip] 建议
-> 个人用全局配置，团队用 Plugins 打包分发。别超过 3 个，够用就行。
+> 个人使用全局配置，团队通过 Plugins 分发。数量不超过 3 个，按需安装。
 
 ---
 
@@ -1263,24 +1264,24 @@ Plugin（插件）是应用级打包容器，用来打包其他四个工具。
 
 ## 开源 Skills 仓库：
 
-- 该项目收集了各种实用 Skill，采用模块化设计。比如文档处理、开发、数据分析、营销、写作创意啥的都有：[ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills)、[BehiSecc/awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills)
-- 传统的 Claude Code Skill 需要你手动记忆和调用，而这个项目通过创新的钩子机制，实现了 Skill 的智能自动触发。当你输入提示或操作文件时，系统会自动分析上下文，并建议最相关的技能：[claude-code-infrastructure-showcase](https://github.com/diet103/claude-code-infrastructure-showcase)
-- 强迫 Claude 按高级工程师标准流程工作的 Skills 套件，详见下方"开源 Plugin 推荐"中的 [obra/superpowers](#obra/superpowers) 章节
+- 模块化 Skill 合集，涵盖文档处理、开发、数据分析、营销和创意写作：[ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills)、[BehiSecc/awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills)
+- 传统 Claude Code Skill 需要手动记忆和调用；这个项目通过钩子分析输入提示或文件操作的上下文，自动触发并推荐相关技能：[claude-code-infrastructure-showcase](https://github.com/diet103/claude-code-infrastructure-showcase)
+- 按高级工程师标准约束 Claude 工作流程的 Skills 套件，详见下方 [obra/superpowers](#obra/superpowers) 章节
 ## 用 Skill 创建 Skill
 
-Anthropic 官方有一个帮助创建 Skill 的 Skill：[skill-creator](https://github.com/anthropics/skills/tree/main/skills/skill-creator)
-告诉 Claude Code 基于当前的 Skill 草稿，调用 skill-creator 来创建一个完整的 skill，名称为 xxx。创建或迭代时，对照 [[#Skill 创建指南：四项检查]] 检查触发、结构、安全与 Eval。
+Anthropic 官方提供了用于创建 Skill 的 [skill-creator](https://github.com/anthropics/skills/tree/main/skills/skill-creator)。
+让 Claude Code 根据现有草稿，调用 skill-creator 创建名为 xxx 的完整 skill。创建或迭代时，对照 [[#Skill 创建指南：四项检查]] 检查触发、结构、安全与 Eval。
 
 ## Obsidian Skill
 
 > [!info] 仓库地址
 > [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills)
 
-obsidian-skills 直接把 Obsidian 专家集成在 Claude Code 里，仓库包含三个核心技能 Skill：
+obsidian-skills 为 Claude Code 提供 Obsidian 支持，包含三个核心 Skill：
 
-- **obsidian-markdown**：Obsidian 风格的 Markdown 书写，各种专有格式都支持
-- **obsidian-bases**：`.base` 类数据库视图，支持过滤、公式、汇总
-- **json-canvas**：`.canvas` 无限画布文件格式，可以实现点、连线、分组
+- **obsidian-markdown**：编写 Markdown，支持 Obsidian 各种专有格式
+- **obsidian-bases**：创建 `.base` 数据库视图，支持过滤、公式和汇总
+- **json-canvas**：创建 `.canvas` 无限画布，支持节点、连线和分组
 
 **安装**：
 
@@ -1295,7 +1296,7 @@ obsidian-skills 直接把 Obsidian 专家集成在 Claude Code 里，仓库包�
 > - GitHub：[github/awesome-copilot - excalidraw-diagram-generator](https://github.com/github/awesome-copilot/blob/main/skills/excalidraw-diagram-generator/)
 > - Skills 市场：[skills.sh](https://skills.sh/github/awesome-copilot/excalidraw-diagram-generator) | [skillsmp.com](https://skillsmp.com/zh/skills/github-awesome-copilot-skills-excalidraw-diagram-generator-skill-md)
 
-一句话用自然语言生成可编辑的 **Excalidraw** 手绘风格图。支持流程图、架构图、思维导图、时序图、ER 图、泳道图、类图、数据流图等 9 种图表类型。
+用一句自然语言生成可编辑的 **Excalidraw** 手绘图，支持流程图、架构图、思维导图、时序图、ER 图、泳道图、类图、数据流图等 9 种类型。
 
 **安装**：
 
@@ -1303,24 +1304,24 @@ obsidian-skills 直接把 Obsidian 专家集成在 Claude Code 里，仓库包�
 npx skills add https://github.com/github/awesome-copilot --skill excalidraw-diagram-generator
 ```
 
-**工作原理**：分析需求 → 提取节点与关系 → 匹配 8 个内置模板之一 → 生成符合 Excalidraw 规范的 JSON → 输出 `.excalidraw` 文件（VS Code 安装 Excalidraw 扩展即可直接打开编辑）。
+**工作原理**：分析需求 → 提取节点和关系 → 匹配 8 个内置模板之一 → 生成符合 Excalidraw 规范的 JSON → 输出 `.excalidraw` 文件（安装 VS Code 的 Excalidraw 扩展后即可打开编辑）。
 
-**用法**：直接告诉 Claude `生成一个用户登录流程图`，即自动调用该 Skill 生成 `.excalidraw` 文件。
+**用法**：向 Claude 提出 `生成一个用户登录流程图`，即可自动调用该 Skill，生成 `.excalidraw` 文件。
 
 > [!note]
-> 图的质量取决于模型能力，建议搭配较强的大模型使用。Claude Code 和 OpenClaw 都可用。
+> 图表质量取决于模型能力，建议使用较强的模型。支持 Claude Code 和 OpenClaw。
 ## obra/superpowers
 
 > [!info] 仓库
-> [obra/superpowers](https://github.com/obra/superpowers) — 强迫 AI 按高级工程师标准流程工作的 Skills 套件
+> [obra/superpowers](https://github.com/obra/superpowers) — 按高级工程师标准约束 AI 工作流程的 Skills 套件
 
-Superpowers 的核心理念：**AI 写代码太随意，需要用结构化流程约束它**。安装后 Claude 的行为模式变为：收到需求 → 头脑风暴 → 制定计划 → TDD 写测试 → 写代码通过测试 → 代码审查 → 验证完成。
+Superpowers 用结构化流程约束 AI 编程。安装后，Claude 按以下顺序工作：收到需求 → 头脑风暴 → 制定计划 → TDD 写测试 → 编码并通过测试 → 代码审查 → 验证完成。
 
 **强制工作流**（每个阶段必须完成才能进入下一个）：
 
-1. **Brainstorming** — 头脑风暴，拒绝直接写代码，必须先出设计方案并获批准
+1. **Brainstorming** — 先完成头脑风暴和设计方案，获批后才能写代码
 2. **Git Worktrees** — 在独立分支上创建隔离工作区
-3. **Writing Plans** — 将设计拆解为细粒度任务，假设执行者零上下文
+3. **Writing Plans** — 将设计拆为细粒度任务，供零上下文的执行者使用
 4. **Subagent-Driven Development** — 子智能体隔离执行，双阶段审查（规格合规 + 代码质量）
 5. **Test-Driven Development** — 强制 RED → GREEN → REFACTOR 循环
 6. **Code Review** — 提交前对照计划自查
@@ -1372,13 +1373,13 @@ Superpowers 的核心理念：**AI 写代码太随意，需要用结构化流程
 > [!info] 仓库
 > [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) — 仅 2.3K 的 CLAUDE.md 文件，GitHub 全球热榜，46.5K 星。
 
-这个项目把 Andrej Karpathy 观察到的 LLM 编程三大祖传毛病，浓缩成 4 条行为准则，写进 CLAUDE.md 让 Claude Code "乖乖听话"。
+这个项目将 Andrej Karpathy 观察到的 LLM 编程三大问题归纳为 4 条行为准则，写入 CLAUDE.md，约束 Claude Code 的行为。
 
 **LLM 编码三大痛点**：
 
-1. **默默做错误假设**：不确定的地方不问你，自己猜，猜完接着写，bug 就埋进去了
-2. **把简单问题复杂化**：50 行能搞定的事，整出 200 行抽象 API
-3. **乱改不相干的代码**：让它修一个函数，它顺便把隔壁的注释删了，格式也"优化"了
+1. **默默做错误假设**：遇到不确定的信息时自行猜测，继续编码并引入 bug
+2. **把简单问题复杂化**：50 行能解决的问题，写成 200 行抽象 API
+3. **乱改不相干的代码**：修一个函数时，顺手删除相邻注释或调整格式
 
 **四条核心原则**：
 
@@ -1390,10 +1391,10 @@ Superpowers 的核心理念：**AI 写代码太随意，需要用结构化流程
 | **Goal-Driven Execution** | 给目标而非命令。"添加验证" → "为无效输入写测试，然后让它们通过"     |
 
 **效果判断标准**：
-- PR 的 diff 变干净了，没有莫名其妙的格式改动
-- 代码第一次就足够简单，不用返工
-- Claude 开始在动手之前先问问题
-- PR 不再附带一堆"顺手重构"
+- PR diff 没有无关的格式改动
+- 首次提交的代码已足够简单，无需返工
+- Claude 动手前先问问题
+- PR 不夹带无关重构
 
 **安装**：
 
@@ -1414,22 +1415,22 @@ curl -s https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/ma
 ```
 
 > [!warning] Plugin 安装 ≠ 自动生效
-> 实测发现：方式一（Plugin）安装后，Karpathy 准则只是**注册在可用 Skill 列表中**，不会自动注入 system prompt。只有显式调用 `/karpathy-guidelines` 时才加载——日常编码不会自动约束。
+> 实测发现：方式一（Plugin）只将 Karpathy 准则注册到可用 Skill 列表，不会自动注入 system prompt；只有显式调用 `/karpathy-guidelines` 才加载，日常编码不会自动受其约束。
 >
-> **如果想让准则始终生效，必须写进 CLAUDE.md。** CLAUDE.md 分两级：
+> **要让准则始终生效，必须写入 CLAUDE.md。** CLAUDE.md 分两级：
 > - **用户级** `~/.claude/CLAUDE.md`：全局生效，所有项目自动加载（推荐方式二）
 > - **项目级** 项目根目录 `CLAUDE.md`：仅对当前项目生效（方式三/四）
 >
-> CLAUDE.md 在每次会话启动时自动作为 system prompt 加载，4 条准则会成为 Claude 所有行为的底线约束。
+> CLAUDE.md 在每次会话启动时自动作为 system prompt 加载，使 4 条准则约束 Claude 的所有行为。
 >
-> 这揭示了 Skills 的一个重要机制差异：**Skills 是"可用"不是"始终激活"**，而 CLAUDE.md 是"始终激活"。对于行为准则型约束，CLAUDE.md 是唯一可靠的注入方式。
+> Skills 可用不代表始终激活，CLAUDE.md 则始终激活。对行为准则约束，CLAUDE.md 是唯一可靠的注入方式。
 
 ## davila7/claude-code-templates
 
 > [!info] 仓库
 > [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) — 500+ 组件的 Claude Code 模板市场，Web 界面：[aitmpl.com](https://aitmpl.com)
 
-一个 CLI 工具 + 组件市场，提供 Agents、Commands、MCPs、Settings、Hooks、Skills、Templates 七大类组件，可按需安装到项目中。
+CLI 工具和组件市场，提供 Agents、Commands、MCPs、Settings、Hooks、Skills、Templates 七类组件，可按需安装到项目。
 
 **内置 Plugin 套件**：
 
@@ -1470,9 +1471,9 @@ npx claude-code-templates@latest --template=react --yes
 > [!info] 仓库
 > [shanraisshan/claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) — Claude Code 生产级最佳实践参考实现
 
-这个项目不是简单的 Plugin，而是一套**从 Vibe Coding 到 Agentic Engineering 的完整进阶指南**，通过一个 TodoApp 示例项目演示如何用 Claude Code 的全部扩展机制构建生产级工作流。
+这是一套从 Vibe Coding 到 Agentic Engineering 的完整进阶指南，通过 TodoApp 示例演示如何组合 Claude Code 的全部扩展机制，构建生产级工作流。
 
-**4 级进阶路径**：Low → Medium → High → Pro，逐级引入 Claude Code 的配置能力。
+**4 级进阶路径**：Low → Medium → High → Pro，逐级引入 Claude Code 配置。
 
 **核心架构模式**：**Command → Agent → Skill** 三层编排
 
@@ -1500,7 +1501,7 @@ npx claude-code-templates@latest --template=react --yes
 > [!info] 仓库
 > [OthmanAdi/planning-with-files](https://github.com/OthmanAdi/planning-with-files) — 21.4K Star，MIT 协议，支持 17+ AI 平台
 
-用 AI 做项目时常见的问题：聊着聊着就跑偏、做到一半忘目标、上下文一清空直接重来、反复踩同一个坑。Planning with Files 让 AI 把所有计划、进度、坑点全写成本地 Markdown 文件——文件化规划 + 外置记忆 + 错误自动记录。
+Planning with Files 将计划、进度和错误记录写入本地 Markdown 文件，解决任务偏移、遗忘目标、上下文清空后重做和重复犯错等问题。它结合文件化规划、外置记忆与错误自动记录。
 
 **3 个核心文件**：
 
@@ -1512,11 +1513,11 @@ npx claude-code-templates@latest --template=react --yes
 
 **核心价值**：
 
-- 文件当记忆，关软件 / 清上下文 / 重启电脑都还在
-- 先规划再动手，自动分阶段结构化推进
-- 自动记坑，AI 下次自动避开，绝不重复犯错
-- 清屏 / 重启后自动读取文件恢复进度
-- 每一步对照计划，严格对齐目标不跑偏
+- 将文件作为记忆，关闭软件、清空上下文或重启电脑后仍会保留
+- 先规划，再自动分阶段推进
+- 自动记录错误，AI 下次会避开，绝不重复犯错
+- 清屏或重启后自动读取文件，恢复进度
+- 每一步对照计划，确保不偏离目标
 - 任务成功率从 6.7% → 96.7%
 
 **安装**：
@@ -1525,7 +1526,7 @@ npx claude-code-templates@latest --template=react --yes
 npx skills add OthmanAdi/planning-with-files --skill planning-with-files -g
 ```
 
-启动规划模式：`/plan`，AI 会自动生成 3 个核心文件并按计划执行。
+输入 `/plan` 启动规划模式，AI 自动生成 3 个核心文件并按计划执行。
 
 > [!note] 支持平台
 > Claude Code / Cursor / GitHub Copilot / Gemini / Hermes / Codex / OpenCode 等 17+ 平台。

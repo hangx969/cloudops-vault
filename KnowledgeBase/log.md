@@ -2323,3 +2323,10 @@ date: 2026-04-17
 - 同步 [[KnowledgeBase/entities/Claude-Code]]、[[KnowledgeBase/maps/claude-code-openclaw-map]] 和 [[KnowledgeBase/INDEX]] 的入口说明；保留既有正文和日志历史。
 - 4 个正文及导航文件经 Obsidian MCP 全文读回一致；frontmatter、新增 YAML 示例、代码围栏、原有代码块保留、7 处新增 wikilink 与章节锚点、心得覆盖及任务范围差异空白检查通过；日志仅追加。
 - 阅读视图未核验，界面工具未找到运行中的 Obsidian；本次未创建或修改实际 Skill，未执行 Skill 对比 Eval。
+
+
+## [2026-10-20] update | Claude Code 扩展体系全文表达优化
+
+- 按 humanizer-zh 通读并润色 [[AI/ClaudeCode/Claude Code 扩展体系]]，简化 MCP、Skills、Slash Commands、Plugin 及推荐项目介绍中的重复、空话和宣传式表达，保留技术信息、使用条件、操作顺序和上一轮整合的 Skill 创建指南。
+- 对比确认 40 个代码块、85 个标题、187 行表格、127 个列表标记及顺序、160 处行内代码、4 处 wikilink、30 处 Markdown 链接、35 处正文 URL、186 处数字与版本表达均保持不变；frontmatter 原样保留。
+- 经 Obsidian MCP 写回后全文读回一致，任务范围差异空白检查通过，日志仅追加。文中技术判断与效果数据按原文保留，本次未重新核验；界面工具未找到运行中的 Obsidian，阅读视图未检查。
