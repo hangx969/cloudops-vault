@@ -5,7 +5,7 @@ tags:
   - knowledgebase/ai
   - knowledgebase/claude-code
   - knowledgebase/openclaw
-date: 2026-04-16
+date: 2026-10-20
 sources:
   - "[[AI/ClaudeCode/Claude Code 基础指南]]"
   - "[[AI/ClaudeCode/Claude Code 扩展体系]]"
@@ -48,7 +48,7 @@ ClaudeCode基础指南
 
 **核心文章：**
 - [[Claude Code 基础指南|Claude Code 基础指南]] — 从零开始
-- [[AI/ClaudeCode/Claude Code 扩展体系|扩展体系]] — ==MCP、Skills、Slash Commands、Plugin 四层扩展机制全解==
+- [[AI/ClaudeCode/Claude Code 扩展体系|扩展体系]] — ==MCP、Skills、Slash Commands、Plugin 四层扩展机制全解==；含 [[AI/ClaudeCode/Claude Code 扩展体系#Skill 创建指南：四项检查|Skill 创建与迭代检查]]
 - [[AI/ClaudeCode/多智能体协作-Subagents与Agent-Teams|多智能体协作]] — Subagents + Agent Teams
 
 ---

@@ -438,7 +438,7 @@ date: 2026-10-20
 
 ### AI 赋能运维
 1. [Claude Code 基础指南](../AI/ClaudeCode/Claude%20Code%20基础指南.md) → Claude Code 入门
-2. [扩展体系](../AI/ClaudeCode/Claude%20Code%20扩展体系.md) → MCP、Skills、Slash Commands、Plugin
+2. [[AI/ClaudeCode/Claude Code 扩展体系|扩展体系]] → MCP、Skills、Slash Commands、Plugin；含 Skill 创建指南与对比 Eval
 3. [OpenClaw-基础-安装](../AI/OpenClaw/OpenClaw-基础-安装.md) → OpenClaw 入门
 4. [[AI/Obsidian/obsidian-claude-code-AI知识库完整指南|Obsidian + Claude Code：AI 知识库指南]] → 知识库完整指南
 

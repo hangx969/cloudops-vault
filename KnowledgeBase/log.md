@@ -2314,3 +2314,12 @@ date: 2026-04-17
 - 原有 CEL 表达式、MutatingPolicy Helm 模板及 values 三个代码块逐字保留；既有架构图已在 GitHub 图床，HTTP 200、image/png，未重复上传。阅读模式抽查标题、版本提示、架构图、表格和命令/YAML 代码块，显示正常。
 - 同步 [[KnowledgeBase/sources/kyverno-1.18-summary]]、[[KnowledgeBase/entities/Kyverno]]、[[KnowledgeBase/sources/k8s-security-auth-batch-summary]]、[[KnowledgeBase/maps/kubernetes-map]] 和 [[KnowledgeBase/INDEX]]；在最新地图与目录上合并 Kyverno 条目，保留其他编辑新增内容。
 - 六个正文与导航文件经 MCP 全文回读一致；13 个 YAML 块、frontmatter、链接和代码围栏检查通过，十个 ClusterPolicy 通过旧 Chart 随附 CRD schema 校验；离线渲染确认控制器副本 3/2/2/2、四个 PDB 及原有 MutatingPolicy 模板。未执行集群部署、Kyverno CLI 语义测试或实际准入验证。
+
+
+## [2026-10-20] update | Skill 创建指南心得整合
+
+- 将用户提供的四类心得整合进 [[AI/ClaudeCode/Claude Code 扩展体系#Skill 创建指南：四项检查|Skill 创建指南]]：description 的触发词、使用条件和跳过条件，步骤出口，参数化与确认门，显式反模式，以及 with-skill / without-skill 对比 Eval 和 WHY 原则；补充描述示例与步骤验收表。
+- 合并原有渐进式披露内容，明确 description、主体和支持资源的职责，区分 references、scripts 与 assets；依据官方最佳实践说明 500 行拆分目标和一跳引用，澄清递归读取与高风险写入确认的适用边界。
+- 同步 [[KnowledgeBase/entities/Claude-Code]]、[[KnowledgeBase/maps/claude-code-openclaw-map]] 和 [[KnowledgeBase/INDEX]] 的入口说明；保留既有正文和日志历史。
+- 4 个正文及导航文件经 Obsidian MCP 全文读回一致；frontmatter、新增 YAML 示例、代码围栏、原有代码块保留、7 处新增 wikilink 与章节锚点、心得覆盖及任务范围差异空白检查通过；日志仅追加。
+- 阅读视图未核验，界面工具未找到运行中的 Obsidian；本次未创建或修改实际 Skill，未执行 Skill 对比 Eval。

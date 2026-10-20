@@ -218,7 +218,7 @@ Plugin 是应用级打包容器，将多种扩展机制捆绑为一个可分发�
 
 - [[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频]]：通过 Anatomy 生成交互模型，再要求 Agent 制作带旁白的视频，记录模型设置、配音调整、耗时与额度体验。
 - [[Claude Code 基础指南]]：模式选择、思考模式、Claude.md、Spec 工作流、实战场景、最佳实践（最全面的综合指南）
-- [[AI/ClaudeCode/Claude Code 扩展体系]]：四层扩展机制全解——MCP（10+ 服务器配置）、Skills（3 层使用模式 + 质量治理 + excalidraw-diagram-generator 等开源推荐）、Slash Commands（手动工作流）、Plugin（打包分发）
+- [[AI/ClaudeCode/Claude Code 扩展体系]]：四层扩展机制全解——MCP（10+ 服务器配置）、Skills（3 层使用模式 + 创建指南：触发边界、三层职责、步骤出口、确认门与对比 Eval + 质量治理 + excalidraw-diagram-generator 等开源推荐）、Slash Commands（手动工作流）、Plugin（打包分发）
 - [[AI/AI-视觉/Effective-HTML-Agent页面工作流]]：Effective HTML 页面工作流——任务判断、线框、交互原型、架构图、计划和视觉设计，并支持通过插件安装。
 - [[KnowledgeBase/sources/effective-html-agent-workflow-summary|Effective HTML 来源摘要]]：HTML 直出、自包含视觉交付、设计范本及与 Markdown Viewer Skills、html-anything、Mermaid 的定位对比。
 - [[AI/ClaudeCode/多智能体协作-Subagents与Agent-Teams]]：SubAgent（5 组件架构、适用场景评级）+ Agent Teams（Team Lead/Teammates/Task List/Mailbox、竞争假设调试）+ 开源 Agent 生态（wshobson/agents：112 个 Agent、72 个插件）
