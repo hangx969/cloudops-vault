@@ -6,7 +6,7 @@ tags:
 aliases:
   - 知识库首页
   - KB Index
-date: 2026-10-11
+date: 2026-10-20
 ---
 
 # 📚 Learning Notes 知识库
@@ -65,7 +65,7 @@ date: 2026-10-11
 
 | 页面 | 摘要 |
 |------|------|
-| [Kubernetes](entities/Kubernetes.md) | 容器编排平台，157 篇 Kubernetes 相关文章覆盖全生命周期 |
+| [Kubernetes](entities/Kubernetes.md) | 容器编排平台，159 篇 Kubernetes 相关文章覆盖全生命周期 |
 | [Docker](entities/Docker.md) | 容器运行时，14 篇覆盖基础、镜像分发与服务部署实战 |
 | [Helm](entities/Helm.md) | Kubernetes 包管理器 |
 | [[KnowledgeBase/entities/Cert-Manager|Cert-Manager]] | Kubernetes 原生证书生命周期控制器，支持 ACME、自签名与自动续期 |
@@ -216,6 +216,10 @@ date: 2026-10-11
 
 - [[KnowledgeBase/sources/k8s-cluster-autoscaler-summary|Cluster Autoscaler 节点扩缩容来源摘要]] — 节点组选择、缩容保护、Helm 部署、参数、监控排障与上线回滚。
 
+- [[KnowledgeBase/sources/k8s-node-swap-summary|Kubernetes NodeSwap 配置与验证来源摘要]] — LimitedSwap、QoS 与额度公式、k3s drop-in、逐节点上线及四项验证。
+
+- [[KnowledgeBase/sources/metallb-loadbalancer-summary|MetalLB 裸机 LoadBalancer 实战]] — 地址池与宣告、Layer2 / BGP、nginx 外部验证、多地址池和故障切换边界。
+
 ### Azure（已摄入 ✅）
 
 | 页面 | 覆盖文档数 | 摘要 |
@@ -358,7 +362,7 @@ date: 2026-10-11
 |------|------|
 | [领域地图](maps/domain-map.md) | 按技术领域导航全库 |
 | [工具地图](maps/tool-map.md) | 按工具/平台聚合知识 |
-| [Kubernetes 专题](maps/kubernetes-map.md) | K8s 生态知识导航（Docker-Kubernetes 共 171 篇） |
+| [Kubernetes 专题](maps/kubernetes-map.md) | K8s 生态知识导航（Docker-Kubernetes 共 173 篇） |
 | [AI 工作流专题](maps/ai-workflow-map.md) | Claude Code + OpenClaw + AI 辅助运维 |
 | [Claude Code & OpenClaw 专题](maps/claude-code-openclaw-map.md) | AI 编程与开源 AI 工具 |
 | [云平台专题](maps/cloud-platform-map.md) | Aliyun + Azure 对标 |
@@ -400,7 +404,7 @@ date: 2026-10-11
 
 | 领域 | 篇数 | 成熟度 | 入口 |
 |------|------|:------:|------|
-| Docker-Kubernetes | 171 | 🟢 | [kubernetes-map](maps/kubernetes-map.md) |
+| Docker-Kubernetes | 173 | 🟢 | [kubernetes-map](maps/kubernetes-map.md) |
 | Python | 28 | 🟢 | [python-devops-map](maps/python-devops-map.md) |
 | Linux-Shell | 11 | 🟡 | [linux-ops-map](maps/linux-ops-map.md) |
 | Azure | 17 | 🟢 | [cloud-platform-map](maps/cloud-platform-map.md) |
@@ -457,3 +461,10 @@ date: 2026-10-11
 ### 技术文章
 
 - [[AI/企业级私有化大模型/KV Cache-从原理到集群调度]] — 从 Attention 复用到集群调度的完整技术文章
+
+
+## 📄 来源摘要（增量）
+
+### AI/AI-视觉
+
+- [[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|Anatomy Skill 交互模型与科普视频]] — 结构拆解、讲解配音与作者的额度耗时记录；原始文章：[[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频]]。

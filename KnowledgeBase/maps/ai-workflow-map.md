@@ -5,8 +5,9 @@ tags:
   - knowledgebase/ai
 aliases:
   - AI Workflow Map
-date: 2026-10-04
+date: 2026-10-20
 sources:
+  - "[[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频]]"
   - "[[AI/Obsidian/github-pages-quartz]]"
   - "[[AI/ClaudeCode/Claude Code 基础指南]]"
   - "[[AI/ClaudeCode/Claude Code 扩展体系]]"
@@ -119,6 +120,7 @@ sources:
 2. [[AI/AI-视觉/Markdown-Viewer-Skills-Markdown中直接画图|Markdown Viewer Skills：AI 文档配图]] — 在 Markdown 中嵌入 PlantUML、Vega、Graphviz 等图表
 3. [[AI/AI-视觉/html-anything-AI生成HTML全场景工具|html-anything]] — 面向报告、演示文稿、动画和社交卡片的全场景 HTML 生成
 4. [[AI/AI-视觉/AI-Animation-Skill-科普动画|AI-Animation-Skill]] — 使用 HTML 模板生成可录制的科普动画
+5. [[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频|Anatomy Skill]] — 可交互的结构模型与带配音的科普视频，附案例、额度耗时记录及内容核对边界
 
 ### 补充
 - [[HarnessKit|HarnessKit]] — AI 编码智能体统一管理工具（Skills/MCP/Plugins/Hooks 跨 Agent 管理）
@@ -149,7 +151,7 @@ sources:
 | [[AI/Obsidian/Obsidian可视化Skills-Excalidraw-Mermaid-Canvas\|Obsidian 可视化 Skills]] | AI 可视化 | Excalidraw、Mermaid、Canvas、Skills |
 | [[AI/Obsidian/github-pages-quartz\|Quartz 4 发布笔记]] | 网站发布 | GitHub Actions、Pages artifact、日夜主题、wikilink 与旧路由兼容 |
 
-### AI 视觉与 HTML 交付（目录共 7 篇笔记，此处列出 4 篇）
+### AI 视觉与 HTML 交付（目录共 8 篇笔记，此处列出 5 篇）
 
 | 文章 | 主题 | 关键词 |
 |------|------|--------|
@@ -157,6 +159,7 @@ sources:
 | [[AI/AI-视觉/Markdown-Viewer-Skills-Markdown中直接画图\|Markdown Viewer Skills：AI 文档配图]] | Markdown 文档配图 | PlantUML、Vega、Graphviz、技能路由 |
 | [[AI/AI-视觉/html-anything-AI生成HTML全场景工具|html-anything]] | 全场景 HTML 生成 | Web 原型、演示文稿、视频、社交卡片、导出 |
 | [[AI/AI-视觉/AI-Animation-Skill-科普动画|AI-Animation-Skill]] | HTML 科普动画 | 模板、动画、视频录制 |
+| [[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频\|Anatomy Skill]] | 交互模型与科普视频 | 结构拆解、讲解配音、学习深度、额度与耗时 |
 
 ### OpenClaw（目录共 10 篇，此处列出 7 篇）
 
@@ -181,6 +184,7 @@ sources:
 ---
 
 ## 📑 来源摘要
+- [[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|Anatomy Skill 来源摘要]] — 交互模型、配音视频、作者体验记录与适用边界
 - [[KnowledgeBase/sources/ai-code-review-validation-loop-summary|AI 代码审查验证闭环]] — 完整上下文、真实运行、安全与信息清理
 - [[KnowledgeBase/sources/12个常用Prompt-summary|12 个常用 Prompt 摘要]] — 问题澄清、学习研究、解决问题、决策与自我探索
 - [[KnowledgeBase/sources/cloudops-agent-batch-summary|CloudOps-Agent 批量摘要]] — 58 篇，三语言智能 OnCall Agent

@@ -6,8 +6,10 @@ tags:
   - "[[开源存储Longhorn，K8s的轻量块存储]]"
 aliases:
   - K8s Map
-date: 2026-10-11
+date: 2026-10-20
 sources:
+  - "[[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]"
+  - "[[Docker-Kubernetes/k8s-installation-management/k8s-NodeSwap-配置与验证]]"
   - "[[Docker-Kubernetes/k8s-storage/分布式存储全景-架构与发展路线]]"
   - "[[Docker-Kubernetes/k8s-storage/开源存储Ceph]]"
   - "[[Docker-Kubernetes/k8s-scaling/K8s Cluster Autoscaler]]"
@@ -107,7 +109,7 @@ sources:
 # ☸️ Kubernetes 专题地图
 
 > [!info] 专题范围
-> 覆盖 Docker-Kubernetes 目录下 ==171 篇文档==（不含目录 index.md，统计日期 2026-10-11），从容器基础到企业级 K8s 全生命周期管理。
+> 覆盖 Docker-Kubernetes 目录下 ==173 篇文档==（不含目录 index.md，统计日期 2026-10-20），从容器基础到企业级 K8s 全生命周期管理。
 
 ---
 
@@ -186,7 +188,7 @@ sources:
 | 自动化 | [[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]] |
 | 设计模式 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter\|K8s 四种容器设计模式]] |
 
-### 安装与运维管理（20 篇）
+### 安装与运维管理（21 篇）
 | 主题 | 文章 |
 |------|------|
 | 最新版 | [[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤|安装k8s-1.35-基于rockylinux10-最新步骤]] |
@@ -194,6 +196,7 @@ sources:
 | 二进制 | [[Docker-Kubernetes/k8s-installation-management/legacy-versions/二进制安装k8s高可用集群|二进制安装k8s高可用集群]] |
 | 历史版本 | 1.20.6 / 1.23 / 1.26-1.27 / 1.28 / 1.30 / 1.32 / 1.33（7 篇） |
 | 运维 | [[Docker-Kubernetes/k8s-installation-management/etcd高可用配置以及模拟集群故障和恢复|etcd高可用配置以及模拟集群故障和恢复]]、[[Docker-Kubernetes/k8s-installation-management/k8s故障排查指南|k8s故障排查指南]]、[[Docker-Kubernetes/k8s-installation-management/k8s生产环境优化与最佳实践|k8s生产环境优化与最佳实践]]、[[Docker-Kubernetes/k8s-installation-management/升级/k8s迁移容器运行时-版本升级|k8s迁移容器运行时-版本升级]]、[[Docker-Kubernetes/k8s-installation-management/k8s-cgroup-v2深度解析-迁移实战与避坑指南\|K8s cgroup v2：资源隔离原理、迁移与生产避坑]]、[[Docker-Kubernetes/k8s-installation-management/升级/k8s-1.37-升级须知-breaking-changes|K8s 1.37 升级须知]]、[[Docker-Kubernetes/k8s-installation-management/k8s部署防火墙端口配置|k8s部署防火墙端口配置]] |
+| 节点内存 | [[Docker-Kubernetes/k8s-installation-management/k8s-NodeSwap-配置与验证\|NodeSwap：原理、k3s 配置与验证]]；[[KnowledgeBase/sources/k8s-node-swap-summary\|来源摘要]]。覆盖 LimitedSwap、QoS 边界、四项验证与控制平面适用条件 |
 | 架构 | [[Docker-Kubernetes/k8s-installation-management/k8s两地三中心架构|k8s两地三中心架构]]、[[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理|多集群 kubeconfig、kubectx 与 kubens]] |
 | 平台工程 | [[Docker-Kubernetes/k8s-installation-management/k8s-Backstage-内部开发者平台IDP实战\|Backstage：K8s 一站式内部开发者平台实战]] |
 
@@ -220,7 +223,8 @@ sources:
 
 - [[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查|ArgoCD 同步故障排查]] — OutOfSync、Progressing、执行失败、prune 和同步性能
 
-### 网络与服务网格（7 篇）
+### 网络与服务网格（8 篇）
+- [[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer|MetalLB：裸机 LoadBalancer 配置与原理]] — 完整安装、Layer2 / BGP、多地址池及故障切换边界；[[KnowledgeBase/sources/metallb-loadbalancer-summary|来源摘要]]。
 - [[Docker-Kubernetes/k8s-networking-service-mesh/k8s精细化流量管理-istio|Istio 服务网格：架构、部署与精细化流量治理]]
 - [[Docker-Kubernetes/k8s-networking-service-mesh/企业项目接入istio实战|企业项目接入istio实战]]
 - [[Docker-Kubernetes/k8s-networking-service-mesh/helm部署ingress-nginx|helm部署ingress-nginx]]

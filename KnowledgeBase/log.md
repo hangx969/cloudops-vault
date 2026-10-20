@@ -2280,3 +2280,19 @@ date: 2026-04-17
 - 按用户确认，将 18 个原始笔记和项目源码文件中的 41 处凭据改为占位符：API Key、集群加入令牌、登录令牌、SMTP 授权码，以及实验环境自设的密码和令牌。
 - 弱口令、软件默认值和文档示例值（C 类）未改。
 - 原值仍保留在 git 历史中。
+
+## [2026-10-20] ingest | Kubernetes NodeSwap 配置与验证
+
+- 新建 [[Docker-Kubernetes/k8s-installation-management/k8s-NodeSwap-配置与验证|Kubernetes NodeSwap：原理、k3s 配置与验证]]，按 humanizer-zh 优化表达、章节、表格及有序和无序列表，保留原文 10 个代码块、全部命令输出、QoS 边界、额度公式和未实测项目的说明。
+- 创建 [[KnowledgeBase/sources/k8s-node-swap-summary|来源摘要]]，更新 [[KnowledgeBase/entities/Kubernetes|Kubernetes 实体页]]、[[KnowledgeBase/maps/kubernetes-map|专题地图]] 和 [[KnowledgeBase/INDEX|知识库目录]]；按现有文件核对安装管理 21 篇、Docker-Kubernetes 正文 172 篇。
+- 对照官方资料核对 NodeSwap v1.34 稳定、默认 NoSwap、k3s drop-in 支持及存储条件，单独说明控制平面不配置 swap、加密 swap 和 I/O 隔离的建议；作者实验与官方建议分别标注。
+- 原始剪藏经 MCP 再次读回确认未改动；原文无图片，无需图床上传。未执行 Kubernetes 集群命令或复现作者的实验。
+- 正文及摘要的 frontmatter、代码围栏、列表格式和 16 条新增 wikilink 检查通过，10 个代码块与原文逐字一致，5 个正文及导航文件经 MCP 全文读回一致，差异检查通过；阅读视图检查因界面工具未找到运行中的 Obsidian 应用而未完成。
+
+## [2026-10-20] ingest | MetalLB 裸机 LoadBalancer 配置与原理
+
+- 新建 [[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]，按 humanizer-zh 整理表达、章节、有序与无序列表，保留背景、组件原理、完整安装与配置、nginx 验证、多地址池、模式比较和跨环境适配；恢复剪藏中折叠的 YAML、Shell 和文本示意图。
+- 依据官方资料补齐 v0.16.1 安装路径，校订 Native BGP 能力、strictARP 的适用模式、Calico BGP 共存、默认地址池选择、单 VIP 宣告节点、Layer2 切换时间和跨网段路由条件；不把旧版通用前提当作所选发行版的兼容性保证。
+- 新建 [[KnowledgeBase/sources/metallb-loadbalancer-summary]]，更新 [[KnowledgeBase/entities/Kubernetes]]、[[KnowledgeBase/entities/Calico]]、[[KnowledgeBase/concepts/高可用架构]]、[[KnowledgeBase/sources/k8s-networking-service-mesh-batch-summary]]、[[KnowledgeBase/maps/kubernetes-map]] 和 [[KnowledgeBase/INDEX]]；保留同期 NodeSwap 更新，复核 Docker-Kubernetes 共 173 篇、Kubernetes 相关 159 篇、网络与服务网格 8 篇。
+- 原文无图片，未使用 PicGo；剪藏原稿保持不变，新增正文与知识页均不引用临时来源目录。
+- 8 个正文及知识页经 Obsidian MCP 全文读回一致；28 个代码块、12 个 YAML 对象、10 个 Shell 代码块的语法、新增 wikilink、frontmatter、篇数及差异空白检查通过。未执行 Kubernetes 部署；界面工具未找到运行中的 Obsidian，阅读视图渲染未核验。操作日志仅追加。

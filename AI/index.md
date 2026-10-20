@@ -45,3 +45,8 @@
 | [[AI/企业级私有化大模型/KV Cache-从原理到集群调度]] | KV Cache 生命周期、显存带宽瓶颈与集群调度 |
 | [[AI/企业级私有化大模型/一个 Deployment 就能跑 vLLM，为什么还需要 KServe？\|为何用 KServe 管理 vLLM 推理服务？]] | KServe Standard、Envoy Gateway、PVC 模型加载与 OpenAI 兼容接口实操 |
 | [[AI/企业级私有化大模型/大模型本地部署选型-Ollama-vLLM-SGLang-vLLM-Omni]] | Ollama、vLLM、SGLang、vLLM-Omni 选型，模型与镜像离线交付及容器化边界 |
+
+
+## AI 视觉与科普视频
+
+- [[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频|Anatomy Skill：交互模型与科普讲解视频]] — 用结构模型探索原理，再按学习需要生成带配音的解释；[[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|来源摘要]]。

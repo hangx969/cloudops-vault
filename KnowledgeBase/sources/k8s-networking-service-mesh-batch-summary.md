@@ -3,7 +3,7 @@ title: k8s-networking-service-mesh 来源批量摘要
 tags:
   - knowledgebase/source
   - docker-kubernetes/networking
-date: 2026-09-15
+date: 2026-10-20
 sources:
   - "[[Docker-Kubernetes/k8s-networking-service-mesh/helm部署external-dns]]"
   - "[[Docker-Kubernetes/k8s-networking-service-mesh/helm部署ingress-nginx]]"
@@ -17,7 +17,7 @@ aliases:
 ## 元信息
 
 - **原始目录**: `Docker-Kubernetes/k8s-networking-service-mesh/`
-- **文档数量**: 本批次收录 5 篇（`k8s-networking-service-mesh/` 目录现有 7 篇）
+- **文档数量**: 本批次收录 5 篇（`k8s-networking-service-mesh/` 目录现有 8 篇）
 - **领域**: Kubernetes 网络、Ingress 控制器、服务网格（Istio）、DNS 与网络安全
 - **摄入日期**: 2026-04-17
 
@@ -33,6 +33,10 @@ aliases:
 4. Istio 核心资源 Gateway、VirtualService、DestinationRule 各有职责并组合使用，支撑域名发布、重写/重定向、灰度、A/B 测试、负载均衡、熔断、故障注入、超时和重试。
 5. 企业项目接入 Istio 分两种场景：Sidecar 管理东西流量，IngressGateway 管理南北流量；新项目按 Istio 规范创建 Deployment/Service 和核心资源，已部署项目需修改 Deployment/Service，建议所有 Deployment 配置 version 标签。
 6. 集群安全检测工具分工：kube-bench 检查集群是否符合 CIS 安全标准，kube-hunter 自动化查找集群安全漏洞，kubeaudit/Polaris 评估 Pod 和 Deployment 配置安全性。
+
+## 相关增量来源
+
+- [[KnowledgeBase/sources/metallb-loadbalancer-summary|MetalLB 裸机 LoadBalancer 实战]]：独立摄入的地址池、Layer2 / BGP、外部验证和故障接管说明，不计入本批次原有的 5 篇。
 
 ## 各文档摘要
 

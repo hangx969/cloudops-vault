@@ -4,8 +4,9 @@ tags:
   - knowledgebase/entity
   - kubernetes/networking
   - cni
-date: 2026-04-17
+date: 2026-10-20
 sources:
+  - "[[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
   - "[[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤]]"
@@ -21,6 +22,7 @@ Calico 是 Kubernetes 生态中最流行的 CNI（Container Network Interface）
 
 ## 核心功能
 
+- **与 MetalLB 分工**：Calico 3.18 起可宣告 LoadBalancer 地址，MetalLB controller 负责分配 IP；需配置 Calico 的 `serviceLoadBalancerIPs`，并避免让两个组件建立冲突的 BGP 会话。FRR-K8s 不会自动合并 Calico 的既有会话，详见 [[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]
 - **Pod 网络**：为每个 Pod 分配独立 IP，跨主机的 Pod 可通过 IP 直接互访
 - **多种网络模式**：支持 IPIP（节点上创建 tunl0 隧道）、BGP（节点作为 vRouter，不建隧道）、VXLAN 和 host-gw，通过 `CALICO_IPV4POOL_IPIP`、`CALICO_NETWORKING_BACKEND` 切换
 - **网络安全策略**：提供网络流量控制和访问授权，支持网络隔离与多租户
@@ -43,6 +45,7 @@ Calico 是 Kubernetes 生态中最流行的 CNI（Container Network Interface）
 
 ## 在本仓库中的覆盖
 
+- [[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]：BGP 会话冲突、IP 分配与宣告职责，以及 Calico / MetalLB 的共存条件。
 - `Docker-Kubernetes/k8s-installation-management/` 中涉及 Calico CNI 部署
 - `Docker-Kubernetes/k8s-basic-resources/` 中涉及 K8s 三层网络协作（Calico + Service + Ingress）
 - ArgoCD 部署中涉及 Calico 与 CoreDNS 的 DNS 解析问题排查

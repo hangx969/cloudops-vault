@@ -3,8 +3,10 @@ title: Kubernetes
 tags:
   - knowledgebase/entity
   - docker-kubernetes
-date: 2026-10-11
+date: 2026-10-20
 sources:
+  - "[[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]"
+  - "[[KnowledgeBase/sources/k8s-node-swap-summary]]"
   - "[[KnowledgeBase/sources/k8s-cluster-autoscaler-summary]]"
   - "[[KnowledgeBase/sources/argocd-sync-troubleshooting-summary]]"
   - "[[KnowledgeBase/sources/k8s-basic-resources-batch-summary]]"
@@ -36,7 +38,7 @@ aliases:
 
 ## 简介
 
-Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年开源，2018 年从 CNCF 毕业。本仓库 Docker-Kubernetes 目录共 171 篇，其中 Kubernetes 相关 **157 篇**（其余 14 篇为 `docker/`），覆盖了 K8s 全生命周期，包括基础资源、集群安装与管理、监控日志、CI/CD、网络与服务网格、安全认证、扩缩容、存储、数据库中间件、UI 工具、备份恢复、GPU 配置、认证考试等主题。全部源文档的详细摘要见上方 `sources` 中列出的批量与增量摘要页面。下文各小节篇数按对应子目录统计（原统计日期 2026-09-29；总数与 CI/CD 增量于 2026-10-04 按现有文件复核），杂项专题含 helm、配置管理、镜像管理、CKA/CKS、KubeBlocks、容器平台、SpringCloud、GPU 子目录及根目录简历指南。
+Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年开源，2018 年从 CNCF 毕业。本仓库 Docker-Kubernetes 目录共 173 篇，其中 Kubernetes 相关 **159 篇**（其余 14 篇为 `docker/`），覆盖了 K8s 全生命周期，包括基础资源、集群安装与管理、监控日志、CI/CD、网络与服务网格、安全认证、扩缩容、存储、数据库中间件、UI 工具、备份恢复、GPU 配置、认证考试等主题。全部源文档的详细摘要见上方 `sources` 中列出的批量与增量摘要页面。下文各小节篇数按对应子目录统计（原统计日期 2026-09-29；总数与 CI/CD 增量于 2026-10-04 按现有文件复核；总数、安装管理与网络目录于 2026-10-20 复核），杂项专题含 helm、配置管理、镜像管理、CKA/CKS、KubeBlocks、容器平台、SpringCloud、GPU 子目录及根目录简历指南。
 
 ## 核心功能：核心架构知识
 
@@ -58,6 +60,7 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 - **多集群上下文管理**：context 绑定 cluster、user 和 namespace；kubectx/kubens 简化切换，kube-ps1 暴露当前位置，但真正的生产权限边界仍是独立凭证和 RBAC，详见 [[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理#kubectx 与 kubens：多集群快速切换]]
 
 ### 网络体系三层协同
+- **裸机 LoadBalancer**：MetalLB 将 VIP 分配与宣告分开；Layer2 为单 VIP 提供单节点入口和故障接管，BGP 配合路由器 ECMP 提供多节点入口，两者的接管时间与连接恢复都需要实际验证
 - **Calico**（底层网络连通性）：IPIP 模式隧道封装配置简单，BGP 模式直接路由性能更优
 - **Service**（四层负载均衡）：通过标签选择器匹配 Pod，iptables/IPVS 转发规则
 - **Ingress**（七层负载均衡）：流量直接从 Ingress Controller 到 Pod，不经过 Service；生产推荐独占节点 + hostNetwork:true + 前端网关
@@ -95,7 +98,7 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 - 生产环境必须对每个 Namespace 限制 Pod/RS 数量，防止异常激增拖垮集群
 - K8s 1.24 后不再自动为 ServiceAccount 创建 Secret，需手动创建 Token
 
-### 安装与管理（20 篇）
+### 安装与管理（21 篇）
 详见 [[KnowledgeBase/sources/k8s-installation-management-batch-summary|k8s-installation-management 批量摘要]]
 
 覆盖 k8s 1.20 至 1.35 多版本 kubeadm 安装（CentOS -> Rocky Linux 迁移路径）、二进制安装高可用集群（keepalived + nginx）、企业级高可用集群规划、etcd 高可用配置与故障恢复、两地三中心与异地多活架构（Karmada、智能 DNS/GTM）、生产环境优化最佳实践、容器运行时迁移与版本升级、故障排查指南，以及 kubectx/kubens、kube-ps1、OIDC 登录和多文件合并等多集群 kubeconfig 管理实践。
@@ -105,6 +108,8 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 - 3 master 可管理约 900 个 worker 节点
 - Pod 状态排查：Pending（资源/调度问题）、ImagePullBackOff（镜像问题）、CrashLoopBackOff（代码/权限问题）、Evicted（资源不足）
 - kubeadm 配置 API 演进：v1beta2 -> v1beta3 -> v1beta4
+- NodeSwap 自 Kubernetes v1.34 稳定，默认仍为 `NoSwap`；`failSwapOn: false` 仅放行 kubelet 启动，符合条件的 Burstable 容器使用 swap 还需 `memorySwap.swapBehavior: LimitedSwap`。调度器不将 swap 计入可调度内存。
+- [[Docker-Kubernetes/k8s-installation-management/k8s-NodeSwap-配置与验证|NodeSwap 配置与验证]]：k3s drop-in、QoS 与 request/limit 边界、逐节点上线，以及 configz、节点容量、使用量和容器 cgroup 四项检查；区分 Homelab 操作与官方控制平面建议。
 
 ### 监控与日志（20 篇）
 详见 [[KnowledgeBase/sources/k8s-monitoring-logging-batch-summary|k8s-monitoring-logging 批量摘要]]
@@ -133,13 +138,14 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 - Kustomize 通过 Base 复用公共资源、Overlay 描述环境差异；部署前应依次渲染、比较并应用最终清单
 - 云原生演进：Jenkins（VM 时代）-> Tekton（K8s 原生）-> ArgoCD（GitOps）
 
-### 网络与服务网格（7 篇）
-详见 [[KnowledgeBase/sources/k8s-networking-service-mesh-batch-summary|k8s-networking-service-mesh 批量摘要]]
+### 网络与服务网格（8 篇）
+详见 [[KnowledgeBase/sources/k8s-networking-service-mesh-batch-summary|k8s-networking-service-mesh 批量摘要]] 与 [[KnowledgeBase/sources/metallb-loadbalancer-summary|MetalLB LoadBalancer 实战摘要]]
 
 覆盖 Ingress-Nginx 部署（hostNetwork + ClusterFirstWithHostNet）、External-DNS 域名自动同步、[[KnowledgeBase/entities/Istio|Istio]] 多版本部署与流量管理（熔断/超时/重试）、企业项目接入 Istio 实战、集群网络安全工具（kube-bench、kube-hunter、kubeaudit、Polaris）。
 
 **核心要点**：
 - 南北流量（Ingress-Nginx）vs 东西流量（Istio）协同工作
+- [[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]：安装、地址池、Layer2 / BGP 宣告、nginx 外部验证、多地址池及 Calico BGP 共存；仅有 EXTERNAL-IP 不代表服务已经可达
 - Istio 1.5+ 将 Pilot/Mixer/Citadel 整合为 istiod 单体
 - 服务网格 vs SpringCloud/Nacos：语言无关、无需侵入业务代码
 - CVE-2019-5736：Docker 18.09.2 以下 runC 漏洞可提权
