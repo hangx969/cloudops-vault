@@ -166,7 +166,7 @@ sources:
 ### 第六阶段：高级特性
 21. [[Docker-Kubernetes/k8s-networking-service-mesh/k8s精细化流量管理-istio|k8s精细化流量管理-istio]] — 服务网格
 22. [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]] — 自动扩缩容
-23. [[Docker-Kubernetes/k8s-security-auth/helm部署kyverno和policy-reporter|helm部署kyverno和policy-reporter]] — 策略管理（含 1.18 新特性）
+23. [[Docker-Kubernetes/k8s-security-auth/helm部署kyverno和policy-reporter|Helm 部署 Kyverno 和 Policy Reporter]] — 十组策略、Harbor/Smart Remote、审计灰度与 1.18 迁移
 24. [[AI/企业级私有化大模型/一个 Deployment 就能跑 vLLM，为什么还需要 KServe？|为何用 KServe 管理 vLLM 推理服务？]] — 用 InferenceService 统一编排模型、Runtime、GPU 与访问入口
 
 ---
@@ -234,7 +234,7 @@ sources:
 - [[Docker-Kubernetes/k8s-networking-service-mesh/helm部署tomcat|Helm 部署 Tomcat]]
 
 ### 安全与认证（9 篇）
-[[KnowledgeBase/entities/Cert-Manager|Cert-Manager]]（Helm、自签名、HTTP01/DNS01、Cloudflare/Azure DNS、自动续期）、External-Secrets、Kyverno+Policy-Reporter（含 1.18 新特性）、OAuth2-Proxy、Capsule、SonarQube、Trivy-Operator、[[k8s容器安全上下文-SecurityContext|K8s 容器安全上下文：从入门到生产避坑]]、[[Docker-Kubernetes/k8s-security-auth/k8s-Admission-Webhook链冲突排查-Istio-Kyverno-Gatekeeper|Admission Webhook 链冲突排查]]
+[[KnowledgeBase/entities/Cert-Manager|Cert-Manager]]（Helm、自签名、HTTP01/DNS01、Cloudflare/Azure DNS、自动续期）、External-Secrets、[[KnowledgeBase/entities/Kyverno|Kyverno]] + Policy Reporter（十组策略、审计上线与 1.18 迁移）、OAuth2-Proxy、Capsule、SonarQube、Trivy-Operator、[[k8s容器安全上下文-SecurityContext|K8s 容器安全上下文：从入门到生产避坑]]、[[Docker-Kubernetes/k8s-security-auth/k8s-Admission-Webhook链冲突排查-Istio-Kyverno-Gatekeeper|Admission Webhook 链冲突排查]]
 
 ### 扩缩容（5 篇）
 [[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA|K8s 自动扩缩容：HPA、VPA 与 Scale-to-Zero]]、[[Docker-Kubernetes/k8s-scaling/k8s-基于KEDA的弹性能力|KEDA：事件驱动扩缩容与 KServe 实战]]、Goldilocks、[[Docker-Kubernetes/k8s-scaling/k8s成本优化方案-FinOps实战|K8s 集群成本优化]]

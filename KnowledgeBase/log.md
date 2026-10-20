@@ -2296,3 +2296,21 @@ date: 2026-04-17
 - 新建 [[KnowledgeBase/sources/metallb-loadbalancer-summary]]，更新 [[KnowledgeBase/entities/Kubernetes]]、[[KnowledgeBase/entities/Calico]]、[[KnowledgeBase/concepts/高可用架构]]、[[KnowledgeBase/sources/k8s-networking-service-mesh-batch-summary]]、[[KnowledgeBase/maps/kubernetes-map]] 和 [[KnowledgeBase/INDEX]]；保留同期 NodeSwap 更新，复核 Docker-Kubernetes 共 173 篇、Kubernetes 相关 159 篇、网络与服务网格 8 篇。
 - 原文无图片，未使用 PicGo；剪藏原稿保持不变，新增正文与知识页均不引用临时来源目录。
 - 8 个正文及知识页经 Obsidian MCP 全文读回一致；28 个代码块、12 个 YAML 对象、10 个 Shell 代码块的语法、新增 wikilink、frontmatter、篇数及差异空白检查通过。未执行 Kubernetes 部署；界面工具未找到运行中的 Obsidian，阅读视图渲染未核验。操作日志仅追加。
+
+
+## [2026-10-20] ingest | Anatomy Skill 交互模型与科普视频
+
+- 使用 humanizer-zh 整理并新增 [[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频|Anatomy Skill：交互模型与科普讲解视频]]，调整章节、有序与无序列表、表格和提示词排版；保留机械表、发动机、显卡、TCP、刹车与榫卯案例，以及模型设置、额度、耗时、配音调整和学习方法。按要求忽略图片与视频，原始剪藏未修改。
+- 新增 [[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|来源摘要]]，同步 [[KnowledgeBase/concepts/提示词工程]]、[[KnowledgeBase/entities/Claude-Code]]、[[KnowledgeBase/maps/ai-workflow-map]]、[[AI/index]] 与 [[KnowledgeBase/INDEX]]；两个索引采用追加写入，完整保留原有内容与同期其他摄入更新。
+- 对照 Anatomy 项目说明区分交互图形与后续配音视频交付；模型名称、效果、额度与耗时按原文作者记录保留，会话限制的触发机制未独立核实，未补写截图中的提示词。
+- 7 个正文、摘要与导航文件经 Obsidian MCP 完整读回一致；两条可见文字提示词、28 项案例信息、YAML frontmatter、Markdown 标题与列表、2 个代码块、2 张表格、21 处新增链接引用（6 个目标）及任务范围 Git diff 空白检查通过。日志仅追加。
+- 未安装 Anatomy 或复现视频生成流程；阅读视图检查未完成，界面工具未找到运行中的 Obsidian 应用。
+
+
+## [2026-10-20] ingest | Kyverno 策略整合与主文章整理
+
+- 将补充材料的十组策略与上线经验合入 [[Docker-Kubernetes/k8s-security-auth/helm部署kyverno和policy-reporter|Kyverno 主文章]]，按部署、策略基础、验证、变更、生成、测试与报告、生产排障及版本迁移组织；使用 humanizer-zh 整理表达、章节和列表，合并 Harbor 仓库限制及重复排障说明，保留剪藏原稿。
+- 核对并区分 Chart 3.2.7 对应的 Kyverno v1.12.6 与较新 CEL/1.18 内容；修正控制器 HA 参数、Namespace 排除方式、非 root 容器覆盖、可选安全字段及 hostPath 锚点，说明 Audit、后台扫描、探针默认值、报告粒度与 GitOps 的边界，并补全原有 CVE 占位链接。
+- 原有 CEL 表达式、MutatingPolicy Helm 模板及 values 三个代码块逐字保留；既有架构图已在 GitHub 图床，HTTP 200、image/png，未重复上传。阅读模式抽查标题、版本提示、架构图、表格和命令/YAML 代码块，显示正常。
+- 同步 [[KnowledgeBase/sources/kyverno-1.18-summary]]、[[KnowledgeBase/entities/Kyverno]]、[[KnowledgeBase/sources/k8s-security-auth-batch-summary]]、[[KnowledgeBase/maps/kubernetes-map]] 和 [[KnowledgeBase/INDEX]]；在最新地图与目录上合并 Kyverno 条目，保留其他编辑新增内容。
+- 六个正文与导航文件经 MCP 全文回读一致；13 个 YAML 块、frontmatter、链接和代码围栏检查通过，十个 ClusterPolicy 通过旧 Chart 随附 CRD schema 校验；离线渲染确认控制器副本 3/2/2/2、四个 PDB 及原有 MutatingPolicy 模板。未执行集群部署、Kyverno CLI 语义测试或实际准入验证。

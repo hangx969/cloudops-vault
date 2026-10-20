@@ -3,7 +3,7 @@ title: k8s-security-auth 来源批量摘要
 tags:
   - knowledgebase/source
   - docker-kubernetes/security
-date: 2026-09-15
+date: 2026-10-20
 sources:
   - "[[Docker-Kubernetes/k8s-security-auth/helm部署capsule]]"
   - "[[cert-manager 实战：Helm 部署、TLS 自动签发与续期]]"
@@ -74,13 +74,13 @@ aliases:
 
 ### [[Docker-Kubernetes/k8s-security-auth/helm部署kyverno和policy-reporter|Helm 部署 Kyverno 和 Policy Reporter]]
 
-**核心内容**: Kyverno 是 K8s 原生策略引擎，作为 Admission Controller 运行，用于验证和变更集群资源。Policy Reporter 提供策略执行结果的可视化界面。
+Kyverno 在准入阶段验证或变更资源，也可以按触发事件生成配套资源；Policy Reporter 单独读取报告，提供 UI 与通知。
 
-- Kyverno 作为 Admission Controller 拦截 API 请求
-- 支持验证（validate）、变更（mutate）、生成（generate）策略
-- Policy 可按 common 和 region 分目录管理，递归应用
-- Policy Reporter 提供策略执行结果的 GUI 界面
-- **1.18 新特性**：HTTP 调用安全加固（SSRF 防护 + 作用域 token）、CLI 扩展（支持现代策略类型测试）、CEL 演进、N-1 支持模型、ClusterPolicy 弃用迁移路径
+- Helm 配置区分历史 Chart 与应用版本；HA 按控制器设置副本、PDB 和资源保障。
+- 十组策略覆盖镜像、运行权限、资源、标签、探针、Service、默认配置注入及命名空间资源生成；Harbor 限制与通用仓库校验合并说明。
+- CEL MutatingPolicy 按命名空间与仓库允许列表改写 Artifactory 镜像地址，覆盖普通容器和初始化容器。
+- 策略按 common 和 region 管理；先 Audit，再按业务范围切换 Enforce，明确后台扫描、服务端 dry-run、CLI 测试与 GitOps 差异的边界。
+- 1.18 公告包含 HTTP 安全加固、CLI 扩展、策略引擎与镜像验证改进、Policies Chart 配置、N-1 支持及 CEL 迁移方向。
 
 ### [[Docker-Kubernetes/k8s-security-auth/helm部署oauth2proxy|Helm 部署 OAuth2 Proxy]]
 

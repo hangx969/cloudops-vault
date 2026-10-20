@@ -104,7 +104,7 @@ date: 2026-10-20
 | [Nginx](entities/Nginx.md) | Web 服务器与反向代理（stub） |
 | [PostgreSQL](entities/PostgreSQL.md) | 开源关系型数据库（stub） |
 | [Rancher](entities/Rancher.md) | K8s 多集群管理平台（stub） |
-| [Kyverno](entities/Kyverno.md) | K8s 原生策略引擎（CNCF 毕业项目） |
+| [[KnowledgeBase/entities/Kyverno\|Kyverno]] | K8s 原生策略引擎：验证、变更、生成与策略报告 |
 | [[KnowledgeBase/entities/Ollama|Ollama]] | 面向本地开发、Demo 与 PoC 的模型下载、管理和运行工具 |
 | [[KnowledgeBase/entities/vLLM|vLLM]] | 高吞吐 LLM Serving Runtime，覆盖 KV Cache、并行推理与 OpenAI 兼容 API |
 | [[KnowledgeBase/entities/ModelScope|ModelScope]] | 模型与数据集平台，可作为国内模型下载及离线资产准备入口 |
@@ -191,9 +191,9 @@ date: 2026-10-20
 | [[KnowledgeBase/sources/kustomize-base-overlay-summary|Kustomize Base 与 Overlay 多环境配置]] | 1 | Base/Overlay 分层、六个常用字段、构建/差异检查/部署顺序与弃用字段边界 |
 | [K8s 发布策略](sources/k8s-release-strategy-summary.md) | 1 | 蓝绿部署/金丝雀发布三种方案（原生/Nginx Ingress/Argo Rollouts）、选型决策树、数据库兼容性 |
 | [K8s 网络与服务网格](sources/k8s-networking-service-mesh-batch-summary.md) | 5 | Ingress-Nginx/External-DNS/Calico/Istio 流量管理 |
-| [K8s 安全认证](sources/k8s-security-auth-batch-summary.md) | 8 | Cert-Manager/External Secrets/Kyverno(含1.18新特性)/OAuth2 Proxy/Trivy/SonarQube/Security Context |
+| [K8s 安全认证](sources/k8s-security-auth-batch-summary.md) | 8 | Cert-Manager/External Secrets/Kyverno（部署、策略与1.18迁移）/OAuth2 Proxy/Trivy/SonarQube/Security Context |
 | [[KnowledgeBase/sources/cert-manager-tls-automation-summary|cert-manager TLS 自动化]] | 1 | Helm 安装、自签名 Pod TLS、HTTP01/DNS01、Cloudflare/Azure DNS、续期、排障与回滚 |
-| [Kyverno 1.18](sources/kyverno-1.18-summary.md) | 1 | CNCF 毕业后首版：SSRF 防护、CLI 扩展、CEL 策略演进、性能与可观测性提升 |
+| [[KnowledgeBase/sources/kyverno-1.18-summary\|Kyverno 部署与策略实践]] | 1 | Helm/HA、十组策略、Harbor/Smart Remote、审计灰度与 1.18 安全及 CEL 迁移 |
 | [K8s 扩缩容与存储](sources/k8s-scaling-storage-batch-summary.md) | 9 | HPA/VPA、KEDA/KServe、Goldilocks 与 FinOps + 原生 HPA Scale-to-Zero + PV/PVC 数据保护 + NFS/Ceph/CubeFS 存储 |
 | [KServe + KEDA 请求指标扩缩容](sources/kserve-keda-request-autoscaling-summary.md) | 1 | KServe/vLLM 指标经 Prometheus、KEDA、External Metrics API 驱动 HPA，实现 1→2→1 扩缩容 |
 | [[KnowledgeBase/sources/k8s-hpa-scale-to-zero-1.37-summary|K8s 1.37 HPA Scale-to-Zero]] | 1 | HPAScaleToZero Beta、External/Object 指标、Worker 缩零、冷启动防抖与 KEDA 迁移清单 |
