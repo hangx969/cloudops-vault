@@ -878,13 +878,7 @@ git clone https://github.com/Azure12355/weilanx-claude-videos.git
 
 ## 8. 来源与延伸阅读
 
-### 8.1 本文整合的文章
-
-- [Claude Opus 5.5 做视频进阶篇，技术栈全拆解丨万字教程](https://mp.weixin.qq.com/s/kaZCk5qg0bWvn31xcAb37Q)：罗佳 Rodya，2026-10-20。22 种技术和工具、16 类视频拆解、8 个 Skill / 工程选项；本文技术图表及代码示意图来自这篇文章。
-- [扔掉 PPT，用这 44 个 HTML 动画模板，让 AI 帮你做科普视频](https://mp.weixin.qq.com/s/s53qdw1IvU4Ei77ebuKF9Q)：AI-Animation-Skill 的模板、平台、安装与演示工作流。
-- [分享一个最近很惊艳的开源 Skill，一句话让 AI 搓出任何原理的科普视频](https://mp.weixin.qq.com/s/VuJsVTvyNIK8GRTL95n-Qw?scene=1&click_id=1652332932)：卡兹克、tashi，2026-10-15。Anatomy 交互模型、讲解视频及作者体验记录。
-
-### 8.2 项目与工具
+### 8.1 项目与工具
 
 - [AI-Animation-Skill](https://github.com/Unclecheng-li/AI-Animation-Skill)：HTML 科普演示工作流，MIT。
 - [lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar)、[样片画廊](https://lemomo-ai.github.io/lemo-opuscar/)：文中 LemoLab 样片的主要来源，样片按 CC BY 4.0 署名；代码许可与具体素材许可需分别核对。
@@ -896,16 +890,9 @@ git clone https://github.com/Azure12355/weilanx-claude-videos.git
 - [creator-style-kit](https://github.com/threeaus/creator-style-kit)、[lanshu-create-ai-presenter-video](https://github.com/cclank/lanshu-create-ai-presenter-video)、[weilanx-claude-videos](https://github.com/Azure12355/weilanx-claude-videos)：竖屏风格、讲解视频和系列制作工程。
 - [awesome-opus-5-5-videos](https://github.com/athemeroy/awesome-opus-5-5-videos)、[awesome-ai-motion](https://github.com/guanmo-ai/awesome-ai-motion)：案例合集。
 
-### 8.3 原教程列出的延伸阅读
+### 8.2 原教程列出的延伸阅读
 
 - [@xilo2991：零基础入门 Opus 5.5 做视频](https://x.com/xilo2991/status/2104912748794589515)：原文中着色器渲染耗时从 7 秒变为 48 秒的测试出处。
 - [@threeaus：如何用 Claude / DeepSeek 做资讯类视频](https://x.com/threeaus/status/2112394912029409410)。
 - [@AI_DVD6：两条 AI 知识短片，都破了 13 万播放](https://x.com/AI_DVD6/status/2111273399943057458)。
 - [@zureA255062：Opus 5.5 抖音起号万字教程](https://x.com/zureA255062/status/2111642497927798995)。
-
-### 8.4 相关笔记
-
-- [[AI/行业动态/Karpathy-大模型输出理解技巧-文字图解网页视频|Karpathy 的输出理解技巧]]：受控语言、图解、网页与定制讲解视频。
-- [[AI/AI-视觉/AI做PPT-ppt-master|PPT Master]]：需要原生可编辑 PPTX 时的另一种输出。
-- [[AI/AI-视觉/Effective-HTML-Agent页面工作流|Effective HTML 工作流]]：交互页面的制作与检查。
-- [[KnowledgeBase/concepts/提示词工程|提示词工程]]：明确受众、内容、风格、实现和验收条件。
