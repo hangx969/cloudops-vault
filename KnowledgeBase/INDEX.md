@@ -470,4 +470,4 @@ date: 2026-10-20
 
 ### AI/AI-视觉
 
-- [[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|Anatomy Skill 交互模型与科普视频]] — 结构拆解、讲解配音与作者的额度耗时记录；原始文章：[[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频]]。
+- [[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|AI 代码动画与科普视频制作]] — 22 种技术与工具、16 类风格、HTML 模板与 Anatomy 工作流；原始文章：[[AI/AI-视觉/AI代码动画与科普视频制作]]。

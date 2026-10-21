@@ -68,7 +68,7 @@ date: 2026-10-03
 
 | 文件 | 标题 | Frontmatter | 双链 |
 |------|------|:-----------:|:----:|
-| [[AI/AI-视觉/AI-Animation-Skill-科普动画\|AI-Animation-Skill-科普动画]] | AI-Animation-Skill - HTML科普动画生成 | ✅ | ✅ |
+| [[AI/AI-视觉/AI代码动画与科普视频制作\|AI代码动画与科普视频制作]] | AI 代码动画与科普视频制作：技术栈、风格与 Skill | ✅ | ✅ |
 | [[AI/AI-视觉/AI做PPT-ppt-master\|AI做PPT-ppt-master]] | AI做PPT - ppt-master | ✅ | ❌ |
 | [[AI/AI-视觉/Diagram-design\|Diagram Design：Claude Code / Codex 技术图设计]] | Diagram Design：让 Claude Code / Codex 生成更有设计感的技术图 | ❌ | ❌ |
 | [[AI/AI-视觉/Effective-HTML-Agent页面工作流\|Effective-HTML-Agent页面工作流]] | Effective HTML：Agent 页面制作与 HTML 交付工作流 | ✅ | ❌ |

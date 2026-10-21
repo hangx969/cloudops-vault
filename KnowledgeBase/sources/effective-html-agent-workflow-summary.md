@@ -51,7 +51,7 @@ HTML 交付按以下顺序展开：先决定 HTML 是否适合作为交付格式
 - [[KnowledgeBase/entities/Codex|Codex]]：文章列举的另一种可通过插件使用 Effective HTML 的 Coding Agent。
 - [[AI/AI-视觉/Markdown-Viewer-Skills-Markdown中直接画图|Markdown Viewer Skills：AI 文档配图]]：同类的 Markdown 内嵌图表方案。
 - [[AI/AI-视觉/html-anything-AI生成HTML全场景工具]]：同类的全场景 HTML 生成工具。
-- [[AI/AI-视觉/AI-Animation-Skill-科普动画]]：同属 AI 生成 HTML 视觉交付的相关实践。
+- [[AI/AI-视觉/AI代码动画与科普视频制作#3. 模板路线：AI-Animation-Skill|AI-Animation-Skill]]：同属 AI 生成 HTML 视觉交付的相关实践。
 
 ## 值得注意
 

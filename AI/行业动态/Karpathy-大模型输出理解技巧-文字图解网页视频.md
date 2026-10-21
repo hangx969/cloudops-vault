@@ -117,7 +117,7 @@ Karpathy 最看好的形式，是为任意主题生成完全定制的讲解视�
 
 完整视频需要动画或视频生成、语音合成及导出能力。可以把任务拆成**脚本 → 分镜 → 动画 → 旁白与字幕 → 视频导出**，逐步核对画面、讲解和时间是否一致。3b1b 风格只是讲解形式的参考，内容正确性仍要单独检查。
 
-相关实践见 [[AI/AI-视觉/AI-Animation-Skill-科普动画|AI 科普动画实践]]。
+相关实践见 [[AI/AI-视觉/AI代码动画与科普视频制作#3. 模板路线：AI-Animation-Skill|AI 科普动画实践]]。
 
 ## 如何把这些技巧用起来
 
@@ -131,5 +131,5 @@ Karpathy 的进一步判断是：随着模型能力提高，智能与代码更�
 
 - [[AI/行业动态/Anthropic工程师力推HTML取代Markdown-Karpathy附议|HTML 取代 Markdown：Anthropic 工程师的建议]]：早期围绕 HTML 输出格式的讨论。
 - [[AI/AI-视觉/Effective-HTML-Agent页面工作流|Effective HTML 页面工作流]]：交互页面的制作与检查流程。
-- [[AI/AI-视觉/AI-Animation-Skill-科普动画|AI 科普动画实践]]：动画生成的相关实践。
+- [[AI/AI-视觉/AI代码动画与科普视频制作#3. 模板路线：AI-Animation-Skill|AI 科普动画实践]]：动画生成的相关实践。
 - [[KnowledgeBase/concepts/提示词工程|提示词工程]]：通过目标、约束、输出形式和验收标准减少任务歧义。

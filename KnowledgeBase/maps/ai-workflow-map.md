@@ -5,9 +5,9 @@ tags:
   - knowledgebase/ai
 aliases:
   - AI Workflow Map
-date: 2026-10-20
+date: 2026-10-21
 sources:
-  - "[[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频]]"
+  - "[[AI/AI-视觉/AI代码动画与科普视频制作]]"
   - "[[AI/Obsidian/github-pages-quartz]]"
   - "[[AI/ClaudeCode/Claude Code 基础指南]]"
   - "[[AI/ClaudeCode/Claude Code 扩展体系]]"
@@ -42,7 +42,6 @@ sources:
   - "[[AI/AI-视觉/Effective-HTML-Agent页面工作流]]"
   - "[[AI/AI-视觉/Markdown-Viewer-Skills-Markdown中直接画图]]"
   - "[[AI/AI-视觉/html-anything-AI生成HTML全场景工具]]"
-  - "[[AI/AI-视觉/AI-Animation-Skill-科普动画]]"
   - "[[AI/ClaudeCode/HarnessKit]]"
   - "[[AI/GithubCopilot/Copilot CLI]]"
   - "[[AI/提示词/提示词]]"
@@ -119,8 +118,7 @@ sources:
 1. [[AI/AI-视觉/Effective-HTML-Agent页面工作流|Effective HTML 页面工作流]] — 任务判断、线框、交互原型、架构图、计划和视觉设计；直接输出自包含 HTML，并对比 HTML 与 Markdown 的交付边界、20 个设计范本和同类工具定位
 2. [[AI/AI-视觉/Markdown-Viewer-Skills-Markdown中直接画图|Markdown Viewer Skills：AI 文档配图]] — 在 Markdown 中嵌入 PlantUML、Vega、Graphviz 等图表
 3. [[AI/AI-视觉/html-anything-AI生成HTML全场景工具|html-anything]] — 面向报告、演示文稿、动画和社交卡片的全场景 HTML 生成
-4. [[AI/AI-视觉/AI-Animation-Skill-科普动画|AI-Animation-Skill]] — 使用 HTML 模板生成可录制的科普动画
-5. [[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频|Anatomy Skill]] — 可交互的结构模型与带配音的科普视频，附案例、额度耗时记录及内容核对边界
+4. [[AI/AI-视觉/AI代码动画与科普视频制作|AI 代码动画与科普视频制作]] — 22 种技术与工具、16 类风格提示词、HTML 模板、Anatomy 结构模型、配音与渲染流程
 
 ### 补充
 - [[HarnessKit|HarnessKit]] — AI 编码智能体统一管理工具（Skills/MCP/Plugins/Hooks 跨 Agent 管理）
@@ -158,8 +156,7 @@ sources:
 | [[AI/AI-视觉/Effective-HTML-Agent页面工作流|Effective HTML 页面工作流]] | Agent 页面制作与 HTML 交付 | 任务路由、线框、原型、架构图、视觉设计、自包含 HTML、HTML vs Markdown、设计范本 |
 | [[AI/AI-视觉/Markdown-Viewer-Skills-Markdown中直接画图\|Markdown Viewer Skills：AI 文档配图]] | Markdown 文档配图 | PlantUML、Vega、Graphviz、技能路由 |
 | [[AI/AI-视觉/html-anything-AI生成HTML全场景工具|html-anything]] | 全场景 HTML 生成 | Web 原型、演示文稿、视频、社交卡片、导出 |
-| [[AI/AI-视觉/AI-Animation-Skill-科普动画|AI-Animation-Skill]] | HTML 科普动画 | 模板、动画、视频录制 |
-| [[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频\|Anatomy Skill]] | 交互模型与科普视频 | 结构拆解、讲解配音、学习深度、额度与耗时 |
+| [[AI/AI-视觉/AI代码动画与科普视频制作\|AI 代码动画与科普视频制作]] | 代码动画与讲解视频 | 22 种技术、16 类风格、44 个模板、Anatomy、录制与配音 |
 
 ### OpenClaw（目录共 10 篇，此处列出 7 篇）
 
@@ -184,7 +181,7 @@ sources:
 ---
 
 ## 📑 来源摘要
-- [[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|Anatomy Skill 来源摘要]] — 交互模型、配音视频、作者体验记录与适用边界
+- [[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|AI 代码动画与科普视频制作摘要]] — 技术栈、风格提示词、模板与交互模型流程
 - [[KnowledgeBase/sources/ai-code-review-validation-loop-summary|AI 代码审查验证闭环]] — 完整上下文、真实运行、安全与信息清理
 - [[KnowledgeBase/sources/12个常用Prompt-summary|12 个常用 Prompt 摘要]] — 问题澄清、学习研究、解决问题、决策与自我探索
 - [[KnowledgeBase/sources/cloudops-agent-batch-summary|CloudOps-Agent 批量摘要]] — 58 篇，三语言智能 OnCall Agent

@@ -49,4 +49,4 @@
 
 ## AI 视觉与科普视频
 
-- [[AI/AI-视觉/Anatomy-Skill-交互模型与科普视频|Anatomy Skill：交互模型与科普讲解视频]] — 用结构模型探索原理，再按学习需要生成带配音的解释；[[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|来源摘要]]。
+- [[AI/AI-视觉/AI代码动画与科普视频制作|AI 代码动画与科普视频制作]] — 从 22 种技术与工具、16 类风格选型，到 HTML 模板、Anatomy 模型、配音与视频导出；[[KnowledgeBase/sources/anatomy-skill-interactive-explainer-summary|来源摘要]]。

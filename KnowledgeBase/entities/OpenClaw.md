@@ -2,8 +2,9 @@
 title: OpenClaw
 tags:
   - knowledgebase/entity
-date: 2026-04-17
+date: 2026-10-21
 sources:
+  - "[[AI/AI-视觉/AI代码动画与科普视频制作]]"
   - "[[AI/OpenClaw/OpenClaw-基础-安装]]"
   - "[[AI/OpenClaw/OpenClaw-Skills-Plugins]]"
   - "[[AI/OpenClaw/OpenClaw-Channels]]"
@@ -30,7 +31,7 @@ OpenClaw 是一个大模型驱动的通用 AI Agent 平台，能够操作电脑�
 - **Agent-browser**（Vercel Labs）：基于 accessibility-tree 快照的浏览器自动化
 - 百度搜索 Skill：弥补模型知识截止日期的关键能力
 - **second-brain**：个人知识库插件，语义检索 + 自动关联 + 主题聚合 + 知识发现，本地存储不上云
-- **AI-Animation-Skill**：44 个 HTML 科普动画模板，AI 自动选模板生成可录制的动画文件，详见 [[AI/AI-视觉/AI-Animation-Skill-科普动画]]
+- **AI-Animation-Skill**：44 个 HTML 科普动画模板，AI 自动选模板生成可录制的动画文件，详见 [[AI/AI-视觉/AI代码动画与科普视频制作#3. 模板路线：AI-Animation-Skill|AI-Animation-Skill]]
 - **self-improving-agent**：实现"做事-复盘-记录-沉淀-改进"的自我进化行为模式
 - **skill-vetter**：四步安全审查流程（来源/代码/权限/风险评级）
 - **ClawDeckX**：可视化管理面板
@@ -105,7 +106,7 @@ OpenClaw 和 [[KnowledgeBase/entities/Claude-Code|Claude Code]] 同属 AI Agent 
 - [[AI/OpenClaw/OpenClaw-K8s智能运维实战|OpenClaw K8s 运维：从只读巡检到低风险变更]]：三阶段渐进（只读→诊断→变更）+ OPA 护栏 + 60 秒诊断修复实战
 - [[AI/OpenClaw/飞书CLI画板-一句话生成架构图|飞书CLI画板-一句话生成架构图]]：飞书 CLI 画板生成能力，AI Agent 一句话生成可编辑架构图
 - [[AI/Hermes-agent/Hermes与OpenClaw对比及飞书接入指南|Hermes Agent：OpenClaw 对比与飞书接入]]：Hermes Agent 与 OpenClaw 的架构对比及飞书接入
-- [[AI/AI-视觉/AI-Animation-Skill-科普动画|AI-Animation-Skill]]：以 Skill 形式运行在 OpenClaw 等 Agent 中的 HTML 科普动画模板集，可通过 ClawHub 安装
+- [[AI/AI-视觉/AI代码动画与科普视频制作#3. 模板路线：AI-Animation-Skill|AI-Animation-Skill]]：以 Skill 形式运行在 OpenClaw 等 Agent 中的 HTML 科普动画模板集，可通过 ClawHub 安装
 
 ## 智能体定义文件（AI/AIOps/agents身份文件/）
 

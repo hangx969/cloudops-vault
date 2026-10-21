@@ -347,6 +347,12 @@ Anatomy 让 Agent 把技术概念做成可操作的装置，再通过零件、�
 
 Raptor 2 试车台的 SVG 与 WebGL 分层实现，以及检查管线穿插的例子，见 [[#5.5 机械原理、技术概念图解]]。
 
+![Anatomy Raptor 2 点火结构示意](https://raw.githubusercontent.com/hangx969/upload-images-md/main/ai-code-video-20261021-15-e1ab2fecb8.jpg)
+
+![Anatomy Raptor 2 拆分结构示意](https://raw.githubusercontent.com/hangx969/upload-images-md/main/ai-code-video-20261021-16-d59642deb0.jpg)
+
+图示：Anatomy 仓库的 Raptor 2 交互模型，原教程标注 MIT。
+
 这类图形适合机器、仪器和工具，不擅长人物或精确地图。交付可以是独立 HTML、SVG 或组件，带 WebGL 效果；它的核心产物是交互图形。配音、编排讲解和视频录制是后续制作步骤。[Anatomy 输出说明](https://github.com/wheresryan22/anatomy#what-it-makes)
 
 ### 4.2 安装与交互提示词
@@ -804,7 +810,7 @@ claude plugin install hyperframes@hyperframes
 
 ### 6.3 Remotion 官方 Skill：长片与系列化工程
 
-原文评估为 ★★、花费低，记录了建项目、渲染、字幕、多媒体和地图等 12 类能力。适合希望在 Remotion 中持续复用组件、字幕和视觉风格的项目。
+原文评估为 ★★、花费低，记录为 12 个 Skill，涉及建项目、渲染、字幕、多媒体和地图等能力。适合希望在 Remotion 中持续复用组件、字幕和视觉风格的项目。
 
 ```bash
 npx skills add remotion-dev/skills
@@ -903,4 +909,3 @@ git clone https://github.com/Azure12355/weilanx-claude-videos.git
 - [[AI/AI-视觉/AI做PPT-ppt-master|PPT Master]]：需要原生可编辑 PPTX 时的另一种输出。
 - [[AI/AI-视觉/Effective-HTML-Agent页面工作流|Effective HTML 工作流]]：交互页面的制作与检查。
 - [[KnowledgeBase/concepts/提示词工程|提示词工程]]：明确受众、内容、风格、实现和验收条件。
-

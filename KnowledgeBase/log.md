@@ -2346,3 +2346,11 @@ date: 2026-04-17
 - 依据正文所列 Kafka、ZooKeeper 和 Kubernetes 官方资料，校正消费者与副本、acks/minISR、KRaft 版本、emptyDir 生命周期、myid 映射、PVC/PV 删除行为及会话超时含义；补齐 Headless Service、成员配置与独立持久卷，区分原案例叙述、可推导风险与未实测示例。
 - 原示意图通过 PicGo CLI 的 GitHub Plus 插件上传至现有图床，HTTP/MIME 及 SHA-256 一致性检查通过；保留图中历史标记的阅读边界说明。同步 [[KnowledgeBase/sources/kafka-basics-production-summary]]、[[KnowledgeBase/entities/Kafka]]、[[KnowledgeBase/concepts/高可用架构]]、两份批量摘要、领域与 Kubernetes 地图、[[KnowledgeBase/INDEX]] 和 [[Middlewares/index]]。
 - 11 个正文与导航文件经 Obsidian MCP 全文回读并与工作区比对一致；新增 wikilink 目标检查、14 个代码块围栏、5 份 YAML 解析、7 个 Shell 块语法、ZooKeeper 选择器/挂载/成员对应、四组章节迁移与任务范围差异空白检查通过。日志仅追加；未执行集群部署、生产消费或故障切换，界面工具未找到运行中的 Obsidian，阅读视图未核验。
+
+## [2026-10-21] ingest | 合并 AI 代码动画与科普视频制作
+
+- 使用 humanizer-zh，经 Obsidian MCP 将视频技术栈教程、AI-Animation-Skill 与 Anatomy 材料整合为 [[AI/AI-视觉/AI代码动画与科普视频制作|AI 代码动画与科普视频制作]]；按交付形式、22 种技术与工具、模板路线、结构模型、16 类风格、Skill 安装与验收组织章节，保留代码、提示词、案例和条件。
+- 13 张流程图、技术表格、代码示意与 Anatomy 结构图经 PicGo GitHub Plus 上传；HTTP、图片 MIME 和源文件哈希检查通过。示例视频截图和营销内容已省略，四张代码图片另转录为可复制片段。
+- 更新来源摘要、提示词工程、Claude Code、OpenClaw、AI 工作流地图、两个索引、盘点表与相关笔记引用；来源摘要沿用 anatomy-skill-interactive-explainer-summary 路径并扩展内容。确认正文与引用迁移后，删除两篇旧主文及本次原始剪藏。
+- 历史日志保持原文，仅追加本记录。旧路径 `AI/AI-视觉/AI-Animation-Skill-科普动画` 与 `AI/AI-视觉/Anatomy-Skill-交互模型与科普视频` 所指内容现见上述合并文章；当前页面分别链接到模板与 Anatomy 章节。
+- 新文和关联页面经 MCP 完整回读，检查 frontmatter、代码围栏、表格及当前引用；未安装 Skill 或复现视频生成。原生 Obsidian 预览不可用，本地浏览器预览受策略限制，未完成阅读视图验证。
