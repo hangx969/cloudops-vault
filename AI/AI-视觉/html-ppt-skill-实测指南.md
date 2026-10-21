@@ -86,7 +86,7 @@ html-ppt-skill 把第 2~5 步收进 prompt：人给需求 → Agent 决定模板
 
 ## 与同类工具的定位对比
 
-| 维度 | html-ppt-skill | [[AI/AI-视觉/AI做PPT-ppt-master\|PPT Master]] | [[AI/AI-视觉/AI-Animation-Skill-科普动画\|AI-Animation-Skill]] |
+| 维度 | html-ppt-skill | [[AI/AI-视觉/AI做PPT-ppt-master\|PPT Master]] | [[AI/AI-视觉/AI代码动画与科普视频制作#3. 模板路线：AI-Animation-Skill\|AI-Animation-Skill]] |
 |------|---------------|------------|---------------------|
 | 输出格式 | HTML/CSS/JS 幻灯片 | 原生 PPTX（DrawingML） | 单 HTML 动画文件 |
 | 目标场景 | 通用幻灯片（技术/商业/社交） | 专业演示文稿 | 科普视频录制 |

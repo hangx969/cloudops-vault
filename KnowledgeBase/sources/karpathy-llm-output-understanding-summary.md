@@ -36,7 +36,7 @@ Karpathy 认为，随着语言模型承担更多具体工作，人类会更关�
 
 - [[KnowledgeBase/concepts/提示词工程|提示词工程]]：约束语言、受众、交付形式及验收标准。
 - [[AI/AI-视觉/Effective-HTML-Agent页面工作流|Effective HTML 页面工作流]]：交互网页的相关制作实践。
-- [[AI/AI-视觉/AI-Animation-Skill-科普动画|AI 科普动画实践]]：动画讲解的相关实践。
+- [[AI/AI-视觉/AI代码动画与科普视频制作#3. 模板路线：AI-Animation-Skill|AI 科普动画实践]]：动画讲解的相关实践。
 
 ## 值得注意
 
