@@ -2366,3 +2366,8 @@ date: 2026-04-17
 - 建议先以 30–50 篇原文验证引用问答，保留现有 Obsidian/Git 编辑与 Quartz 发布流程；明确目录上传与增量同步、通用 Markdown 与 Obsidian 语义、现有 Wiki 与自动生成 Wiki 的区别。
 - 本次仅调研与文档归档，未安装或启动 WeKnora，未导入笔记、探测模型端点或实测检索质量。
 - 归档文档经 Obsidian CLI 全文回读一致；frontmatter、代码围栏、11 处内部链接目标及差异空白检查通过。阅读模式 DOM 确认了标题和首张表格，截图仍显示旧页，未完成整篇视觉验收。日志历史前缀保持不变。
+## [2026-10-22] query | WeKnora 本机部署适配检查
+
+- 只读核实 M4 Pro 14 核、48 GiB 内存、约 553 GiB 宿主机可用磁盘，以及 Colima/Docker、Compose、数据盘和常用端口；受限环境下的 Colima Broken 结果经只读复核纠正为正常运行，当前虚拟机配额为 2 核 / 2 GiB。
+- 从 Registry manifest 核实 WeKnora 三个 v0.8.3 镜像、ParadeDB 和 Redis 均支持 ARM64；确认不带 v 的 0.8.3 标签当次返回 404。建议复用 Colima，先调整到 4 核 / 8 GiB，再以标准 Compose 和远程模型 API 试用。
+- 补充 [[KnowledgeBase/analysis/WeKnora与CloudOps-Vault适配评估|适配评估]] 并更新 [[KnowledgeBase/INDEX]]。正文经 Obsidian CLI 回读，检查 frontmatter、内部链接、围栏与差异空白；日志保持追加。未安装、启动、调整服务配置或运行模型，也未进行性能压测。

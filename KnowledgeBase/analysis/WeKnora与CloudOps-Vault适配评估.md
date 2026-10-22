@@ -128,6 +128,55 @@ WeKnora 的回答引用能定位到导入文档或分块。要回到本仓库的
 
 这些是建议的验收方案，尚未执行。是否长期保留 WeKnora，取决于它在这些问题上能否稳定优于当前查询流程，以及同步和运行成本是否可接受。
 
+## 本机部署适配快照（2026-10-22）
+
+结论：本机适合部署 WeKnora 标准版，用于个人知识库和功能验证。硬件有足够容量，当前需要调整的是容器虚拟机的资源额度；无需为了试用另装 Docker Desktop 或部署 Kubernetes。
+
+### 已检查的环境
+
+以下为当次只读检查结果，不代表持续监测数据。
+
+| 项目 | 实际状态 | 判断 |
+| --- | --- | --- |
+| CPU / 架构 | MacBook Pro，Apple M4 Pro，14 核（10 性能核 + 4 能效核），arm64 | 满足应用服务与个人检索负载的试用条件 |
+| 物理内存 | 48 GiB 统一内存 | 容量足够；当前系统与日常应用也在使用这部分内存 |
+| 即时负载 | CPU 约 79% idle；`top` 显示约 44 GiB used、2.9 GiB unused；Swap 使用为 0 | used 包含缓存等内容，不等于全部不可回收；仍应从较小 VM 配额起步并观察压力 |
+| 宿主机磁盘 | 约 553 GiB 可用 | 足以容纳服务镜像、笔记索引和试验数据 |
+| 容器运行时 | Colima 0.10.3，aarch64，macOS Virtualization.Framework；Docker Engine 29.2.1 正常响应 | 当前已有可用的 ARM64 容器环境 |
+| Colima 配额 | 2 vCPU / 2 GiB 内存 / 100 GiB 配置磁盘；没有运行中的容器 | CPU、内存低于 WeKnora 标准部署官方建议，部署前应调整 |
+| Docker 数据盘 | `/var/lib/docker` 所在文件系统约 88 GiB 可用 | 初期无需扩盘或清理已有镜像 |
+| Compose | 独立命令 `docker-compose` 5.6.0 可用；`docker compose` 不可用 | 可直接使用独立命令；若需要子命令形式，再配置现有插件目录 |
+| 常用端口 | IPv4 localhost 的 80、3000、8000、8080、8088、11434 均拒绝连接 | 检查时没有发现这些端口的监听服务；不保证后续一直空闲 |
+| 本地模型 | PATH 与常见应用目录未找到 Ollama、LM Studio；常见模型端口未监听 | 不能假定已有本地模型 API；其他路径或端口的服务未作穷尽检查 |
+| Lite 构建工具 | Go 1.27.2、Node 25.9.0、npm 11.12.1、Clang 21 与 Command Line Tools 已有 | 具备尝试源码构建的基础，但本次没有编译；官方前端 CI 使用 Node 24 |
+
+最初在沙箱中执行 Colima 状态查询得到 `Broken`，同时系统进程查询被拒绝。随后在获准的只读检查中，`colima status`、`colima list` 和明确指定 `--context colima` 的 Docker API 均确认正常运行。因此没有把首次受限结果作为环境故障。
+
+### ARM64 镜像与版本标签
+
+当次直接读取 Docker Hub / Registry manifest，以下默认组件均提供 `linux/arm64`：
+
+| 组件 | 已核实的镜像标签 |
+| --- | --- |
+| 后端 | `wechatopenai/weknora-app:v0.8.3` |
+| 前端 | `wechatopenai/weknora-ui:v0.8.3` |
+| 文档解析 | `wechatopenai/weknora-docreader:v0.8.3` |
+| 数据库 | `paradedb/paradedb:v0.25.11-pg17` |
+| Redis | `redis:7.0-alpine` |
+
+此次查询不带 `v` 的三个 WeKnora `:0.8.3` 标签均返回 404；带 `v` 的 `:v0.8.3` 返回有效 manifest。部署时应使用已验证的 `WEKNORA_VERSION=v0.8.3`，不能直接照抄安装文档中的不带 `v` 示例。本次只读取 manifest 和镜像元数据，没有拉取镜像层。[官方构建工作流](https://github.com/Tencent/WeKnora/blob/v0.8.3/.github/workflows/docker-image.yml)、[后端镜像标签](https://hub.docker.com/r/wechatopenai/weknora-app/tags?name=v0.8.3)、[前端镜像标签](https://hub.docker.com/r/wechatopenai/weknora-ui/tags?name=v0.8.3)、[解析服务镜像标签](https://hub.docker.com/r/wechatopenai/weknora-docreader/tags?name=v0.8.3)
+
+### 推荐的本机部署方式
+
+1. 复用现有 Colima，把配额调整为 **4 vCPU、8 GiB 内存**，保持现有 100 GiB 磁盘；这是起步建议，并非实际测得的服务消耗。根据文档解析并发和内存压力，再考虑增至 6 vCPU、12 GiB。
+2. 用标准 Compose 启动默认核心服务，固定上述版本；使用现有 `docker-compose` 即可，不必为拉取预构建镜像安装 Buildx。初期关闭可选图谱、沙箱与链路追踪组件。
+3. 先接远程聊天模型与 Embedding API，验证 30–50 篇笔记的问答质量。是否可复用已有 LiteLLM 服务，仍需后续核对端点、模型能力和凭据；本次未探测远程模型服务。
+4. 若随后需要全本地模型，优先评估 macOS 原生 Ollama，利用 Apple GPU 的 Metal 支持。模型参数量、量化、上下文和并发共同影响内存与速度，本次没有加载模型或做性能测试。[Ollama macOS 要求](https://docs.ollama.com/macos)、[Apple GPU 支持](https://docs.ollama.com/gpu)
+
+Lite 仍是较少后台组件的备选，但标准版已有匹配的 ARM64 镜像和可复用的 Docker 环境。对这台机器，标准版更便于直接验证完整文档处理能力；无需因硬件担忧退到 Lite。
+
+本机适合自己使用、学习和验证。检查时运行在电池供电下，电池与接电配置均存在系统睡眠设置。笔记本合盖、休眠、关机或切换网络会影响服务可用性；若需要多人长期访问或定时后台同步，应将稳定运行的服务放到持续在线的主机。本次未调整电源设置。
+
 ## 本次验证范围
 
-本次完成官方 Release、相关文档与源码阅读、本地仓库结构及格式扫描，并归档评估。没有安装或启动 WeKnora，没有上传 Vault 内容，没有连接外部模型，也没有测试检索质量、同步行为或模型费用。上文接入设计与试用步骤均为建议。
+本次完成官方 Release、相关文档与源码阅读、本地仓库结构及格式扫描，并读取本机硬件、负载、磁盘、Colima/Docker 状态、Compose 可用性、常用端口和镜像平台元数据。没有安装或启动 WeKnora，没有修改 Colima、Docker、模型或电源配置，没有上传 Vault 内容，没有连接外部模型，也没有测试检索质量、同步行为或模型费用。上文接入设计与资源配置均为建议。
