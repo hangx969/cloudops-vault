@@ -2359,3 +2359,10 @@ date: 2026-04-17
 
 - 优化 [[AI/AI-视觉/AI代码动画与科普视频制作]] 的正文表达，去掉文章编排、摄入过程与反复转述的说明，直接介绍技术原理、工具用途、操作步骤和案例；保留体验数据归属与历史价格范围。
 - 35 个代码与提示词块、13 张图片及 70 个外部 URL 均保持一致；MCP 完整回读、frontmatter、表格、章节引用与空白检查通过。
+
+## [2026-10-22] query | WeKnora 与 CloudOps Vault 适配评估
+
+- 阅读 Tencent/WeKnora v0.8.3 的官方介绍、部署、RAG、Wiki、MCP、数据源与知识 API 文档，以及目录上传、目录绑定和 Markdown 解析相关源码；结合本仓库三层规约与实际文件结构，归档 [[KnowledgeBase/analysis/WeKnora与CloudOps-Vault适配评估|适配评估]]，更新 [[KnowledgeBase/INDEX]]。
+- 建议先以 30–50 篇原文验证引用问答，保留现有 Obsidian/Git 编辑与 Quartz 发布流程；明确目录上传与增量同步、通用 Markdown 与 Obsidian 语义、现有 Wiki 与自动生成 Wiki 的区别。
+- 本次仅调研与文档归档，未安装或启动 WeKnora，未导入笔记、探测模型端点或实测检索质量。
+- 归档文档经 Obsidian CLI 全文回读一致；frontmatter、代码围栏、11 处内部链接目标及差异空白检查通过。阅读模式 DOM 确认了标题和首张表格，截图仍显示旧页，未完成整篇视觉验收。日志历史前缀保持不变。

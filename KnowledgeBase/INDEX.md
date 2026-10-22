@@ -6,7 +6,7 @@ tags:
 aliases:
   - 知识库首页
   - KB Index
-date: 2026-10-20
+date: 2026-10-22
 ---
 
 # 📚 Learning Notes 知识库
@@ -386,6 +386,8 @@ date: 2026-10-20
 | [多Agent vs 单Agent架构决策分析](analysis/multi-agent-vs-single-agent.md) | 分析多Agent何时是伪需求，提出信息隔离与并发需求的决策框架 |
 
 - [[KnowledgeBase/analysis/title-review-2026-10-04|文章标题审阅]] — 49 条网页标题与关联引用已按确认方案更新并验收，26 条离线建议未执行；保留原题对照与执行记录。
+
+- [[KnowledgeBase/analysis/WeKnora与CloudOps-Vault适配评估|WeKnora 与 CloudOps Vault 适配评估]] — 基于 v0.8.3 评估检索问答、自动 Wiki、Obsidian 适配、增量同步与部署成本，并给出小规模试用方案。
 
 ---
 
