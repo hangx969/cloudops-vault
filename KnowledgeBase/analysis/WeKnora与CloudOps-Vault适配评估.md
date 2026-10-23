@@ -98,11 +98,11 @@ WeKnora 的回答引用能定位到导入文档或分块。要回到本仓库的
 
 ## 部署与模型成本
 
-| 路线 | 组件与约束 | 建议 |
-| --- | --- | --- |
+| 路线                | 组件与约束                                                                    | 建议                                    |
+| ----------------- | ------------------------------------------------------------------------ | ------------------------------------- |
 | 标准 Docker Compose | 前端、Go 后端、docreader、ParadeDB/PostgreSQL、Redis；官方建议 4 核 / 8 GB 起步，不含本地模型权重 | 有合适 Linux 测试环境时优先，采用固定 v0.8.3 配置与镜像版本 |
-| Lite | 单进程、SQLite FTS5 + sqlite-vec、内存队列；无需独立 PostgreSQL 和 Redis | 适合个人本地使用，但需接受源码构建与解析能力差异 |
-| Helm | Kubernetes 部署，可管理持久存储及相关服务 | 问答质量与日常使用价值确认后再考虑 |
+| Lite              | 单进程、SQLite FTS5 + sqlite-vec、内存队列；无需独立 PostgreSQL 和 Redis                | 适合个人本地使用，但需接受源码构建与解析能力差异              |
+| Helm              | Kubernetes 部署，可管理持久存储及相关服务                                               | 问答质量与日常使用价值确认后再考虑                     |
 
 本次查询 v0.8.3 Release 的 `assets` 为空；官方文档也标明桌面应用尚未正式提供安装包。因此不能把桌面版当作已可直接下载安装的试用路线。[安装文档](https://github.com/Tencent/WeKnora/blob/v0.8.3/website-docs/01-getting-started/02-installation.md)、[Lite 差异](https://github.com/Tencent/WeKnora/blob/v0.8.3/docs/LITE.md)
 
