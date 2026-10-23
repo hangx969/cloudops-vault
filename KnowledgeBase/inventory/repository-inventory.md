@@ -291,7 +291,7 @@ date: 2026-10-03
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-kubeadm\|k8s基础-kubeadm]] | kubeadm | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配\|k8s基础-namespace-资源分配]] | namespace-资源分配 | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod\|k8s基础-pod]] | K8s基础-Pod | ✅ | ✅ |
-| [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针\|Kubernetes 健康探针]] | Kubernetes 健康探针：从配置原理到重启风暴排查 | ✅ | ✅ |
+| [[k8s基础-pod-健康探针\|Kubernetes 健康探针]] | Kubernetes 健康探针：从配置原理到重启风暴排查 | ✅ | ✅ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] | Kubernetes 标签与选择器避坑：5 条核心铁律与生产级实战案例 | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset\|k8s基础-statefulset]] | StatefulSet | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage\|k8s基础-storage]] | Storage | ✅ | ❌ |

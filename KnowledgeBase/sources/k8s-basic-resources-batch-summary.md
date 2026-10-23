@@ -71,7 +71,7 @@ aliases:
   - `containerPort` 不改变应用监听；requests 用于调度与资源保障，limits 约束运行时使用
   - 普通 Init Container 依次成功结束后，应用容器才启动
   - `PostStart` 与入口程序没有先后保证；`preStop` 与应用退出共用终止宽限期
-  - 探针配置与故障复盘见 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|健康探针专文]]，来源摘要见 [[KnowledgeBase/sources/k8s-probe-restart-storm-summary]]
+  - 探针配置与故障复盘见 [[k8s基础-pod-健康探针|健康探针专文]]，来源摘要见 [[KnowledgeBase/sources/k8s-probe-restart-storm-summary]]
 
 ### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|K8s基础-Deployment]]
 - 核心内容：Deployment 控制器的概念与工作原理，包括 ReplicaSet 管理、滚动更新策略（maxSurge/maxUnavailable）、金丝雀发布与回滚机制。

@@ -22,7 +22,7 @@ sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针]]"
+  - "[[k8s基础-pod-健康探针]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress]]"
@@ -147,7 +147,7 @@ sources:
 9. [[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret|k8s基础-configMap-Secret]] — 配置管理
 10. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|k8s基础-storage]] — 存储
 
-探针专题：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|Kubernetes 健康探针]] — 学习 Pod 与 Service 后，继续阅读探针分工、参数与完整示例，再结合重启风暴案例排查误杀。
+探针专题：[[k8s基础-pod-健康探针|Kubernetes 健康探针]] — 学习 Pod 与 Service 后，继续阅读探针分工、参数与完整示例，再结合重启风暴案例排查误杀。
 
 补充阅读：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet Recreate 更新策略（1.37 Alpha）]] — 启用条件、整体重建与分区灰度的区别、PVC/PV 生命周期及原文 11 个案例的核验说明。
 

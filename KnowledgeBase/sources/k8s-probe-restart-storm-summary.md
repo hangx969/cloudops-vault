@@ -14,7 +14,7 @@ aliases:
 
 ## 元信息
 
-- **原始文档**：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针]]
+- **原始文档**：[[k8s基础-pod-健康探针]]
 - **领域**：Kubernetes / Pod / 健康探针
 - **摄入日期**：2026-09-06
 - **最近更新**：2026-10-23（探针配置与案例独立成文）
@@ -45,4 +45,4 @@ aliases:
 - 事故数字与时间线是原案例记述，不是官方文档结论或本次实测；现有材料只有来源标题，未补造作者或发布链接。
 - 三种探针共用一个 Actuator 路径的例子用于说明配置位置，生产环境仍需按职责选择端点。
 - Liveness 与 Readiness 的容忍窗口倍数属于经验建议；Prometheus 查询使用示意指标名，实际指标、标签与类型需核对采集系统。
-- Pod 基础、退出和调试内容保留在 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod]]；历史案例锚点保留跳转入口。
+- Pod 基础、退出和调试内容保留在 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod]]。

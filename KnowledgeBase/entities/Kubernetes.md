@@ -56,7 +56,7 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 - **Pause 容器**：常见 Linux 运行时借助 Pod sandbox 维持共享命名空间，容器可通过 localhost 互访；存储共享依赖显式挂载同一个 Volume
 - **Operator = CRD + Controller**：无需修改 K8s 源码即可扩展 API，适合复杂有状态应用管理
 - **PodDisruptionBudget（PDB）**：自愿中断（drain/滚动更新/升级）时的可用性保护，通过 `minAvailable` 或 `maxUnavailable` 约束同时不可用的 Pod 数量，详见 [[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战]]
-- **健康探针分工**：Startup 隔离启动阶段，Readiness 控制摘流，Liveness 仅处理重启能够修复的进程内部故障；外部依赖抖动不应直接触发容器重启，详见 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针]]
+- **健康探针分工**：Startup 隔离启动阶段，Readiness 控制摘流，Liveness 仅处理重启能够修复的进程内部故障；外部依赖抖动不应直接触发容器重启，详见 [[k8s基础-pod-健康探针]]
 - **多集群上下文管理**：context 绑定 cluster、user 和 namespace；kubectx/kubens 简化切换，kube-ps1 暴露当前位置，但真正的生产权限边界仍是独立凭证和 RBAC，详见 [[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理#kubectx 与 kubens：多集群快速切换]]
 
 ### 网络体系三层协同
