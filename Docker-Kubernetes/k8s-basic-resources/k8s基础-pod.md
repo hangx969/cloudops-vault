@@ -275,10 +275,6 @@ Pod phase 只有下面五类：
 
 默认情况下，反复失败的容器重启采用指数退避，例如 10、20、40 秒，最长到 300 秒；持续正常运行一段时间后会重置。较新版本可调整退避行为，因此这些数字应结合节点配置理解。`CrashLoopBackOff` 描述的是“正在等待重试”，真正的故障原因仍要从日志和事件中找。[^lifecycle]
 
-## 健康探针：把启动、就绪与存活分开
-
-容器处于 `Running`，不代表应用已经能接收请求。Kubernetes 用 Startup Probe 判断启动是否完成，用 Readiness Probe 表达当前能否接流，用 Liveness Probe 识别需要终止容器并按策略处理的故障。配置了 Startup Probe 时，其成功前不会执行另外两种探针。[^probes]
-
 ## Pod 如何退出：钩子与宽限期
 
 启动和健康检查解决了“什么时候接流”和“什么时候恢复”，退出则要解决相反的问题：如何停止接收新请求，并尽量处理完正在进行的工作。
@@ -486,7 +482,6 @@ Pod、初始化、资源配置与终止流程的机制说明，参考以下官�
 [^lifecycle]: [Kubernetes：Pod Lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)；[中文版](https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/pod-lifecycle/)。
 [^init]: [Kubernetes：Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)。
 [^volumes]: [Kubernetes：Volumes / emptyDir](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir)。
-[^probes]: [Kubernetes：三种健康探针及参数](https://kubernetes.io/docs/concepts/workloads/pods/probes/)。
 [^endpoints]: [Kubernetes：EndpointSlice conditions](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions)。
 [^hooks]: [Kubernetes：容器生命周期钩子](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/)。
 [^feature-gates]: [Kubernetes：Feature Gates，PodLifecycleSleepAction](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/)。
