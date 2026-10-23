@@ -2401,3 +2401,8 @@ date: 2026-04-17
 
 - 从 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 删除“健康探针：把启动、就绪与存活分开”一节和不再使用的 probes 脚注；Running 状态中“它不保证应用已经就绪”的说明继续保留。
 - Obsidian MCP 全文回读一致，原有代码块、图片与其余脚注保持完整。
+
+## [2026-10-23] update | Pod 与健康探针文章改用普通参考文档编号
+
+- 移除 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 和 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]] 正文中的 38 处脚注引用标记，将文末参考文档分别改为 1–17、1–7 的普通有序列表；保留全部参考链接。
+- 两篇文章经 Obsidian MCP 全文回读一致，代码块、图片、URL 和 frontmatter 保持不变，参考文档编号连续，未留下脚注标记。

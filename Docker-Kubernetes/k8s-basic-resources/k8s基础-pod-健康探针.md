@@ -14,7 +14,7 @@ aliases:
 
 一个 Pod 已经进入 `Running`，应用却可能还在预热缓存；进程仍然存活，也可能已经卡住，无法继续处理请求。面对这些状态，仅检查“容器有没有运行”还不足以决定是否接收流量、是否需要重启。
 
-Kubernetes 的健康探针让应用通过命令、端口或健康接口表达自身状态，再由节点上的 kubelet 执行检查并采取相应动作。检查内容和失败后的处置需要一起设计：把临时的依赖故障写进错误的探针，可能让一次短暂抖动变成更多容器的重启。[^probes]
+Kubernetes 的健康探针让应用通过命令、端口或健康接口表达自身状态，再由节点上的 kubelet 执行检查并采取相应动作。检查内容和失败后的处置需要一起设计：把临时的依赖故障写进错误的探针，可能让一次短暂抖动变成更多容器的重启。
 
 本文先分清启动、就绪与存活检查的职责，再读懂参数和配置示例，随后讨论发布与恢复边界，最后用一个重启风暴案例检查这些设计为什么会失效。Pod 的容器协作、生命周期与基本操作，可参阅 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门文章]]。
 
@@ -22,7 +22,7 @@ Kubernetes 的健康探针让应用通过命令、端口或健康接口表达自
 
 ## 健康探针在检查什么
 
-Kubernetes 提供三种可选探针。它们配置在容器上，由 kubelet 执行，需要使用者在 YAML 中显式声明。探针失败通常影响同一个 Pod 内的目标容器，并不意味着自动删除整个 Pod 或重新调度到其他节点。[^probes]
+Kubernetes 提供三种可选探针。它们配置在容器上，由 kubelet 执行，需要使用者在 YAML 中显式声明。探针失败通常影响同一个 Pod 内的目标容器，并不意味着自动删除整个 Pod 或重新调度到其他节点。
 
 ### 先决定要回答的问题，再选择探测方法
 
@@ -32,7 +32,7 @@ Kubernetes 提供三种可选探针。它们配置在容器上，由 kubelet 执
 | `readinessProbe` | 当前是否适合接收业务流量？ | 标记未就绪，使 Pod 不再作为通常的 Service 就绪后端；不重启容器。 |
 | `livenessProbe` | 是否出现需要重启才能恢复的内部故障？ | 终止该容器，再按重启策略处理。 |
 
-配置了 Startup Probe 时，它成功前，Liveness 和 Readiness 都不会执行；成功后，本轮启动不再执行 Startup Probe。Liveness 与 Readiness 随后各自工作，不能理解为“Readiness 失败后，Liveness 才运行”。未配置的探针按默认成功处理，这不代表 kubelet 已经检查过业务接口。[^probes]
+配置了 Startup Probe 时，它成功前，Liveness 和 Readiness 都不会执行；成功后，本轮启动不再执行 Startup Probe。Liveness 与 Readiness 随后各自工作，不能理解为“Readiness 失败后，Liveness 才运行”。未配置的探针按默认成功处理，这不代表 kubelet 已经检查过业务接口。
 
 探针类型决定“怎样处置”，探测方法决定“怎样判断”。四种常用方法如下：
 
@@ -41,7 +41,7 @@ Kubernetes 提供三种可选探针。它们配置在容器上，由 kubelet 执
 - `httpGet`：通常向 Pod IP 的指定端口和路径发送 HTTP GET，状态码 200 至 399 表示成功。
 - `grpc`：应用实现 gRPC Health Checking Protocol，返回 `SERVING` 表示成功。
 
-每个探针选择一种探测方法。HTTP 或 gRPC 能表达多细的健康语义，取决于应用怎样实现接口；不能仅凭端口能连通，就断言服务已经可以处理请求。[^probe-config]
+每个探针选择一种探测方法。HTTP 或 gRPC 能表达多细的健康语义，取决于应用怎样实现接口；不能仅凭端口能连通，就断言服务已经可以处理请求。
 
 ## 读懂参数：给启动和故障恢复分配时间
 
@@ -55,7 +55,7 @@ Kubernetes 提供三种可选探针。它们配置在容器上，由 kubelet 执
 | `failureThreshold` | 3 | 连续失败多少次后判定失败，最小为 1。 |
 | `successThreshold` | 1 | 失败后需要连续成功多少次才恢复成功；Startup 和 Liveness 必须为 1。 |
 
-可以用 `failureThreshold × periodSeconds` 估算一组配置的容忍量级。例如 Startup 每 5 秒探测、允许连续失败 30 次，可提供约 150 秒的启动预算。但它不是从任意故障发生时刻起精确倒计时的保证，还要考虑初始延迟、探测相位、请求耗时和退出过程。[^probes]
+可以用 `failureThreshold × periodSeconds` 估算一组配置的容忍量级。例如 Startup 每 5 秒探测、允许连续失败 30 次，可提供约 150 秒的启动预算。但它不是从任意故障发生时刻起精确倒计时的保证，还要考虑初始延迟、探测相位、请求耗时和退出过程。
 
 实际调参时，可以按应用特点分别考虑：
 
@@ -138,7 +138,7 @@ startupProbe:
 
 应用可能正在预热缓存、等待关键依赖，或因负载过高而暂时无法接收新请求。Readiness 失败时，容器继续运行，Pod 的就绪状态则发生变化。
 
-对于常规 Service 流量，控制平面会相应更新后端就绪信息。现代 Kubernetes 通常通过 EndpointSlice 表达这些状态；“摘流”不一定意味着立即删除整个端点记录，也不代表网络层禁止任何客户端直接访问 Pod IP。`publishNotReadyAddresses` 等配置还会改变相关行为。[^endpoints]
+对于常规 Service 流量，控制平面会相应更新后端就绪信息。现代 Kubernetes 通常通过 EndpointSlice 表达这些状态；“摘流”不一定意味着立即删除整个端点记录，也不代表网络层禁止任何客户端直接访问 Pod IP。`publishNotReadyAddresses` 等配置还会改变相关行为。
 
 下面的示例通过 8081 端口探测 Spring Boot 的健康接口，并声明一个 NodePort Service：
 
@@ -195,7 +195,7 @@ spec:
 
 Liveness 适合识别主循环卡死、不可恢复的死锁等进程内部故障。外部数据库暂时不可用，通常不应直接判定本进程需要重启；重启并不能修好数据库，还可能加重连接和流量压力。
 
-连续失败达到阈值后，kubelet 终止对应容器，再根据重启策略处理。它通常不会因此删除 Pod 对象、重新调度整个 Pod。[^probes]
+连续失败达到阈值后，kubelet 终止对应容器，再根据重启策略处理。它通常不会因此删除 Pod 对象、重新调度整个 Pod。
 
 **Exec 示例。** 容器先创建 `/tmp/healthy`，30 秒后删除它；探针用 `cat` 检查文件是否存在。前 30 秒命令成功，文件删除后命令失败，连续失败达到默认阈值后触发后续动作。
 
@@ -248,7 +248,7 @@ spec:
         path: /actuator/health
 ```
 
-该例使用 `/actuator/health` 演示语法。生产环境应先检查该接口包含哪些检查项，避免把数据库等共享依赖的故障引入 Liveness。支持相应功能的 Spring Boot 版本可以分别使用 `/actuator/health/liveness` 和 `/actuator/health/readiness`。[^springboot]
+该例使用 `/actuator/health` 演示语法。生产环境应先检查该接口包含哪些检查项，避免把数据库等共享依赖的故障引入 Liveness。支持相应功能的 Spring Boot 版本可以分别使用 `/actuator/health/liveness` 和 `/actuator/health/readiness`。
 
 **TCP 示例。** 下面只检查 Nginx 的 80 端口能否建立连接：
 
@@ -346,7 +346,7 @@ spec:
 
 这份 Service 与前面的 Readiness 示例都使用 NodePort 31180、31181，两个实验应分别运行；如果需要并存，必须改用未占用的 NodePort，并区分用于选择后端的标签，避免两个 Service 同时选中两组 Pod。
 
-还要确认管理端口能否代表业务端口的实际状态。单独的管理 HTTP 服务正常，并不一定说明业务 HTTP 服务也能接收请求。[^springboot]
+还要确认管理端口能否代表业务端口的实际状态。单独的管理 HTTP 服务正常，并不一定说明业务 HTTP 服务也能接收请求。
 
 ### gRPC：应用需要实现健康检查协议
 
@@ -370,7 +370,7 @@ spec:
       initialDelaySeconds: 10
 ```
 
-目标必须实现 gRPC 健康检查协议，不能把任意开放的 gRPC 端口都当作健康接口。这里使用数字端口；实际镜像、协议支持和集群版本需要对应。[^probe-config]
+目标必须实现 gRPC 健康检查协议，不能把任意开放的 gRPC 端口都当作健康接口。这里使用数字端口；实际镜像、协议支持和集群版本需要对应。
 
 ## 让探针参与发布与故障恢复
 
@@ -628,7 +628,7 @@ func readyHandler(w http.ResponseWriter, r *http.Request) {
 
 ### 监控与诊断
 
-应监控探针成功率、延迟、容器重启和可用副本变化。下面使用自定义指标的示意名称：第一条统计成功事件的每秒速率，第二条假定延迟使用 classic Histogram，计算最近 5 分钟的 P99。成功事件速率不是成功率；成功率还需要对应的总探测次数。实际指标名、标签和类型必须按采集系统核对，不能当作 kubelet 默认指标。[^prometheus]
+应监控探针成功率、延迟、容器重启和可用副本变化。下面使用自定义指标的示意名称：第一条统计成功事件的每秒速率，第二条假定延迟使用 classic Histogram，计算最近 5 分钟的 P99。成功事件速率不是成功率；成功率还需要对应的总探测次数。实际指标名、标签和类型必须按采集系统核对，不能当作 kubelet 默认指标。
 
 ```promql
 # 成功事件的每秒速率，假设该指标是自定义 Counter
@@ -671,7 +671,7 @@ kubectl get pod <pod-name> -o yaml
 - 结合滚动更新策略、拓扑分布、反亲和性和足够副本数降低同时失效风险。
 
 > [!danger] PDB 与 HPA 的保护边界
-> PodDisruptionBudget 主要约束自愿中断，例如节点排空；它不能阻止 kubelet 因 Liveness 失败而重启容器，也不能直接阻止应用自身崩溃。HPA 的 `minReplicas` 只约束期望副本下限，不能保证这些副本在探针误杀期间保持 Ready。二者可以增强整体可用性，但不能代替正确的探针语义、参数和故障隔离。PDB 的约束主要通过 Eviction API 生效，直接删除 Pod 也可能绕过它。[^pdb][^hpa]
+> PodDisruptionBudget 主要约束自愿中断，例如节点排空；它不能阻止 kubelet 因 Liveness 失败而重启容器，也不能直接阻止应用自身崩溃。HPA 的 `minReplicas` 只约束期望副本下限，不能保证这些副本在探针误杀期间保持 Ready。二者可以增强整体可用性，但不能代替正确的探针语义、参数和故障隔离。PDB 的约束主要通过 Eviction API 生效，直接删除 Pod 也可能绕过它。
 
 ### 复盘结论
 
@@ -686,12 +686,12 @@ kubectl get pod <pod-name> -o yaml
 
 探针类型、参数和运行机制参考 Kubernetes 官方文档；Spring Boot 的端点设计参考项目官方说明。事故数字与时间线沿用案例来源的记述。
 
-[^probes]: [Kubernetes：三种健康探针及参数](https://kubernetes.io/docs/concepts/workloads/pods/probes/)。
-[^probe-config]: [Kubernetes：配置 Liveness、Readiness 与 Startup Probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)。
-[^endpoints]: [Kubernetes：EndpointSlice conditions](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions)。
-[^springboot]: [Spring Boot：Kubernetes Probes 与外部依赖检查](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes)。
-[^prometheus]: [Prometheus：histogram_quantile](https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile)。
-[^pdb]: [Kubernetes：Disruptions 与 PDB](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)。
-[^hpa]: [Kubernetes：Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/)。
+1. [Kubernetes：三种健康探针及参数](https://kubernetes.io/docs/concepts/workloads/pods/probes/)。
+2. [Kubernetes：配置 Liveness、Readiness 与 Startup Probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)。
+3. [Kubernetes：EndpointSlice conditions](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions)。
+4. [Spring Boot：Kubernetes Probes 与外部依赖检查](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes)。
+5. [Prometheus：histogram_quantile](https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile)。
+6. [Kubernetes：Disruptions 与 PDB](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)。
+7. [Kubernetes：Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/)。
 
 补充阅读：[Kubernetes 详细教程：容器探测](https://gitee.com/hangxu969/golang/blob/main/k8s详细教程/Kubernetes详细教程.md#534-容器探测)。

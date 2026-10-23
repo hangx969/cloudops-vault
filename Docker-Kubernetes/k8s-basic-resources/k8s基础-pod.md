@@ -15,7 +15,7 @@ aliases:
 
 本文按应用运行的过程展开：先理解 Pod 与容器的关系，再读懂配置、启动和状态，随后讨论退出、发布和日常调试。
 
-文中的独立 Pod 清单主要用于演示；持续运行的业务通常由 Deployment、StatefulSet 等工作负载管理，批处理任务则可以使用 Job。示例中的实验镜像、应用接口和网络条件需要自行准备；生产部署应选择经过验证的镜像版本。[^pods]
+文中的独立 Pod 清单主要用于演示；持续运行的业务通常由 Deployment、StatefulSet 等工作负载管理，批处理任务则可以使用 Job。示例中的实验镜像、应用接口和网络条件需要自行准备；生产部署应选择经过验证的镜像版本。
 
 ## 为什么 Kubernetes 需要 Pod
 
@@ -23,9 +23,9 @@ aliases:
 
 单容器 Pod 是常见的用法。需要多个副本时，通常增加 Pod 数量，而不是把多个相同的业务容器塞进一个 Pod。
 
-多容器 Pod 适合需要紧密协作的进程，例如业务容器与日志收集容器、Web 服务与文件同步容器，或应用与服务网格代理。这些容器作为一个单元调度到同一节点，共享 Pod 的部分运行环境，但不代表它们必须同时启动。[^pods]
+多容器 Pod 适合需要紧密协作的进程，例如业务容器与日志收集容器、Web 服务与文件同步容器，或应用与服务网格代理。这些容器作为一个单元调度到同一节点，共享 Pod 的部分运行环境，但不代表它们必须同时启动。
 
-这种组织方式也给应用管理提供了统一的边界：Kubernetes 可以综合容器状态和就绪条件判断整个 Pod 能否提供服务。底层运行时则由 kubelet 通过 CRI 对接，例如 containerd；Pod 的使用并不以 Docker 为前提。[^cri]
+这种组织方式也给应用管理提供了统一的边界：Kubernetes 可以综合容器状态和就绪条件判断整个 Pod 能否提供服务。底层运行时则由 kubelet 通过 CRI 对接，例如 containerd；Pod 的使用并不以 Docker 为前提。
 
 ### 同一个 Pod 内，哪些资源可以共享
 
@@ -33,13 +33,13 @@ aliases:
 
 - **网络**：容器共享 Pod 的 IP 地址和端口空间，可以用 `localhost:port` 互相访问。同一地址、同一传输协议下的监听端口不能冲突。
 - **存储**：Pod 可以声明多个 Volume，容器再通过各自的 `volumeMounts` 选择挂载哪些卷、挂载到哪里。只有挂载同一个卷，才会看到相应的共享文件；容器的整个根文件系统不会自动共享。
-- **进程与 IPC**：常见 Linux Pod 可以通过共享的 IPC 环境通信，但 PID 命名空间默认不共享。需要跨容器查看进程时，可显式设置 `spec.shareProcessNamespace: true`。[^process]
+- **进程与 IPC**：常见 Linux Pod 可以通过共享的 IPC 环境通信，但 PID 命名空间默认不共享。需要跨容器查看进程时，可显式设置 `spec.shareProcessNamespace: true`。
 
-Pod 中的容器可以独立退出和重启。容器重启时，Pod 对象通常仍是原来的对象；Pod 被删除或替换后，新 Pod 才拥有新的 UID。即使控制器创建的替代 Pod 沿用了相同名称，也不能把它当作原来的实例。[^lifecycle]
+Pod 中的容器可以独立退出和重启。容器重启时，Pod 对象通常仍是原来的对象；Pod 被删除或替换后，新 Pod 才拥有新的 UID。即使控制器创建的替代 Pod 沿用了相同名称，也不能把它当作原来的实例。
 
 ### Pause 容器：为共享运行环境提供基础
 
-在常见的 Linux 容器运行时实现中，创建 Pod sandbox 时会先创建一个基础设施容器，通常称为 pause 或 infra 容器。它维持共享的命名空间环境，应用容器随后加入其中。[^cri]
+在常见的 Linux 容器运行时实现中，创建 Pod sandbox 时会先创建一个基础设施容器，通常称为 pause 或 infra 容器。它维持共享的命名空间环境，应用容器随后加入其中。
 
 `kubectl get pods` 中的 `READY 1/1` 通常表示该行统计的一个容器已经就绪，pause 容器不计入其中。pause 也不负责检测业务健康；健康探针由 kubelet 执行，存储共享则依赖 Volume 的声明和挂载。
 
@@ -47,7 +47,7 @@ Pod 中的容器可以独立退出和重启。容器重启时，Pod 对象通常
 
 ### 用两个场景理解容器协作
 
-**文件同步。** 如果应用需要消费 Git 仓库中的文件，可以让一个 sidecar 定期同步仓库，业务容器读取共享卷中的内容。Kubernetes 社区的 git-sync 就提供了这类能力。[^gitsync]
+**文件同步。** 如果应用需要消费 Git 仓库中的文件，可以让一个 sidecar 定期同步仓库，业务容器读取共享卷中的内容。Kubernetes 社区的 git-sync 就提供了这类能力。
 
 需要区分“文件已更新”和“程序已升级”：同步源码或配置，并不会自动让正在运行的 Go 二进制或 Java 进程加载新代码。是否能直接生效，要看应用的加载方式；应用版本发布仍需相应的构建、替换和重启机制。
 
@@ -90,13 +90,13 @@ kubectl describe pod pod-demo
 
 ### 端口：声明不会替应用启动监听
 
-`spec.containers[].ports[].containerPort` 描述容器使用的端口，也可通过端口名称供 Service 等配置引用。它不会让应用自动监听这个端口，也不等于把端口映射到了宿主机。实际监听哪个地址和端口，仍由容器中的程序决定。[^api]
+`spec.containers[].ports[].containerPort` 描述容器使用的端口，也可通过端口名称供 Service 等配置引用。它不会让应用自动监听这个端口，也不等于把端口映射到了宿主机。实际监听哪个地址和端口，仍由容器中的程序决定。
 
 例如，程序实际监听 80，把 `containerPort` 改成 81 不会改变程序行为。同一个 Pod 的两个容器如果都要监听同一地址的 TCP 80 端口，也不能靠在 YAML 中填写不同数字来避免冲突。
 
 ### 启动命令：区分 command 与 args
 
-`spec.containers[].command` 对应镜像的 `ENTRYPOINT`，`args` 对应 `CMD`。未指定时使用镜像中的默认值；只设置 `args` 时，可以保留镜像入口并替换参数。它们不会自动经过 Shell，使用管道、重定向等语法时，需要显式调用 `/bin/sh -c`。[^command]
+`spec.containers[].command` 对应镜像的 `ENTRYPOINT`，`args` 对应 `CMD`。未指定时使用镜像中的默认值；只设置 `args` 时，可以保留镜像入口并替换参数。它们不会自动经过 Shell，使用管道、重定向等语法时，需要显式调用 `/bin/sh -c`。
 
 这一点也会影响后文的 Tini 示例：如果镜像入口已经用 Tini 包装主进程，在 Pod 中重新指定 `command` 就可能绕过它。
 
@@ -104,7 +104,7 @@ kubectl describe pod pod-demo
 
 `requests` 是调度器判断节点能否容纳 Pod 的重要依据，并不表示对应内存已经全部被程序占用。因此，节点上运行 `free -m` 看起来还有空闲内存，新 Pod 仍可能因为可分配资源已被其他 Pod 的 requests 占用而处于 Pending。
 
-`limits` 约束容器运行时的资源使用：CPU 超限通常表现为节流，内存压力下则可能触发 OOM 终止。只填写某项资源的 limit、没有填写 request，且准入阶段没有设置默认 request 时，Kubernetes 会把该 limit 复制为 request。排查调度失败时，应检查最终生效的配置。[^resources]
+`limits` 约束容器运行时的资源使用：CPU 超限通常表现为节流，内存压力下则可能触发 OOM 终止。只填写某项资源的 limit、没有填写 request，且准入阶段没有设置默认 request 时，Kubernetes 会把该 limit 复制为 request。排查调度失败时，应检查最终生效的配置。
 
 ### 环境变量：把 Pod 自身的信息交给应用
 
@@ -135,7 +135,7 @@ env:
 - 调度与身份：`spec.nodeName`、`spec.serviceAccountName`。
 - 地址：`status.hostIP`、`status.hostIPs`、`status.podIP`、`status.podIPs`。
 
-这些字段可用作环境变量，但不代表所有字段都能通过 Downward API Volume 暴露，具体支持范围应查官方列表。[^downward]
+这些字段可用作环境变量，但不代表所有字段都能通过 Downward API Volume 暴露，具体支持范围应查官方列表。
 
 ### 重启策略：决定容器退出之后怎么办
 
@@ -147,7 +147,7 @@ Pod 级别的 `spec.restartPolicy` 有三个常见取值：
 | `OnFailure` | 退出码非 0 时重启，正常退出时不重启。 |
 | `Never` | 不自动重启已退出的容器。 |
 
-这里讨论的是常规应用容器的 Pod 级策略；原生 sidecar 和较新版本的容器级重启规则还存在单独的配置。Deployment 的 Pod 模板使用 `Always`，Job 则通常按任务需要选择 `OnFailure` 或 `Never`，不能把“始终保持 Always”当作所有工作负载的通用规则。[^lifecycle]
+这里讨论的是常规应用容器的 Pod 级策略；原生 sidecar 和较新版本的容器级重启规则还存在单独的配置。Deployment 的 Pod 模板使用 `Always`，Job 则通常按任务需要选择 `OnFailure` 或 `Never`，不能把“始终保持 Always”当作所有工作负载的通用规则。
 
 下面的实验让 BusyBox 等待 10 秒后以非零状态退出，便于观察容器重启次数：
 
@@ -197,7 +197,7 @@ spec:
 
 它适合下载文件、生成初始配置或等待启动前置条件。初始化容器与应用容器可以使用不同镜像，通过显式挂载的共享卷传递结果。在 Deployment、DaemonSet、StatefulSet、Job 等资源中，也是在各自的 Pod 模板内配置它。
 
-普通 Init Container 不支持 `lifecycle`、`livenessProbe`、`readinessProbe`、`startupProbe`，因为它应当执行完成后退出。这里要与使用 `initContainers` 声明、设置容器级 `restartPolicy: Always` 的原生 sidecar 区分。[^init]
+普通 Init Container 不支持 `lifecycle`、`livenessProbe`、`readinessProbe`、`startupProbe`，因为它应当执行完成后退出。这里要与使用 `initContainers` 声明、设置容器级 `restartPolicy: Always` 的原生 sidecar 区分。
 
 下面的示例先下载页面，再由 Nginx 提供访问。下载成功依赖镜像中的工具、DNS 和外部站点连通性：
 
@@ -234,7 +234,7 @@ spec:
       mountPath: /usr/share/nginx/html # 两个容器显式挂载同一个卷，在不同路径看到同一份文件。
 ```
 
-`emptyDir` 是随 Pod 创建的临时卷，不是把某个指定宿主机目录直接挂入容器。它可以跨容器重启保留数据，但 Pod 从节点移除后，其中的数据会丢失。两个容器分别挂载到 `/work-dir` 和 `/usr/share/nginx/html`，因此访问的是同一份文件。[^volumes]
+`emptyDir` 是随 Pod 创建的临时卷，不是把某个指定宿主机目录直接挂入容器。它可以跨容器重启保留数据，但 Pod 从节点移除后，其中的数据会丢失。两个容器分别挂载到 `/work-dir` 和 `/usr/share/nginx/html`，因此访问的是同一份文件。
 
 如果另一个 Pod 定义了两个初始化容器，列表中可能看到这样的输出：
 
@@ -247,7 +247,7 @@ pod-init   0/1     Init:0/2   0          7s
 
 ### 状态：先区分 Pod phase 与列表中的 STATUS
 
-`kubectl get pods` 的 `STATUS` 列会展示便于排障的信息，它不总是 Pod 的 `status.phase`。例如 `CrashLoopBackOff` 和 `Terminating` 都不属于 Pod phase。[^lifecycle]
+`kubectl get pods` 的 `STATUS` 列会展示便于排障的信息，它不总是 Pod 的 `status.phase`。例如 `CrashLoopBackOff` 和 `Terminating` 都不属于 Pod phase。
 
 Pod phase 只有下面五类：
 
@@ -273,7 +273,7 @@ Pod phase 只有下面五类：
 | `Error` | 容器失败终止时的常见展示值，需要进一步检查具体原因。 |
 | `Evicted` | Pod 被驱逐，常见原因包括节点内存、磁盘等资源压力。 |
 
-默认情况下，反复失败的容器重启采用指数退避，例如 10、20、40 秒，最长到 300 秒；持续正常运行一段时间后会重置。较新版本可调整退避行为，因此这些数字应结合节点配置理解。`CrashLoopBackOff` 描述的是“正在等待重试”，真正的故障原因仍要从日志和事件中找。[^lifecycle]
+默认情况下，反复失败的容器重启采用指数退避，例如 10、20、40 秒，最长到 300 秒；持续正常运行一段时间后会重置。较新版本可调整退避行为，因此这些数字应结合节点配置理解。`CrashLoopBackOff` 描述的是“正在等待重试”，真正的故障原因仍要从日志和事件中找。
 
 ## Pod 如何退出：钩子与宽限期
 
@@ -286,7 +286,7 @@ Pod phase 只有下面五类：
 - `postStart` 在容器创建后触发，与容器入口程序之间没有先后保证。可以处理不要求先于主程序完成的轻量动作；必须完成后才能启动业务的准备工作，应放进 Init Container。它不接收 Kubernetes 额外传入的事件参数，但处理器自身可以定义命令和参数。
 - `preStop` 在 kubelet 发出停止信号前执行，可用于通知下线、触发清理或给流量摘除留出传播时间。它会占用终止宽限期，不能无限阻塞，也不会因为主进程已自行退出而补做清理。
 
-钩子失败可能导致容器被终止，后续行为再由重启策略等机制决定。Kubernetes 没有这里可以替代 `postStart` 的通用 `preStart` 钩子。[^hooks]
+钩子失败可能导致容器被终止，后续行为再由重启策略等机制决定。Kubernetes 没有这里可以替代 `postStart` 的通用 `preStart` 钩子。
 
 下面的示例在 `postStart` 中生成页面，在 `preStop` 中等待 10 秒：
 
@@ -312,7 +312,7 @@ spec:
           # seconds: 60
 ```
 
-`preStop` 的等待只是给流量切换留出时间，不会自动让应用处理完请求。镜像中的主进程仍需正确处理停止信号。示例注释中的 Sleep handler 在 Kubernetes 1.30 进入 Beta 并默认启用，1.34 成为稳定功能；旧集群应确认支持情况。[^feature-gates]
+`preStop` 的等待只是给流量切换留出时间，不会自动让应用处理完请求。镜像中的主进程仍需正确处理停止信号。示例注释中的 Sleep handler 在 Kubernetes 1.30 进入 Beta 并默认启用，1.34 成为稳定功能；旧集群应确认支持情况。
 
 ### 一次普通删除，会发生哪些事
 
@@ -323,13 +323,13 @@ spec:
 3. 钩子完成后，kubelet 请求容器运行时向容器主进程发送停止信号，通常为 `SIGTERM`；镜像或受支持的配置可以指定其他停止信号。应用应停止接收新任务并完成必要清理。
 4. 宽限期到期仍未退出的剩余进程，会被运行时强制终止，通常涉及 `SIGKILL`。本地终止完成后，kubelet 推进 API 对象的删除。
 
-与节点关闭过程并行，控制平面也在更新 EndpointSlice：终止中的端点通常标记为 `terminating`，并不再作为常规就绪后端。传播到代理和客户端需要时间，不应假定“端点已更新”和“所有流量都已停止”是同一瞬间。[^endpoints]
+与节点关闭过程并行，控制平面也在更新 EndpointSlice：终止中的端点通常标记为 `terminating`，并不再作为常规就绪后端。传播到代理和客户端需要时间，不应假定“端点已更新”和“所有流量都已停止”是同一瞬间。
 
-普通容器的停止顺序没有统一保证；原生 sidecar 有相应的终止顺序机制。上述行为通过 kubelet 和容器运行时完成，不能统一理解为 Kubernetes 在节点上执行 `docker stop`。[^lifecycle]
+普通容器的停止顺序没有统一保证；原生 sidecar 有相应的终止顺序机制。上述行为通过 kubelet 和容器运行时完成，不能统一理解为 Kubernetes 在节点上执行 `docker stop`。
 
 ### 宽限期包含 preStop，也包含应用自己的退出时间
 
-`spec.terminationGracePeriodSeconds` 默认是 30 秒。如果 `preStop` 在期限结束时仍未完成，kubelet 会请求一次很短的 2 秒扩展；这不是给应用额外保留的一整段正常退出时间。[^lifecycle]
+`spec.terminationGracePeriodSeconds` 默认是 30 秒。如果 `preStop` 在期限结束时仍未完成，kubelet 会请求一次很短的 2 秒扩展；这不是给应用额外保留的一整段正常退出时间。
 
 因此，在默认 30 秒宽限期下写一个 90 秒的 `preStop`，不会自动获得 90 秒等待。如果业务确实需要更长时间处理长连接，应设置合适的 `spec.terminationGracePeriodSeconds`，例如 90，并让“钩子耗时 + 应用退出耗时”落在预算内。若钩子本身就等待 90 秒，仅把总宽限期设成 90 秒仍不足以给后续清理留出空间。
 
@@ -340,7 +340,7 @@ spec:
 kubectl delete pod <pod-name> --force --grace-period=0
 ```
 
-`--force --grace-period=0` 会绕过正常优雅终止，并使 API 对象立即删除，但不保证节点上的进程已经停止。尤其在节点失联时，不能把“列表里看不到 Pod”当作业务进程已退出的证据。[^lifecycle]
+`--force --grace-period=0` 会绕过正常优雅终止，并使 API 对象立即删除，但不保证节点上的进程已经停止。尤其在节点失联时，不能把“列表里看不到 Pod”当作业务进程已退出的证据。
 
 ## 生产发布：把流量切换与应用生命周期对齐
 
@@ -358,7 +358,7 @@ kubectl delete pod <pod-name> --force --grace-period=0
 - 先向应用发出下线信号，再通过合适的 `preStop` 等待时间覆盖地址传播，且将整个过程计入终止宽限期。
 - 在架构允许时，使用 Kubernetes Service 统一服务发现，并验证 EndpointSlice、代理和调用方连接的更新过程。
 
-Kubernetes 的服务发现不能概括为“替代整个 Spring Cloud”。Spring Cloud 还包括配置管理、熔断、路由等能力，迁移应逐项判断功能与调用路径。[^springcloud]
+Kubernetes 的服务发现不能概括为“替代整个 Spring Cloud”。Spring Cloud 还包括配置管理、熔断、路由等能力，迁移应逐项判断功能与调用路径。
 
 ## 日常调试：让容器运行并找到故障线索
 
@@ -414,7 +414,7 @@ spec:
 
 ### Tini 解决 PID 1 问题，不负责业务自动拉起
 
-Tini 是轻量级容器 init，主要处理信号转发和僵尸子进程回收。它启动的主子进程退出后，Tini 也会退出，并沿用子进程的退出码；它不是让业务永久运行、失败后自动拉起的进程监督器。[^tini]
+Tini 是轻量级容器 init，主要处理信号转发和僵尸子进程回收。它启动的主子进程退出后，Tini 也会退出，并沿用子进程的退出码；它不是让业务永久运行、失败后自动拉起的进程监督器。
 
 下面的镜像包装方式示意如何让 Tini 作为入口。`your-main-process` 是占位名称，实际构建还要把应用及其依赖放进镜像，并选择与目标平台匹配的 Tini 二进制：
 
@@ -448,7 +448,7 @@ spec:
 
 ### 看日志时，先确定是哪个容器、哪一轮运行
 
-`kubectl logs` 默认读取容器标准输出、标准错误对应的日志。多容器 Pod 应明确选择容器，反复退出的容器则可以用 `--previous` 读取上一次已终止实例的日志。默认情况下，kubelet 保留一个已终止容器及其日志，不代表能够回看任意多轮历史；需要长期留存时，应依赖集中日志系统。[^logging]
+`kubectl logs` 默认读取容器标准输出、标准错误对应的日志。多容器 Pod 应明确选择容器，反复退出的容器则可以用 `--previous` 读取上一次已终止实例的日志。默认情况下，kubelet 保留一个已终止容器及其日志，不代表能够回看任意多轮历史；需要长期留存时，应依赖集中日志系统。
 
 ```bash
 kubectl logs <pod-name>
@@ -471,20 +471,20 @@ kubectl get events --field-selector involvedObject.name=podName
 
 Pod、初始化、资源配置与终止流程的机制说明，参考以下官方资料。
 
-[^pods]: [Kubernetes：Pods](https://kubernetes.io/docs/concepts/workloads/pods/)。
-[^process]: [Kubernetes：共享进程命名空间](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)。
-[^cri]: [containerd：CRI 插件架构](https://github.com/containerd/containerd/blob/main/docs/cri/architecture.md)。
-[^gitsync]: [Kubernetes git-sync 项目说明](https://github.com/kubernetes/git-sync)。
-[^api]: [Kubernetes Core API 类型定义](https://github.com/kubernetes/api/blob/master/core/v1/types.go)。
-[^command]: [Kubernetes：定义容器命令与参数](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/)。
-[^resources]: [Kubernetes：Pod 与容器的资源管理](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)。
-[^downward]: [Kubernetes：Downward API](https://kubernetes.io/docs/concepts/workloads/pods/downward-api/)。
-[^lifecycle]: [Kubernetes：Pod Lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)；[中文版](https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/pod-lifecycle/)。
-[^init]: [Kubernetes：Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)。
-[^volumes]: [Kubernetes：Volumes / emptyDir](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir)。
-[^endpoints]: [Kubernetes：EndpointSlice conditions](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions)。
-[^hooks]: [Kubernetes：容器生命周期钩子](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/)。
-[^feature-gates]: [Kubernetes：Feature Gates，PodLifecycleSleepAction](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/)。
-[^springcloud]: [Spring Cloud：功能与项目说明](https://spring.io/projects/spring-cloud/)。
-[^tini]: [Tini：使用方式与退出行为](https://github.com/krallin/tini)。
-[^logging]: [Kubernetes：日志架构](https://kubernetes.io/docs/concepts/cluster-administration/logging/)。
+1. [Kubernetes：Pods](https://kubernetes.io/docs/concepts/workloads/pods/)。
+2. [Kubernetes：共享进程命名空间](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)。
+3. [containerd：CRI 插件架构](https://github.com/containerd/containerd/blob/main/docs/cri/architecture.md)。
+4. [Kubernetes git-sync 项目说明](https://github.com/kubernetes/git-sync)。
+5. [Kubernetes Core API 类型定义](https://github.com/kubernetes/api/blob/master/core/v1/types.go)。
+6. [Kubernetes：定义容器命令与参数](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/)。
+7. [Kubernetes：Pod 与容器的资源管理](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)。
+8. [Kubernetes：Downward API](https://kubernetes.io/docs/concepts/workloads/pods/downward-api/)。
+9. [Kubernetes：Pod Lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)；[中文版](https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/pod-lifecycle/)。
+10. [Kubernetes：Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)。
+11. [Kubernetes：Volumes / emptyDir](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir)。
+12. [Kubernetes：EndpointSlice conditions](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions)。
+13. [Kubernetes：容器生命周期钩子](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/)。
+14. [Kubernetes：Feature Gates，PodLifecycleSleepAction](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/)。
+15. [Spring Cloud：功能与项目说明](https://spring.io/projects/spring-cloud/)。
+16. [Tini：使用方式与退出行为](https://github.com/krallin/tini)。
+17. [Kubernetes：日志架构](https://kubernetes.io/docs/concepts/cluster-administration/logging/)。
