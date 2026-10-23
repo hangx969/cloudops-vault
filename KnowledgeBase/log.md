@@ -2378,3 +2378,9 @@ date: 2026-04-17
 - 补充 [[KnowledgeBase/analysis/WeKnora与CloudOps-Vault适配评估|适配评估]] 并更新 [[KnowledgeBase/INDEX]]；区分云端 API、本机 Ollama、额外 CLI 适配和客户端经 MCP 查询知识库四种路线，建议优先验证现有 Claude Code/Codex 负责回答、本机 Embedding 支撑 WeKnora 检索。
 - 核对 WeKnora v0.8.3 模型 provider、MCP 工具与摘要处理开关，以及 Claude Code 程序调用/Agent SDK 和 OpenAI Sign in with ChatGPT 官方预览方案；明确 MCP ask 仍需服务端生成模型，OAuth 套餐授权不是复用本机 CLI 登录即可完成的集成。
 - 本机 CLI 版本和帮助检查未发起推理或读取令牌；未检查账户套餐、部署服务或修改 MCP/模型配置。正文与索引经 Obsidian CLI 全文回读、YAML、围栏、内部链接与差异空白检查；日志仅追加。未进行模型联通、导入或性能测试。
+## [2026-10-23] restructure | Pod 公众号文章导读、章节与技术核对
+
+- 使用 humanizer-zh 完善 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门文章]] 的引言与背景，按容器协作、常用字段、启动与状态、健康探针、优雅终止、发布、调试和故障案例组织章节，统一有序步骤、并列列表与表格。
+- 保留原有 31 组代码或命令示例的用途、5 张图片的原始链接、外部链接目标与“探针失效真实案例”锚点；案例配置数值、Go 示例和时间线时刻保持一致，补充最小 Pod 清单与创建观察命令。
+- 核对 Kubernetes、containerd、Spring、Tini 与 Prometheus 官方资料，校正 PID 共享、容器与 Pod 重启、资源 requests、探针时序、终止宽限期及 Tini 退出行为；修复 YAML 缩进、valueFrom、Shell 命令与 Histogram 查询，并保留实验和生产配置的适用边界。
+- Obsidian MCP 全文回读一致；24 份 YAML、7 个 Shell 代码块、frontmatter、围栏、脚注及现有章节引用检查通过。当前桌面无可连接的 Obsidian 窗口，未完成阅读视图视觉检查；未执行示例部署、容器构建或集群故障演练。事故来源仍只有原有标题，未独立核实其事件数字。
