@@ -6,7 +6,7 @@ tags:
 aliases:
   - 知识库首页
   - KB Index
-date: 2026-10-22
+date: 2026-10-23
 ---
 
 # 📚 Learning Notes 知识库
@@ -387,7 +387,7 @@ date: 2026-10-22
 
 - [[KnowledgeBase/analysis/title-review-2026-10-04|文章标题审阅]] — 49 条网页标题与关联引用已按确认方案更新并验收，26 条离线建议未执行；保留原题对照与执行记录。
 
-- [[KnowledgeBase/analysis/WeKnora与CloudOps-Vault适配评估|WeKnora 与 CloudOps Vault 适配评估]] — 基于 v0.8.3 评估检索问答、Wiki 与同步方案，并核实本机 M4 Pro、Colima 配额及 ARM64 镜像兼容性。
+- [[KnowledgeBase/analysis/WeKnora与CloudOps-Vault适配评估|WeKnora 与 CloudOps Vault 适配评估]] — 基于 v0.8.3 评估检索问答与同步、本机部署条件，以及 Claude Code/Codex、MCP、Ollama 与模型 API 的接入边界。
 
 ---
 

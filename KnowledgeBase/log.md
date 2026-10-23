@@ -2371,3 +2371,10 @@ date: 2026-04-17
 - 只读核实 M4 Pro 14 核、48 GiB 内存、约 553 GiB 宿主机可用磁盘，以及 Colima/Docker、Compose、数据盘和常用端口；受限环境下的 Colima Broken 结果经只读复核纠正为正常运行，当前虚拟机配额为 2 核 / 2 GiB。
 - 从 Registry manifest 核实 WeKnora 三个 v0.8.3 镜像、ParadeDB 和 Redis 均支持 ARM64；确认不带 v 的 0.8.3 标签当次返回 404。建议复用 Colima，先调整到 4 核 / 8 GiB，再以标准 Compose 和远程模型 API 试用。
 - 补充 [[KnowledgeBase/analysis/WeKnora与CloudOps-Vault适配评估|适配评估]] 并更新 [[KnowledgeBase/INDEX]]。正文经 Obsidian CLI 回读，检查 frontmatter、内部链接、围栏与差异空白；日志保持追加。未安装、启动、调整服务配置或运行模型，也未进行性能压测。
+
+
+## [2026-10-23] query | WeKnora 模型与本机 CLI 接入边界
+
+- 补充 [[KnowledgeBase/analysis/WeKnora与CloudOps-Vault适配评估|适配评估]] 并更新 [[KnowledgeBase/INDEX]]；区分云端 API、本机 Ollama、额外 CLI 适配和客户端经 MCP 查询知识库四种路线，建议优先验证现有 Claude Code/Codex 负责回答、本机 Embedding 支撑 WeKnora 检索。
+- 核对 WeKnora v0.8.3 模型 provider、MCP 工具与摘要处理开关，以及 Claude Code 程序调用/Agent SDK 和 OpenAI Sign in with ChatGPT 官方预览方案；明确 MCP ask 仍需服务端生成模型，OAuth 套餐授权不是复用本机 CLI 登录即可完成的集成。
+- 本机 CLI 版本和帮助检查未发起推理或读取令牌；未检查账户套餐、部署服务或修改 MCP/模型配置。正文与索引经 Obsidian CLI 全文回读、YAML、围栏、内部链接与差异空白检查；日志仅追加。未进行模型联通、导入或性能测试。

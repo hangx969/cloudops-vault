@@ -4,7 +4,7 @@ tags:
   - knowledgebase/analysis
   - ai/rag
   - ai/knowledge-management
-date: 2026-10-22
+date: 2026-10-23
 sources:
   - "[[AI/Obsidian/obsidian-claude-code-AI知识库完整指南]]"
   - "[[AI/Obsidian/github-pages-quartz]]"
@@ -176,6 +176,42 @@ WeKnora 的回答引用能定位到导入文档或分块。要回到本仓库的
 Lite 仍是较少后台组件的备选，但标准版已有匹配的 ARM64 镜像和可复用的 Docker 环境。对这台机器，标准版更便于直接验证完整文档处理能力；无需因硬件担忧退到 Lite。
 
 本机适合自己使用、学习和验证。检查时运行在电池供电下，电池与接电配置均存在系统睡眠设置。笔记本合盖、休眠、关机或切换网络会影响服务可用性；若需要多人长期访问或定时后台同步，应将稳定运行的服务放到持续在线的主机。本次未调整电源设置。
+
+## 模型接入与本机 CLI 的边界（2026-10-23）
+
+WeKnora 需要可调用的模型服务，不一定需要付费云 API Key。v0.8.3 的模型设置支持 API 与 Ollama；本次核对的模型文档、厂商注册与 OpenAI/Anthropic provider 中，没有直接把本机 Claude Code 或 Codex CLI 作为模型后端的接入项。安装并登录 CLI，不会自动为 WeKnora 提供模型接口。[模型管理](https://github.com/Tencent/WeKnora/blob/v0.8.3/website-docs/03-features/06-models.md)、[OpenAI provider](https://github.com/Tencent/WeKnora/blob/v0.8.3/internal/models/providers/openai.go)、[Anthropic provider](https://github.com/Tencent/WeKnora/blob/v0.8.3/internal/models/providers/anthropic.go)
+
+| 方式 | 是否原生支持 | 登录或凭据要求 |
+| --- | --- | --- |
+| WeKnora 调用云端模型 API | 支持相应厂商与兼容接口 | 按服务商配置 API Key 等凭据 |
+| WeKnora 调用本机 Ollama | 支持 | 本机模型服务不需要购买云端 API Key；模型推理由本机承担 |
+| WeKnora 调用已登录的 Claude Code / Codex CLI | 未见直接接入项 | 需额外适配服务，不能直接把本机登录状态当作通用 API Key |
+| Claude Code / Codex 通过 MCP 查询 WeKnora | WeKnora 提供内置 MCP Server | 客户端继续使用其自身模型登录；另配置 WeKnora 端点令牌 |
+
+对于本仓库，若目标是继续使用现有客户端的模型和额度，建议先评估以下方向：
+
+```mermaid
+flowchart LR
+    U["在 Claude Code / Codex 中提问"] --> C["客户端调用 MCP 检索工具"]
+    C --> W["WeKnora 搜索与读取笔记"]
+    W --> R["返回原文片段与来源"]
+    R --> A["客户端模型生成答案"]
+    E["本机 Ollama：Embedding"] --> W
+```
+
+MCP 端点先开放 `search_knowledge`、`read_document` 等检索阅读工具。`ask` 会在 WeKnora 服务端运行问答或 Agent，仍需它自己的生成模型，因此不用于这条“客户端负责回答”的路线。语义或混合检索仍需要 Embedding，可由本机 Ollama 提供；CLI 的聊天能力不能代替向量模型。WeKnora 端点令牌仅用于访问知识库，不是付费模型 Key。[MCP Server 与工具说明](https://github.com/Tencent/WeKnora/blob/v0.8.3/website-docs/03-features/08-mcp.md)
+
+文档自动摘要、自动标签、AI 描述与 Wiki 等功能还可能调用生成模型。初期可关闭相应处理，其中导入接口支持 `process_config.summary_enabled=false`；需要这些功能或直接在 WeKnora 网页中问答时，再配置它自己的聊天模型。该方案尚未部署验证初始化与导入全过程。[知识 API 与处理开关](https://github.com/Tencent/WeKnora/blob/v0.8.3/website-docs/04-api/02-api-knowledge.md)
+
+### CLI 适配与 OAuth 的区别
+
+本机已确认安装 Claude Code 2.1.296 与 Codex CLI 0.163.0。它们分别提供 `claude -p`、`codex exec` 等非交互入口，因此可以研究由适配服务调用 CLI，再向 WeKnora 提供兼容接口。但这需要处理协议、流式输出、工具调用、并发、超时与凭据生命周期，属于额外开发，当前没有验证可用性。
+
+Claude Code 官方支持程序调用；不过当前 `--bare` 模式不读取订阅 OAuth 登录，需要 API Key 或其他受支持的平台凭据。Agent SDK 文档也明确，第三方产品未经批准不能向用户提供 claude.ai 登录或其额度。不能据此承诺把已有订阅透明转换成 WeKnora 的通用推理后端。[Claude Code 程序调用](https://code.claude.com/docs/en/headless)、[Agent SDK 身份验证说明](https://code.claude.com/docs/en/agent-sdk/overview)
+
+OpenAI 当前提供 **Sign in with ChatGPT 的套餐使用预览方案**：开源、本地应用可以通过用户明确授权，为符合条件的 Responses API 请求使用 ChatGPT 套餐，也有 Codex app-server 的官方接入说明。这说明“第三方应用必须购买 API Key”并非普遍成立；但应用必须实现自己的 OAuth 注册、授权、令牌续期以及预览接口约束。v0.8.3 已核对的模型接入未提供这套流程，不能通过直接复用本机 Codex 登录就视为完成集成，也不能推断此授权覆盖 Embedding。[官方方案](https://developers.openai.com/siwc/token-sharing-open-source)、[app-server 接入](https://developers.openai.com/siwc/token-sharing-open-source/codex-app-server)、[预览限制](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)
+
+此次仅核对版本、CLI 帮助、官方资料及 WeKnora 源码；没有读取登录令牌、检查账户套餐、发起模型推理或配置 MCP。推荐先测试“现有客户端 + WeKnora 检索 + 本机 Embedding”，再决定是否值得开发 CLI 或 OAuth 适配。
 
 ## 本次验证范围
 
