@@ -2384,3 +2384,10 @@ date: 2026-04-17
 - 保留原有 31 组代码或命令示例的用途、5 张图片的原始链接、外部链接目标与“探针失效真实案例”锚点；案例配置数值、Go 示例和时间线时刻保持一致，补充最小 Pod 清单与创建观察命令。
 - 核对 Kubernetes、containerd、Spring、Tini 与 Prometheus 官方资料，校正 PID 共享、容器与 Pod 重启、资源 requests、探针时序、终止宽限期及 Tini 退出行为；修复 YAML 缩进、valueFrom、Shell 命令与 Histogram 查询，并保留实验和生产配置的适用边界。
 - Obsidian MCP 全文回读一致；24 份 YAML、7 个 Shell 代码块、frontmatter、围栏、脚注及现有章节引用检查通过。当前桌面无可连接的 Obsidian 窗口，未完成阅读视图视觉检查；未执行示例部署、容器构建或集群故障演练。事故来源仍只有原有标题，未独立核实其事件数字。
+
+## [2026-10-23] restructure | 健康探针与重启风暴案例独立成文
+
+- 新建 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|Kubernetes 健康探针：从配置原理到重启风暴排查]]，使用 humanizer-zh 补充独立导读，按探针分工、参数、单项与组合示例、发布和自定义检查边界、故障复盘组织全文；复核 Kubernetes 与 Spring Boot 官方文档。
+- 将完整探针配置与失效案例从 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 迁出；新文保留 19 个代码块，主文保留 15 个，原有 34 个代码块各出现一次。案例正文、配置、时间线与 5 张原图链接保持完整；主文保留简短介绍、双向跳转和历史案例锚点。
+- 扩展既有探针来源摘要，更新基础资源摘要、Kubernetes 实体、高可用概念、专题地图、知识库与 Docker-Kubernetes 索引、根目录学习入口及盘点条目；复核基础资源 26 篇、Docker-Kubernetes 174 篇的口径（不含 index.md）。
+- 11 个正文与导航文件经 Obsidian MCP 完整回读，与成稿和工作区一致；24 份 YAML、7 个 Shell 代码块、脚注和 24 处内部链接检查通过。历史日志仅追加；未执行示例部署或故障演练，阅读视图仍未视觉核验；案例来源保持原有归因，未独立核实事件数字。

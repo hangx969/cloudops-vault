@@ -1,13 +1,13 @@
 # Docker-Kubernetes/ — 容器与编排
 
-168 篇文档，覆盖 Docker 基础到 K8s 生产级全栈。
+174 篇文档，覆盖 Docker 基础到 K8s 生产级全栈。
 
 ## 子目录结构
 
 | 子目录 | 篇数 | 核心内容 |
 |--------|------|----------|
 | docker/ | 13 | Docker 基础、镜像离线分发、GPU 配置与服务部署实战 |
-| k8s-basic-resources/ | 25 | Pod/Deployment/Service/Ingress/Storage/RBAC/CRD |
+| k8s-basic-resources/ | 26 | Pod/健康探针/Deployment/Service/Ingress/Storage/RBAC/CRD |
 | k8s-configMap-secret/ | 3 | ConfigMap/Secret 基础、跨 Namespace 同步与变更重载 |
 | k8s-installation-management/ | 16 | v1.20→v1.35 安装演进、企业高可用、etcd HA |
 | k8s-monitoring-logging/ | 20 | Prometheus 全栈、EFK/Loki 日志、Jaeger/SkyWalking 链路追踪 |
@@ -27,6 +27,8 @@
 
 - [[Docker-Kubernetes/docker/docker基础]] — Docker 入门
 - [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]] — K8s 架构总览
+- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门]] — 容器协作、配置、生命周期与优雅退出
+- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|健康探针]] — Startup/Readiness/Liveness 配置、参数与重启风暴排查
 - [[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret]] — ConfigMap 与 Secret 配置管理
 - [[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理]] — 多集群 kubeconfig、kubectx/kubens 与生产防误操作
 - [[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤]] — 最新版安装
@@ -37,7 +39,7 @@
 
 ## 知识库导航
 
-→ [[KnowledgeBase/maps/kubernetes-map]] — K8s 专题地图（147 篇导航）
+→ [[KnowledgeBase/maps/kubernetes-map]] — K8s 专题地图
 
 
 ---

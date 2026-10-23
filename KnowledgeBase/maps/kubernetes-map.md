@@ -6,7 +6,7 @@ tags:
   - "[[开源存储Longhorn，K8s的轻量块存储]]"
 aliases:
   - K8s Map
-date: 2026-10-20
+date: 2026-10-23
 sources:
   - "[[Middlewares/Kafka]]"
   - "[[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]"
@@ -22,6 +22,7 @@ sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress]]"
@@ -110,7 +111,7 @@ sources:
 # ☸️ Kubernetes 专题地图
 
 > [!info] 专题范围
-> 覆盖 Docker-Kubernetes 目录下 ==173 篇文档==（不含目录 index.md，统计日期 2026-10-20），从容器基础到企业级 K8s 全生命周期管理。
+> 覆盖 Docker-Kubernetes 目录下 ==174 篇文档==（不含目录 index.md，统计日期 2026-10-23），从容器基础到企业级 K8s 全生命周期管理。
 
 ---
 
@@ -139,12 +140,14 @@ sources:
 ### 第二阶段：K8s 核心资源
 3. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] — 架构总览
 4. [[k8s基础-yaml-apply|k8s基础-yaml-apply]] — YAML 编写、CSA/SSA 合并机制与字段所有权
-5. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|k8s基础-pod]] — Pod、Startup/Liveness/Readiness 探针与重启风暴复盘
+5. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门]] — 容器协作、常用字段、生命周期与优雅退出
 6. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|k8s基础-deployment]] — Deployment
 7. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|k8s基础-Service]] — Service
 8. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress|k8s基础-ingress]] — Ingress（2399 行深度文章）
 9. [[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret|k8s基础-configMap-Secret]] — 配置管理
 10. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|k8s基础-storage]] — 存储
+
+探针专题：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|Kubernetes 健康探针]] — 学习 Pod 与 Service 后，继续阅读探针分工、参数与完整示例，再结合重启风暴案例排查误杀。
 
 补充阅读：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet Recreate 更新策略（1.37 Alpha）]] — 启用条件、整体重建与分区灰度的区别、PVC/PV 生命周期及原文 11 个案例的核验说明。
 
@@ -174,11 +177,12 @@ sources:
 
 ## 📂 完整内容目录
 
-### 基础资源（25 篇）
+### 基础资源（26 篇）
 | 主题 | 文章 |
 |------|------|
 | 架构 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] |
-| Pod | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|k8s基础-pod（含探针失效案例）]]、[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力|K8s基础-pod调度-亲和力]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral|k8s基础-临时容器ephemeral]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] |
+| Pod | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门]]、[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力|K8s基础-pod调度-亲和力]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral|k8s基础-临时容器ephemeral]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] |
+| 健康探针 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|健康探针配置与重启风暴排查]] |
 | 工作负载 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|k8s基础-deployment]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-daemonset|k8s基础-daemonset]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset|k8s基础-statefulset]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob|k8s基础-job-cronjob]]、[[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战|PodDisruptionBudget 实战]] |
 | 网络 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|k8s基础-Service]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress|k8s基础-ingress]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico|k8s基础-Calico]] |
 | 存储 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|k8s基础-storage]] |

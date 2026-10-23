@@ -3,7 +3,7 @@ title: K8s基础资源 来源批量摘要
 tags:
   - knowledgebase/source
   - docker-kubernetes/k8s-basic-resources
-date: 2026-10-11
+date: 2026-10-23
 sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理]]"
@@ -36,7 +36,7 @@ aliases:
 
 ## 元信息
 - **原始目录**：`Docker-Kubernetes/k8s-basic-resources/`
-- **文档数量**：本批次收录 22 篇（`k8s-basic-resources/` 现有 25 篇；另 1 篇 ConfigMap/Secret 已移至 `k8s-configMap-secret/`）
+- **文档数量**：本批次收录 22 篇（`k8s-basic-resources/` 现有 26 篇；另 1 篇 ConfigMap/Secret 已移至 `k8s-configMap-secret/`）
 - **领域**：Docker-Kubernetes
 - **摄入日期**：2026-04-17（新增文档摄入日期：2026-07-18）
 
@@ -45,7 +45,7 @@ aliases:
 
 ## 关键知识点
 1. API Server 是所有组件通信的中枢，也是唯一与 etcd 交互的组件；请求链路依次为认证 → 授权（RBAC）→ 变更准入 → 校验 → 验证准入 → etcd 持久化 → Watch 通知。
-2. Pause（infra）容器负责 Pod 的网络和存储共享，Pod 内容器共享 Network Namespace、通过 localhost 互访；`containerPort` 仅为声明性字段，requests 即使未使用也会占用节点资源。
+2. 常见 Linux 运行时通过 Pod sandbox 维持共享命名空间；容器共享网络，存储共享需显式挂载同一个 Volume。`containerPort` 不会改变应用监听，requests 参与调度记账与资源保障，不等于资源已被程序实际使用。
 3. Liveness 只应检查重启能够修复的进程内部故障并保守重启，外部依赖状态交由 Readiness 谨慎处理（先摘流），慢启动应用使用 Startup Probe 隔离启动阶段。
 4. Deployment 仅在 `spec.template` 变化时生成新 RS，滚动更新节奏由 maxSurge 和 maxUnavailable（数字或百分比）控制。
 5. StatefulSet 基于 Headless Service 为每个 Pod 分配固定 DNS（`pod-name.svc-name.ns.svc.cluster.local`），并通过 volumeClaimTemplates 为每个 Pod 自动创建独立 PVC。
@@ -64,15 +64,14 @@ aliases:
   - K8s 相比纯 Docker 的优势：弹性伸缩、服务发现、自愈、滚动更新、声明式管理
 
 ### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|K8s基础-Pod]]
-- 核心内容：Pod 作为 K8s 最小部署单元的核心概念，包括 Pause 容器、多容器协作、字段配置和健康探针；新增一次 Liveness/Readiness 配置不当引发 300+ Pod 连锁重启的生产复盘。
+- 核心内容：Pod 作为最小可部署单元的容器协作边界，常用字段、调度与初始化、phase 与状态展示、钩子与优雅退出，以及日志和主进程排障。
 - 关键知识点：
-  - Pause（infra）容器负责网络和存储共享，是 Pod 内所有容器的根
-  - Pod 内容器共享 Network Namespace，通过 localhost 互访
-  - `containerPort` 仅为声明性字段，不决定实际暴露端口
-  - requests 资源直接划分给 Pod，即使未使用也会占用节点资源
-  - Liveness 只应检查重启能够修复的进程内部故障，外部依赖状态应由 Readiness 谨慎处理
-  - Readiness 应先摘流，Liveness 应保守重启；慢启动应用使用 Startup Probe 隔离启动阶段
-  - PDB 和 HPA 不能直接阻止 Liveness 误杀，探针变更仍需灰度、监控和快速回滚
+  - 容器共享 Pod 网络；PID 命名空间默认不共享，文件共享需显式挂载同一 Volume
+  - 容器重启通常仍在原 Pod 内，替代 Pod 的 UID 不同
+  - `containerPort` 不改变应用监听；requests 用于调度与资源保障，limits 约束运行时使用
+  - 普通 Init Container 依次成功结束后，应用容器才启动
+  - `PostStart` 与入口程序没有先后保证；`preStop` 与应用退出共用终止宽限期
+  - 探针配置与故障复盘见 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|健康探针专文]]，来源摘要见 [[KnowledgeBase/sources/k8s-probe-restart-storm-summary]]
 
 ### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|K8s基础-Deployment]]
 - 核心内容：Deployment 控制器的概念与工作原理，包括 ReplicaSet 管理、滚动更新策略（maxSurge/maxUnavailable）、金丝雀发布与回滚机制。

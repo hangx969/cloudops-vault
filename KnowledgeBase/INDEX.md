@@ -181,7 +181,7 @@ date: 2026-10-23
 | [[KnowledgeBase/sources/k8s-basic-resources-batch-summary\|K8s 基础资源]] | 22 | Pod/Deployment/Service/Ingress/ConfigMap/Storage/RBAC/CRD/Operator/API Server 深度剖析/Finalizer；StatefulSet Recreate Alpha 与 PVC/PV 生命周期 |
 | [[KnowledgeBase/sources/kubectl-server-side-apply-summary|kubectl Server-side Apply]] | 1 | CSA 三路合并、SSA 字段所有权、CRD schema 与 Helm 4 迁移边界 |
 | [[KnowledgeBase/sources/kubectx-kubens-multi-cluster-summary|kubectx 与 kubens 多集群切换]] | 1 | context/namespace 快速切换、fzf、kube-ps1、多 kubeconfig 合并及生产防误操作 |
-| [[KnowledgeBase/sources/k8s-probe-restart-storm-summary|K8s 健康探针重启风暴]] | 1 | Liveness 误判外部依赖抖动引发 300+ Pod 连锁重启，覆盖探针分工、时间窗口、监控和治理 |
+| [[KnowledgeBase/sources/k8s-probe-restart-storm-summary|K8s 健康探针配置与复盘]] | 1 | 独立文章：三类探针、四种方式、参数与 YAML；重启风暴案例、端点设计、监控和治理 |
 | [K8s 标签与选择器](sources/k8s-labels-selectors-summary.md) | 1 | 5 条 SRE 铁律（selector 匹配/节点调度/成本归因/版本陷阱/单值原则）、4 个翻车案例、`app.kubernetes.io/*` 命名规范 |
 | [K8s 容器设计模式](sources/k8s-container-design-patterns-summary.md) | 1 | Sidecar/Init Container/Ambassador/Adapter 四大模式：核心理念、场景、完整 YAML、选型对比 |
 | [K8s PDB 实战](sources/k8s-pdb-summary.md) | 1 | PodDisruptionBudget 自愿中断保护、四大配置陷阱、与 drain/滚动更新/HPA 的配合 |
@@ -365,7 +365,7 @@ date: 2026-10-23
 |------|------|
 | [领域地图](maps/domain-map.md) | 按技术领域导航全库 |
 | [工具地图](maps/tool-map.md) | 按工具/平台聚合知识 |
-| [Kubernetes 专题](maps/kubernetes-map.md) | K8s 生态知识导航（Docker-Kubernetes 共 173 篇） |
+| [Kubernetes 专题](maps/kubernetes-map.md) | K8s 生态知识导航（Docker-Kubernetes 共 174 篇） |
 | [AI 工作流专题](maps/ai-workflow-map.md) | Claude Code + OpenClaw + AI 辅助运维 |
 | [Claude Code & OpenClaw 专题](maps/claude-code-openclaw-map.md) | AI 编程与开源 AI 工具 |
 | [云平台专题](maps/cloud-platform-map.md) | Aliyun + Azure 对标 |
@@ -409,7 +409,7 @@ date: 2026-10-23
 
 | 领域 | 篇数 | 成熟度 | 入口 |
 |------|------|:------:|------|
-| Docker-Kubernetes | 173 | 🟢 | [kubernetes-map](maps/kubernetes-map.md) |
+| Docker-Kubernetes | 174 | 🟢 | [kubernetes-map](maps/kubernetes-map.md) |
 | Python | 28 | 🟢 | [python-devops-map](maps/python-devops-map.md) |
 | Linux-Shell | 11 | 🟡 | [linux-ops-map](maps/linux-ops-map.md) |
 | Azure | 17 | 🟢 | [cloud-platform-map](maps/cloud-platform-map.md) |

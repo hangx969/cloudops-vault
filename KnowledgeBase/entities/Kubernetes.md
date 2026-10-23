@@ -3,7 +3,7 @@ title: Kubernetes
 tags:
   - knowledgebase/entity
   - docker-kubernetes
-date: 2026-10-20
+date: 2026-10-23
 sources:
   - "[[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]"
   - "[[KnowledgeBase/sources/k8s-node-swap-summary]]"
@@ -38,7 +38,7 @@ aliases:
 
 ## 简介
 
-Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年开源，2018 年从 CNCF 毕业。本仓库 Docker-Kubernetes 目录共 173 篇，其中 Kubernetes 相关 **159 篇**（其余 14 篇为 `docker/`），覆盖了 K8s 全生命周期，包括基础资源、集群安装与管理、监控日志、CI/CD、网络与服务网格、安全认证、扩缩容、存储、数据库中间件、UI 工具、备份恢复、GPU 配置、认证考试等主题。全部源文档的详细摘要见上方 `sources` 中列出的批量与增量摘要页面。下文各小节篇数按对应子目录统计（原统计日期 2026-09-29；总数与 CI/CD 增量于 2026-10-04 按现有文件复核；总数、安装管理与网络目录于 2026-10-20 复核），杂项专题含 helm、配置管理、镜像管理、CKA/CKS、KubeBlocks、容器平台、SpringCloud、GPU 子目录及根目录简历指南。
+Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年开源，2018 年从 CNCF 毕业。本仓库 Docker-Kubernetes 目录共 174 篇，其中 Kubernetes 相关 **160 篇**（其余 14 篇为 `docker/`），覆盖了 K8s 全生命周期，包括基础资源、集群安装与管理、监控日志、CI/CD、网络与服务网格、安全认证、扩缩容、存储、数据库中间件、UI 工具、备份恢复、GPU 配置、认证考试等主题。全部源文档的详细摘要见上方 `sources` 中列出的批量与增量摘要页面。下文各小节篇数按对应子目录统计（原统计日期 2026-09-29；总数与 CI/CD 增量于 2026-10-04 按现有文件复核；总数、安装管理与网络目录于 2026-10-20 复核；2026-10-23 新增独立健康探针文章后复核总数与基础资源目录），杂项专题含 helm、配置管理、镜像管理、CKA/CKS、KubeBlocks、容器平台、SpringCloud、GPU 子目录及根目录简历指南。
 
 ## 核心功能：核心架构知识
 
@@ -53,10 +53,10 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 ### 声明式资源模型
 - 所有资源通过 YAML 定义期望状态，由控制器自动实现：apiVersion、kind、metadata、spec、status
 - **Server-side Apply**：API Server 通过 `managedFields` 记录字段所有权；相比依赖 last-applied 三路合并的 Client-side Apply，它会把 kubectl、Helm、Argo CD、Operator 等多管理器之间的字段争用显式报告为冲突，详见 [[k8s基础-yaml-apply#kubectl apply：Client-side Apply 与 Server-side Apply]]
-- **Pause 容器**：Pod 内所有容器的网络和存储共享根，容器间通过 localhost 互访
+- **Pause 容器**：常见 Linux 运行时借助 Pod sandbox 维持共享命名空间，容器可通过 localhost 互访；存储共享依赖显式挂载同一个 Volume
 - **Operator = CRD + Controller**：无需修改 K8s 源码即可扩展 API，适合复杂有状态应用管理
 - **PodDisruptionBudget（PDB）**：自愿中断（drain/滚动更新/升级）时的可用性保护，通过 `minAvailable` 或 `maxUnavailable` 约束同时不可用的 Pod 数量，详见 [[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战]]
-- **健康探针分工**：Startup 隔离启动阶段，Readiness 控制摘流，Liveness 仅处理重启能够修复的进程内部故障；外部依赖抖动不应直接触发容器重启，详见 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod#探针失效真实案例]]
+- **健康探针分工**：Startup 隔离启动阶段，Readiness 控制摘流，Liveness 仅处理重启能够修复的进程内部故障；外部依赖抖动不应直接触发容器重启，详见 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针]]
 - **多集群上下文管理**：context 绑定 cluster、user 和 namespace；kubectx/kubens 简化切换，kube-ps1 暴露当前位置，但真正的生产权限边界仍是独立凭证和 RBAC，详见 [[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理#kubectx 与 kubens：多集群快速切换]]
 
 ### 网络体系三层协同
@@ -87,7 +87,7 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 
 ## 在本仓库中的覆盖：知识覆盖地图
 
-### 基础资源（25 篇）
+### 基础资源（26 篇）
 详见 [[KnowledgeBase/sources/k8s-basic-resources-batch-summary|k8s-basic-resources 批量摘要]]
 
 覆盖 Pod、Deployment（滚动更新 maxSurge/maxUnavailable）、StatefulSet（Headless Service + volumeClaimTemplates）、DaemonSet、Job/CronJob、Service、Ingress、ConfigMap/Secret、Storage（EmptyDir/HostPath/NFS/PV/PVC）、Namespace 资源分配（ResourceQuota/LimitRange）、Calico 网络、kubeadm 集群搭建、容器运行时 containerd、CRD/Operator、认证授权 RBAC、临时容器 Ephemeral、YAML 编写规范、Python K8s API 编程、Finalizer 资源删除生命周期机制。

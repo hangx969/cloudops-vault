@@ -72,6 +72,8 @@
 4. [Service](./Docker-Kubernetes/k8s-basic-resources/k8s基础-Service.md) → 理解服务发现与应用访问。
 5. [Helm v3 安装与使用](./Docker-Kubernetes/helm/helmv3-安装与使用.md) → 用 Chart 安装、升级和管理应用。
 
+专题阅读：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|Kubernetes 健康探针]] → 在理解 Pod 与 Service 后，学习启动、就绪、存活检查与重启风暴排查。
+
 ### GitOps 交付与可观测性
 
 1. [Kustomize 入门：Base 与 Overlay](./Docker-Kubernetes/k8s-CICD/Kustomize/Kustomize入门-Base与Overlay多环境配置.md) → 组织多环境配置，管理共用基础与环境差异。
