@@ -466,25 +466,3 @@ kubectl get events --field-selector involvedObject.name=podName
 ```
 
 遇到问题，可以先沿着“Events → 容器状态与退出原因 → 当前及上一轮日志 → 实际生效配置”排查。如果重启与健康检查有关，还要把探针事件和重启前的依赖延迟放在一起，判断重启是否真的能够修复故障。
-
-## 参考文档
-
-Pod、初始化、资源配置与终止流程的机制说明，参考以下官方资料。
-
-1. [Kubernetes：Pods](https://kubernetes.io/docs/concepts/workloads/pods/)。
-2. [Kubernetes：共享进程命名空间](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)。
-3. [containerd：CRI 插件架构](https://github.com/containerd/containerd/blob/main/docs/cri/architecture.md)。
-4. [Kubernetes git-sync 项目说明](https://github.com/kubernetes/git-sync)。
-5. [Kubernetes Core API 类型定义](https://github.com/kubernetes/api/blob/master/core/v1/types.go)。
-6. [Kubernetes：定义容器命令与参数](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/)。
-7. [Kubernetes：Pod 与容器的资源管理](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)。
-8. [Kubernetes：Downward API](https://kubernetes.io/docs/concepts/workloads/pods/downward-api/)。
-9. [Kubernetes：Pod Lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)；[中文版](https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/pod-lifecycle/)。
-10. [Kubernetes：Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)。
-11. [Kubernetes：Volumes / emptyDir](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir)。
-12. [Kubernetes：EndpointSlice conditions](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions)。
-13. [Kubernetes：容器生命周期钩子](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/)。
-14. [Kubernetes：Feature Gates，PodLifecycleSleepAction](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/)。
-15. [Spring Cloud：功能与项目说明](https://spring.io/projects/spring-cloud/)。
-16. [Tini：使用方式与退出行为](https://github.com/krallin/tini)。
-17. [Kubernetes：日志架构](https://kubernetes.io/docs/concepts/cluster-administration/logging/)。

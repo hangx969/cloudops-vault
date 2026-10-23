@@ -2406,3 +2406,8 @@ date: 2026-04-17
 
 - 移除 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 和 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]] 正文中的 38 处脚注引用标记，将文末参考文档分别改为 1–17、1–7 的普通有序列表；保留全部参考链接。
 - 两篇文章经 Obsidian MCP 全文回读一致，代码块、图片、URL 和 frontmatter 保持不变，参考文档编号连续，未留下脚注标记。
+
+## [2026-10-23] update | 移除 Pod 与健康探针文章的参考文档栏
+
+- 用户反馈参考文档链接在电脑端与手机端均未正常显示；当前无法连接原生 Obsidian 阅读视图确认原因，按用户授权的备选方案，删除 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 与 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]] 文末“参考文档”栏目及其中的补充阅读链接。
+- 两篇文章经 Obsidian MCP 全文回读一致，参考栏目之前的正文、34 个代码块、5 张图片和 frontmatter 保持完整；未声称修复或验证跨平台链接渲染。
