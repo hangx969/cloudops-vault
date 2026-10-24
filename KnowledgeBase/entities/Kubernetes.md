@@ -52,7 +52,7 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 
 ### 声明式资源模型
 - 所有资源通过 YAML 定义期望状态，由控制器自动实现：apiVersion、kind、metadata、spec、status
-- **Server-side Apply**：API Server 通过 `managedFields` 记录字段所有权；相比依赖 last-applied 三路合并的 Client-side Apply，它会把 kubectl、Helm、Argo CD、Operator 等多管理器之间的字段争用显式报告为冲突，详见 [[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply#kubectl apply：Client-side Apply 与 Server-side Apply]]
+- **Server-side Apply**：API Server 通过 `managedFields` 记录字段所有权，使用 SSA 的管理者修改其他管理者拥有的字段时可能报告冲突；普通 Update 或非 apply PATCH 仍可修改字段，需同时约定工具的管理范围，详见 [[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply#Server-side Apply 如何追踪字段所有权]]
 - **Pause 容器**：常见 Linux 运行时借助 Pod sandbox 维持共享命名空间，容器可通过 localhost 互访；存储共享依赖显式挂载同一个 Volume
 - **Operator = CRD + Controller**：无需修改 K8s 源码即可扩展 API，适合复杂有状态应用管理
 - **PodDisruptionBudget（PDB）**：自愿中断（drain/滚动更新/升级）时的可用性保护，通过 `minAvailable` 或 `maxUnavailable` 约束同时不可用的 Pod 数量，详见 [[Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战]]

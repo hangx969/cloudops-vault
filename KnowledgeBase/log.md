@@ -2417,3 +2417,11 @@ date: 2026-04-17
 - 使用 humanizer 与 Obsidian 技能完善 [[02-k8s基础-pod-健康探针|健康探针文章]]，补充 Running 与业务可用的背景，按职责、探测与参数、配置、端点设计、案例、诊断、发布与恢复组织正文；将端点实现提前，用有序列表承载排查顺序、无序列表承载并列检查项，合并重复结论。
 - 核对 Kubernetes、Spring Boot 和 Prometheus 官方文档，明确探针时序、Service 就绪边界、共享依赖、管理端口及 PDB/HPA 的适用范围；保留原有 19 个代码块、frontmatter、案例配置数值和时间线。两处站内链接保留在 HTML 注释中，避免公众号正文出现 wikilink 源码；未增加参考文档章节，同步更新既有来源摘要。
 - Obsidian MCP 全文回读与成稿一致，16 份 YAML 解析、2 个 Shell 代码块语法检查通过（命令占位符仅在检查副本中替换），阅读视图和公众号预览已抽查。未执行示例部署或故障演练；案例数字沿用原来源，未独立核实。
+
+
+## [2026-10-24] update | Kubernetes 基础资源公众号系列编辑与顺序编号
+
+- 使用 humanizer 与 Obsidian 工作流，结合 Kubernetes、containerd、Calico、Kubebuilder 等官方文档，由三位 GPT 6.1 Sol High 子 Agent 完成 22 篇技术文章的背景、引言、章节、列表与实验流程整理，主 Agent 逐篇复审并处理交叉复核项；原有 4 篇只调整编号与链接目标。
+- 26 篇统一按学习顺序编号为 01–26，保留原有 52 张图片；发布清单见 [[Docker-Kubernetes/index#Kubernetes 基础资源系列：建议发布顺序|Kubernetes 基础资源系列发布顺序]]。同步更新活动索引、主题地图、盘点及相关引用；历史日志中的旧路径按仅追加约定保留。
+- 校正旧版本配置与技术边界，包括 ingress-nginx 退役、EndpointSlice/IPVS、PDB 的 Eviction 范围、ServiceAccount token、StatefulSet Recreate Alpha/存储生命周期、CRD 与 Controller 职责，以及 PVC 扩容失败恢复；官方链接嵌入正文，未新增参考文档章节。相关来源摘要及 Calico、Ingress、Finalizer 等已有 Wiki 页面同步修正。
+- 验收通过：26 篇 frontmatter、标题层级、代码围栏及 YAML/JSON/Python 静态检查；199 份原生资源的官方 v1.37 OpenAPI 离线结构检查；236 处活动系列内链与章节锚点；原 4 篇正文保护及图片保留检查。Kubebuilder 摘取代码编译与 5 个 fake-client 场景通过，CRD 生成必填约束通过；抽查 Obsidian 阅读视图。未执行真实集群、云或主机变更，未进行网络、数据库、存储和 envtest 运行验证。

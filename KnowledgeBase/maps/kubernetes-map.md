@@ -133,6 +133,8 @@ sources:
 
 ## 📖 推荐阅读顺序
 
+基础资源目录的 26 篇公众号文章已按学习顺序编号，完整发布清单见 [[Docker-Kubernetes/index#Kubernetes 基础资源系列：建议发布顺序|Kubernetes 基础资源系列发布顺序]]。
+
 ### 第一阶段：容器基础
 1. [[Docker-Kubernetes/docker/docker基础|docker基础]] — Docker 核心概念
 2. [[Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd|k8s基础-容器运行时-containerd]] — containerd
@@ -182,7 +184,7 @@ sources:
 |------|------|
 | 架构 | [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] |
 | Pod | [[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础|Pod 入门]]、[[Docker-Kubernetes/k8s-basic-resources/06-K8s基础-pod调度-亲和力|K8s基础-pod调度-亲和力]]、[[Docker-Kubernetes/k8s-basic-resources/16-k8s基础-临时容器ephemeral|k8s基础-临时容器ephemeral]]、[[Docker-Kubernetes/k8s-basic-resources/05-k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] |
-| 健康探针 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|健康探针配置与重启风暴排查]] |
+| 健康探针 | [[Docker-Kubernetes/k8s-basic-resources/04-k8s基础-pod-健康探针|健康探针配置与重启风暴排查]] |
 | 工作负载 | [[Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment|k8s基础-deployment]]、[[Docker-Kubernetes/k8s-basic-resources/08-k8s基础-daemonset|k8s基础-daemonset]]、[[Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset|k8s基础-statefulset]]、[[Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob|k8s基础-job-cronjob]]、[[Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战|PodDisruptionBudget 实战]] |
 | 网络 | [[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service|k8s基础-Service]]、[[Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress|k8s基础-ingress]]、[[Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico|k8s基础-Calico]] |
 | 存储 | [[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage|k8s基础-storage]] |
