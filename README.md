@@ -68,7 +68,7 @@
 
 1. [Docker 基础](./Docker-Kubernetes/docker/docker基础.md) → 掌握镜像、容器与基本操作。
 2. [K8s 架构、组件与资源](./Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源.md) → 建立集群架构与资源模型的整体认识。
-3. [Pod](./Docker-Kubernetes/k8s-basic-resources/k8s基础-pod.md) + [Deployment](./Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment.md) → 学习容器生命周期、应用发布与滚动更新。
+3. [Pod](01-k8s基础-pod基础.md) + [Deployment](./Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment.md) → 学习容器生命周期、应用发布与滚动更新。
 4. [Service](./Docker-Kubernetes/k8s-basic-resources/k8s基础-Service.md) → 理解服务发现与应用访问。
 5. [Helm v3 安装与使用](./Docker-Kubernetes/helm/helmv3-安装与使用.md) → 用 Chart 安装、升级和管理应用。
 

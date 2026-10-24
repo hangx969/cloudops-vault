@@ -1814,7 +1814,7 @@ date: 2026-04-17
 
 ## [2026-09-06] update | Pod 健康探针重启风暴案例
 
-- 将《一场由健康探针引发的Pod重启风暴——K8s LivenessReadiness Probe配置不当的深度复盘》清洗后追加至 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod#探针失效真实案例]]。
+- 将《一场由健康探针引发的Pod重启风暴——K8s LivenessReadiness Probe配置不当的深度复盘》清洗后追加至 [[01-k8s基础-pod基础#探针失效真实案例]]。
 - 保留事故数据、错误配置、时间线、Liveness/Readiness/Startup 分工、端点实现、监控排查命令和工程治理措施；移除作者宣传与公众号引流。
 - 补充技术校正：探针时间倍数属于经验性建议；示例 Prometheus 指标并非 kubelet 固定指标；PDB 与 HPA 不能直接阻止 Liveness 误杀。
 - 新增 [[KnowledgeBase/sources/k8s-probe-restart-storm-summary|来源摘要]]，更新 K8s 基础资源批量摘要、[[KnowledgeBase/entities/Kubernetes]]、[[KnowledgeBase/maps/kubernetes-map|Kubernetes 主题地图]] 和 KnowledgeBase/index.md。
@@ -2380,7 +2380,7 @@ date: 2026-04-17
 - 本机 CLI 版本和帮助检查未发起推理或读取令牌；未检查账户套餐、部署服务或修改 MCP/模型配置。正文与索引经 Obsidian CLI 全文回读、YAML、围栏、内部链接与差异空白检查；日志仅追加。未进行模型联通、导入或性能测试。
 ## [2026-10-23] restructure | Pod 公众号文章导读、章节与技术核对
 
-- 使用 humanizer-zh 完善 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门文章]] 的引言与背景，按容器协作、常用字段、启动与状态、健康探针、优雅终止、发布、调试和故障案例组织章节，统一有序步骤、并列列表与表格。
+- 使用 humanizer-zh 完善 [[01-k8s基础-pod基础|Pod 入门文章]] 的引言与背景，按容器协作、常用字段、启动与状态、健康探针、优雅终止、发布、调试和故障案例组织章节，统一有序步骤、并列列表与表格。
 - 保留原有 31 组代码或命令示例的用途、5 张图片的原始链接、外部链接目标与“探针失效真实案例”锚点；案例配置数值、Go 示例和时间线时刻保持一致，补充最小 Pod 清单与创建观察命令。
 - 核对 Kubernetes、containerd、Spring、Tini 与 Prometheus 官方资料，校正 PID 共享、容器与 Pod 重启、资源 requests、探针时序、终止宽限期及 Tini 退出行为；修复 YAML 缩进、valueFrom、Shell 命令与 Histogram 查询，并保留实验和生产配置的适用边界。
 - Obsidian MCP 全文回读一致；24 份 YAML、7 个 Shell 代码块、frontmatter、围栏、脚注及现有章节引用检查通过。当前桌面无可连接的 Obsidian 窗口，未完成阅读视图视觉检查；未执行示例部署、容器构建或集群故障演练。事故来源仍只有原有标题，未独立核实其事件数字。
@@ -2388,28 +2388,28 @@ date: 2026-04-17
 ## [2026-10-23] restructure | 健康探针与重启风暴案例独立成文
 
 - 新建 [[k8s基础-pod-健康探针|Kubernetes 健康探针：从配置原理到重启风暴排查]]，使用 humanizer-zh 补充独立导读，按探针分工、参数、单项与组合示例、发布和自定义检查边界、故障复盘组织全文；复核 Kubernetes 与 Spring Boot 官方文档。
-- 将完整探针配置与失效案例从 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 迁出；新文保留 19 个代码块，主文保留 15 个，原有 34 个代码块各出现一次。案例正文、配置、时间线与 5 张原图链接保持完整；主文保留简短介绍、双向跳转和历史案例锚点。
+- 将完整探针配置与失效案例从 [[01-k8s基础-pod基础|Pod 主文]] 迁出；新文保留 19 个代码块，主文保留 15 个，原有 34 个代码块各出现一次。案例正文、配置、时间线与 5 张原图链接保持完整；主文保留简短介绍、双向跳转和历史案例锚点。
 - 扩展既有探针来源摘要，更新基础资源摘要、Kubernetes 实体、高可用概念、专题地图、知识库与 Docker-Kubernetes 索引、根目录学习入口及盘点条目；复核基础资源 26 篇、Docker-Kubernetes 174 篇的口径（不含 index.md）。
 - 11 个正文与导航文件经 Obsidian MCP 完整回读，与成稿和工作区一致；24 份 YAML、7 个 Shell 代码块、脚注和 24 处内部链接检查通过。历史日志仅追加；未执行示例部署或故障演练，阅读视图仍未视觉核验；案例来源保持原有归因，未独立核实事件数字。
 
 ## [2026-10-23] update | 移除 Pod 主文中的探针专文入口
 
-- 从 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 移除引言、探针简述、滚动发布和案例段落中的 4 处专文链接，删除只用于跳转的案例章节，并调整正文衔接；保留基础机制说明。
+- 从 [[01-k8s基础-pod基础|Pod 主文]] 移除引言、探针简述、滚动发布和案例段落中的 4 处专文链接，删除只用于跳转的案例章节，并调整正文衔接；保留基础机制说明。
 - 来源摘要同步移除“历史案例锚点保留跳转入口”的过期说明。MCP 全文回读一致，主文 15 个代码块、5 张图片、frontmatter 和脚注保持完整；独立探针文章内容哈希未变。
 
 ## [2026-10-23] update | 删除 Pod 主文中的健康探针概述
 
-- 从 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 删除“健康探针：把启动、就绪与存活分开”一节和不再使用的 probes 脚注；Running 状态中“它不保证应用已经就绪”的说明继续保留。
+- 从 [[01-k8s基础-pod基础|Pod 主文]] 删除“健康探针：把启动、就绪与存活分开”一节和不再使用的 probes 脚注；Running 状态中“它不保证应用已经就绪”的说明继续保留。
 - Obsidian MCP 全文回读一致，原有代码块、图片与其余脚注保持完整。
 
 ## [2026-10-23] update | Pod 与健康探针文章改用普通参考文档编号
 
-- 移除 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 和 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]] 正文中的 38 处脚注引用标记，将文末参考文档分别改为 1–17、1–7 的普通有序列表；保留全部参考链接。
+- 移除 [[01-k8s基础-pod基础|Pod 主文]] 和 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]] 正文中的 38 处脚注引用标记，将文末参考文档分别改为 1–17、1–7 的普通有序列表；保留全部参考链接。
 - 两篇文章经 Obsidian MCP 全文回读一致，代码块、图片、URL 和 frontmatter 保持不变，参考文档编号连续，未留下脚注标记。
 
 ## [2026-10-23] update | 移除 Pod 与健康探针文章的参考文档栏
 
-- 用户反馈参考文档链接在电脑端与手机端均未正常显示；当前无法连接原生 Obsidian 阅读视图确认原因，按用户授权的备选方案，删除 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 与 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]] 文末“参考文档”栏目及其中的补充阅读链接。
+- 用户反馈参考文档链接在电脑端与手机端均未正常显示；当前无法连接原生 Obsidian 阅读视图确认原因，按用户授权的备选方案，删除 [[01-k8s基础-pod基础|Pod 主文]] 与 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]] 文末“参考文档”栏目及其中的补充阅读链接。
 - 两篇文章经 Obsidian MCP 全文回读一致，参考栏目之前的正文、34 个代码块、5 张图片和 frontmatter 保持完整；未声称修复或验证跨平台链接渲染。
 
 ## [2026-10-24] update | 健康探针文章公众号整理

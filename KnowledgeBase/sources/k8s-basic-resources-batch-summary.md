@@ -16,7 +16,7 @@ sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-kubeadm]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod]]"
+  - "[[01-k8s基础-pod基础]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage]]"
   - "[[k8s基础-yaml-apply]]"
@@ -28,8 +28,8 @@ sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s-APIServer深度剖析-请求链路-认证授权-生产调优]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Finalizer与资源删除]]"
 aliases:
-  - "K8s 基础资源批量摘要"
-  - "k8s-basic-resources 批量摘要"
+  - K8s 基础资源批量摘要
+  - k8s-basic-resources 批量摘要
 ---
 
 # K8s基础资源 来源批量摘要
@@ -63,7 +63,7 @@ aliases:
   - Scheduler 监听未绑定节点的 Pod 并执行调度算法
   - K8s 相比纯 Docker 的优势：弹性伸缩、服务发现、自愈、滚动更新、声明式管理
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|K8s基础-Pod]]
+### [[01-k8s基础-pod基础|K8s基础-Pod]]
 - 核心内容：Pod 作为最小可部署单元的容器协作边界，常用字段、调度与初始化、phase 与状态展示、钩子与优雅退出，以及日志和主进程排障。
 - 关键知识点：
   - 容器共享 Pod 网络；PID 命名空间默认不共享，文件共享需显式挂载同一 Volume

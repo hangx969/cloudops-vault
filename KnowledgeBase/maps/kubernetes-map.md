@@ -21,7 +21,7 @@ sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod]]"
+  - "[[01-k8s基础-pod基础]]"
   - "[[k8s基础-pod-健康探针]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service]]"
@@ -140,7 +140,7 @@ sources:
 ### 第二阶段：K8s 核心资源
 3. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] — 架构总览
 4. [[k8s基础-yaml-apply|k8s基础-yaml-apply]] — YAML 编写、CSA/SSA 合并机制与字段所有权
-5. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门]] — 容器协作、常用字段、生命周期与优雅退出
+5. [[01-k8s基础-pod基础|Pod 入门]] — 容器协作、常用字段、生命周期与优雅退出
 6. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|k8s基础-deployment]] — Deployment
 7. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|k8s基础-Service]] — Service
 8. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress|k8s基础-ingress]] — Ingress（2399 行深度文章）

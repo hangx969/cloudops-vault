@@ -27,7 +27,7 @@
 
 - [[Docker-Kubernetes/docker/docker基础]] — Docker 入门
 - [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]] — K8s 架构总览
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门]] — 容器协作、配置、生命周期与优雅退出
+- [[01-k8s基础-pod基础|Pod 入门]] — 容器协作、配置、生命周期与优雅退出
 - [[k8s基础-pod-健康探针|健康探针]] — Startup/Readiness/Liveness 配置、参数与重启风暴排查
 - [[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret]] — ConfigMap 与 Secret 配置管理
 - [[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理]] — 多集群 kubeconfig、kubectx/kubens 与生产防误操作
