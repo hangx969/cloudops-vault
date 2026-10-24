@@ -276,7 +276,7 @@ date: 2026-10-03
 
 | 文件 | 标题 | Frontmatter | 双链 |
 |------|------|:-----------:|:----:|
-| [[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力\|K8s基础-pod调度-亲和力]] | Pod调度-亲和力 | ✅ | ❌ |
+| [[04-K8s基础-pod调度-亲和力\|K8s基础-pod调度-亲和力]] | Pod调度-亲和力 | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理\|Python调用k8s-api实现资源管理]] | Python调用K8s-API | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s-APIServer深度剖析-请求链路-认证授权-生产调优\|K8s API Server：请求链路、认证授权与生产调优]] | Kubernetes API Server 深度剖析：请求链路、认证授权与生产调优 | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战\|k8s-PodDisruptionBudget实战]] | K8s PodDisruptionBudget 实战：优雅中断保护 | ✅ | ❌ |
@@ -291,8 +291,8 @@ date: 2026-10-03
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-kubeadm\|k8s基础-kubeadm]] | kubeadm | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配\|k8s基础-namespace-资源分配]] | namespace-资源分配 | ✅ | ❌ |
 | [[01-k8s基础-pod基础\|k8s基础-pod]] | K8s基础-Pod | ✅ | ✅ |
-| [[k8s基础-pod-健康探针\|Kubernetes 健康探针]] | Kubernetes 健康探针：从配置原理到重启风暴排查 | ✅ | ✅ |
-| [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] | Kubernetes 标签与选择器避坑：5 条核心铁律与生产级实战案例 | ✅ | ❌ |
+| [[02-k8s基础-pod-健康探针\|Kubernetes 健康探针]] | Kubernetes 健康探针：从配置原理到重启风暴排查 | ✅ | ✅ |
+| [[03-k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] | Kubernetes 标签与选择器避坑：5 条核心铁律与生产级实战案例 | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset\|k8s基础-statefulset]] | StatefulSet | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage\|k8s基础-storage]] | Storage | ✅ | ❌ |
 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply\|k8s基础-yaml-apply]] | YAML | ✅ | ❌ |

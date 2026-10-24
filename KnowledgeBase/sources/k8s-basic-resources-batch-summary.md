@@ -5,7 +5,7 @@ tags:
   - docker-kubernetes/k8s-basic-resources
 date: 2026-10-23
 sources:
-  - "[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力]]"
+  - "[[04-K8s基础-pod调度-亲和力]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service]]"
@@ -71,7 +71,7 @@ aliases:
   - `containerPort` 不改变应用监听；requests 用于调度与资源保障，limits 约束运行时使用
   - 普通 Init Container 依次成功结束后，应用容器才启动
   - `PostStart` 与入口程序没有先后保证；`preStop` 与应用退出共用终止宽限期
-  - 探针配置与故障复盘见 [[k8s基础-pod-健康探针|健康探针专文]]，来源摘要见 [[KnowledgeBase/sources/k8s-probe-restart-storm-summary]]
+  - 探针配置与故障复盘见 [[02-k8s基础-pod-健康探针|健康探针专文]]，来源摘要见 [[KnowledgeBase/sources/k8s-probe-restart-storm-summary]]
 
 ### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|K8s基础-Deployment]]
 - 核心内容：Deployment 控制器的概念与工作原理，包括 ReplicaSet 管理、滚动更新策略（maxSurge/maxUnavailable）、金丝雀发布与回滚机制。
@@ -152,7 +152,7 @@ aliases:
   - SSA 通过 `managedFields` 追踪字段所有权，并把字段争用转化为显式冲突
   - CRD 列表的 map/atomic 合并语义取决于结构化 schema 和 `x-kubernetes-list-*` 注释
 
-### [[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力|K8s基础-Pod调度-亲和力]]
+### [[04-K8s基础-pod调度-亲和力|K8s基础-Pod调度-亲和力]]
 - 核心内容：K8s 四种 Pod 调度方式（自动调度、定向调度、亲和性调度、污点调度）及拓扑域概念，通过标签和亲和力规则精确控制 Pod 部署位置。
 - 关键知识点：
   - 拓扑域通过节点标签划分（主机、区域、数据中心、子网）

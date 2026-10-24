@@ -22,7 +22,7 @@ sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply]]"
   - "[[01-k8s基础-pod基础]]"
-  - "[[k8s基础-pod-健康探针]]"
+  - "[[02-k8s基础-pod-健康探针]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress]]"
@@ -42,9 +42,9 @@ sources:
   - "[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA]]"
   - "[[Docker-Kubernetes/k8s-security-auth/helm部署kyverno和policy-reporter]]"
   - "[[AI/企业级私有化大模型/一个 Deployment 就能跑 vLLM，为什么还需要 KServe？]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力]]"
+  - "[[04-K8s基础-pod调度-亲和力]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod调度-标签与选择器实战]]"
+  - "[[03-k8s基础-pod调度-标签与选择器实战]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-daemonset]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset]]"
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob]]"
@@ -147,7 +147,7 @@ sources:
 9. [[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret|k8s基础-configMap-Secret]] — 配置管理
 10. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|k8s基础-storage]] — 存储
 
-探针专题：[[k8s基础-pod-健康探针|Kubernetes 健康探针]] — 学习 Pod 与 Service 后，继续阅读探针分工、参数与完整示例，再结合重启风暴案例排查误杀。
+探针专题：[[02-k8s基础-pod-健康探针|Kubernetes 健康探针]] — 学习 Pod 与 Service 后，继续阅读探针分工、参数与完整示例，再结合重启风暴案例排查误杀。
 
 补充阅读：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet Recreate 更新策略（1.37 Alpha）]] — 启用条件、整体重建与分区灰度的区别、PVC/PV 生命周期及原文 11 个案例的核验说明。
 
@@ -181,7 +181,7 @@ sources:
 | 主题 | 文章 |
 |------|------|
 | 架构 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] |
-| Pod | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门]]、[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力|K8s基础-pod调度-亲和力]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral|k8s基础-临时容器ephemeral]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] |
+| Pod | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门]]、[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力|K8s基础-pod调度-亲和力]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral|k8s基础-临时容器ephemeral]]、[[03-k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] |
 | 健康探针 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|健康探针配置与重启风暴排查]] |
 | 工作负载 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|k8s基础-deployment]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-daemonset|k8s基础-daemonset]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset|k8s基础-statefulset]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob|k8s基础-job-cronjob]]、[[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战|PodDisruptionBudget 实战]] |
 | 网络 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|k8s基础-Service]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress|k8s基础-ingress]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico|k8s基础-Calico]] |
