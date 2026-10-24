@@ -14,7 +14,7 @@ aliases:
 
 Finalizer 为这类异步清理保留对象。本文先解释删除协议，再按常见阻塞原因排查，最后展示 controller-runtime 中的实现方式。阅读前需要了解资源对象、Controller 和 ownerReferences。诊断命令可以先读取状态；文中的移除 finalizer、批量清理及 `/finalize` 示例会绕过保护，只用于已核实依赖的人工恢复。
 
-## Finalizer是什么？为什么需要它？
+## 删除请求之后，为什么还要保留对象
 
 DELETE 请求与“对象已经消失”不是同一时刻。Pod 可能需要优雅终止，垃圾回收器可能需要处理依赖对象，控制器也可能需要先释放外部资源。Finalizer 是 API 对象上的删除等待标记，为这些工作保留执行机会。
 
@@ -22,9 +22,9 @@ DELETE 请求与“对象已经消失”不是同一时刻。Pod 可能需要优
 
 [Finalizer](https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/) 本身只是字符串，不包含可执行代码。API Server 标记删除并保留对象；观察该标记的 Controller 才负责执行清理并移除自己管理的条目。没有对应 Controller 的自定义字符串，会让对象一直等待。
 
-## Finalizer的工作机制
+## 从删除标记到清理完成
 
-Finalizer是资源对象 `metadata.finalizers` 字段中的一个字符串列表。当这个列表非空时，K8s不会从etcd中真正删除该对象。
+Finalizer 记录在资源对象的 `metadata.finalizers` 字符串列表中。删除开始后，只要列表仍有条目，API server 就会保留对象，等待相应控制器完成清理。
 
 整个删除流程如下：
 
@@ -43,7 +43,7 @@ Finalizer是资源对象 `metadata.finalizers` 字段中的一个字符串列表
 
 下面是正在删除中的 PVC 状态示意。`deletionTimestamp` 由服务端设置，不能把这个片段当作新建 PVC 的 manifest。
 
-```
+```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -61,11 +61,11 @@ spec:
   storageClassName: ceph-block
 ```
 
-这个PVC有一个 `kubernetes.io/pvc-protection` 的Finalizer。只要这个Finalizer存在，PVC就不会被真正删除。只有当PVC不再被任何Pod使用时，PVC Controller才会移除这个Finalizer，PVC才会被删除。
+这个 PVC 带有 `kubernetes.io/pvc-protection`。负责保护的控制器确认不再有 Pod 使用它后，才移除该条目；若还有其他 finalizer，删除仍需继续等待。
 
-## 常见的Finalizer
+## 常见 Finalizer 分别由谁处理
 
-K8s内置了一些常用的Finalizer：
+内置控制器使用不同的条目处理存储保护与级联删除：
 
 | Finalizer | 作用 | 添加者 |
 | --- | --- | --- |
@@ -75,11 +75,9 @@ K8s内置了一些常用的Finalizer：
 | `foregroundDeletion` | 前台级联删除时等待阻塞删除的依赖对象 | API Server/垃圾回收控制器 |
 | `orphan` | 孤儿删除模式，不自动删除依赖资源 | apiserver |
 
-第三方 Operator 也会添加自己的条目。具体名称依版本和资源类型而变，应读取对象确认；下面保留 Argo CD 和自定义 Operator 的例子。cert-manager 不应把未经核实的 Certificate finalizer 名称当作固定约定。
+第三方 Operator 也会添加自己的条目。具体名称随版本和资源类型变化，应读取实际对象确认。下面以 Argo CD Application 和自定义 Operator 为例：
 
 ```
-# cert-manager：请从实际对象读取 metadata.finalizers，不假定固定 Certificate 条目
-
 # ArgoCD的Application
 metadata:
   finalizers:
@@ -91,11 +89,11 @@ metadata:
   - my-operator.example.com/cleanup
 ```
 
-## 资源"删不掉"的五大场景
+## 按阻塞位置区分五种删除故障
 
-### 场景一：Controller已不存在
+### 场景一：负责清理的 Controller 已卸载
 
-这是最常见的情况。某个Operator创建了一堆Custom Resource，每个都带着它的Finalizer。后来Operator被卸载了，但Custom Resource还在。现在你删除这些CR，它们的Finalizer永远不会被移除，因为负责移除Finalizer的Controller已经不在了。
+某个 Operator 创建了带有自定义 finalizer 的资源，卸载时却没有先清理这些对象。之后再删除它们，API server 仍会等待相应控制器移除条目。此时应先确认能否恢复 Operator，完成它负责的外部清理。
 
 ```
 # 删除CR卡住
@@ -108,9 +106,9 @@ kubectl get mysqlcluster my-db -o yaml | grep finalizers
 # - mysql.operator.example.com/finalizer
 ```
 
-### 场景二：Controller清理逻辑报错
+### 场景二：Controller 的清理调用失败
 
-Controller存在，但清理逻辑执行失败。比如一个Operator的Finalizer逻辑需要调用外部API删除一个云资源，但API凭证过期了，清理逻辑一直报错，Finalizer一直无法被移除。
+Controller 虽然运行着，清理步骤仍可能失败。例如删除云资源时凭据过期，外部 API 返回未授权。查看日志中的实际错误，比反复提交删除请求更容易找到阻塞点。
 
 ```
 # 查看Controller日志
@@ -121,9 +119,9 @@ ERROR: failed to delete cloud resource: Unauthorized
 ERROR: Reconciler error: failed to cleanup: timeout calling API
 ```
 
-### 场景三：Namespace卡在Terminating
+### 场景三：Namespace 停在 Terminating
 
-删除Namespace时，Namespace内的所有资源都需要先被删除。如果其中任何一个资源因为Finalizer卡住，整个Namespace都会卡在Terminating状态。
+Namespace 控制器需要清理命名空间内的资源。某个对象的 finalizer 尚未完成时，整个命名空间也可能继续等待；应枚举残留对象，找到具体阻塞项。
 
 ```
 kubectl get namespace old-project
@@ -189,9 +187,9 @@ kubectl patch <resource> <name> --type=json \
 
 JSON Patch 示例先用 `test` 验证索引 0 的值，防止并发修改后删错条目；应替换成对象中的真实值与索引。删除正在使用的卷相关保护，除了泄漏外还可能带来数据风险。
 
-### 批量盘点与受控清理
+### 先盘点，再决定是否批量移除
 
-批量移除会跳过多个控制器的清理流程。下面保留循环处理方式，默认只列出候选对象；只有逐项核对后，才在隔离恢复环境中显式设置 `ALLOW_REMOVE_FINALIZERS=true`。它不是日常清理脚本。
+批量移除会跳过多个控制器的清理流程。下面的脚本默认只列出候选对象；只有逐项核对后，才在隔离恢复环境中显式设置 `ALLOW_REMOVE_FINALIZERS=true`。它不是日常清理脚本。
 
 ```
 #!/bin/bash
@@ -227,15 +225,15 @@ kubectl get namespace <name> -o json | \
 
 # 方法二：如使用第三方 Krew 插件，先确认名称、来源和实现
 kubectl krew search finalizer
-# 旧笔记中的 ns-remove-finalizer 不是 Kubernetes 内置命令，
+# ns-remove-finalizer 不是 Kubernetes 内置命令，
 # 不能假定当前 Krew 索引一定提供它；核实后才安装和使用
 ```
 
-## 编写自己的Finalizer
+## 在 Controller 中实现自己的 Finalizer
 
 下面给出 controller-runtime 的控制流程。`examplev1.MyResource` 是项目生成的 API 类型（Spec 需要有 `DatabaseName string`），`DatabaseClient` 是需要由项目实现并注入的外部数据库接口；因此这是一份带明确依赖的控制器骨架，不是独立可运行程序。实现顺序可对照 [Kubebuilder 的 finalizer 示例](https://book.kubebuilder.io/reference/using-finalizers.html)。
 
-```
+```go
 package controllers
 
 import (
@@ -337,24 +335,24 @@ func (r *MyResourceReconciler) cleanupExternalResources(ctx context.Context, res
 }
 ```
 
-编写Finalizer时的关键原则：
+这段控制流程还需要满足几个条件：
 
-第一，清理逻辑必须幂等。 Controller可能在清理失败后多次重试，清理逻辑必须能安全地执行多次。
+清理调用必须幂等。Controller 可能在请求成功但状态尚未更新时重启，下次调用同一操作时，应能把“目标已经不存在”视为清理完成。
 
-第二，清理失败时不要移除Finalizer。 只有在确认所有外部资源都已清理完毕后，才移除Finalizer。失败时返回 `RequeueAfter` ，让Controller稍后重试。
+清理失败时保留条目，并记录错误后重试。示例使用 `RequeueAfter` 安排下一次调谐，不能在外部 API 返回失败时直接移除 finalizer。
 
-第三，给Finalizer起一个唯一的名字。 使用 `域名/功能` 的格式，避免与其他Operator的Finalizer冲突。
+自定义名称采用 `域名/功能` 格式。控制器只维护自己的条目，避免覆盖其他 Operator 已写入的保护。
 
-第四，处理部分清理的情况。 如果有多个外部资源需要清理，记录清理进度，下次重试时跳过已清理的资源。
+如果清理涉及多个外部资源，还应保存足够的进度或让每一步都可重复执行，防止中途失败后无法继续。
 
-## Finalizer与Graceful Shutdown的关系
+## Finalizer 与容器优雅退出怎样配合
 
-Finalizer和 `preStop` 钩子、 `terminationGracePeriodSeconds` 经常被混淆，它们的作用层次不同：
+Finalizer、`preStop` 和终止宽限期分别处理 API 对象保留与容器退出，排障时应先区分各自的作用：
 
 | 机制                          | 作用层级         | 触发时机              |
 |-------------------------------|-----------------|----------------------|
 | preStop hook                  | Pod级别         | Pod被删除时           |
-| terminationGracePeriodSeconds | Pod级别         | Pod删除超时强制杀死    |
+| terminationGracePeriodSeconds | Pod 级别 | 约束终止宽限期，到期后仍运行的容器可能被强制结束 |
 | Finalizer                     | 资源对象级别      | 资源对象被删除时       |
 | OwnerReference + Garbage Collection | 资源关系级别 | 父资源删除级联子资源    |
 

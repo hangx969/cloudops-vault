@@ -15,33 +15,37 @@ tags:
 <div id="从零开发-kubernetes-operatorkubebuilder-实战教程" class="legacy-anchor"></div>
 <div id="从零开发-kubernetes-operator" class="legacy-anchor"></div>
 
+一个自定义对象能通过 API 保存配置，却不会自动执行任务。要让配置变化转成实际行为，需要一个控制器反复检查对象，并把观察结果或执行结果写回。Kubebuilder 会生成 API 类型、控制器入口和部署文件，开发者再补上领域逻辑。
+
+本文实现一个较小的例子：Foo 对象在同一命名空间寻找指定名称的 Pod，存在时将 `status.happy` 设为 true，不存在时设为 false。这个控制器只观察对象，不创建数据库或业务 Pod，适合先学会资源注册、事件映射和状态更新。阅读前需要 Go 基础、CRD 概念和一个可丢弃的测试集群。
+
 ## 什么是 Operator？
 
-Operator 的主要目标是将工程师的逻辑转换为代码，以便实现原生 Kubernetes 无法完成的某些任务的自动化。
+Operator 将应用的部署、升级或恢复规则编码到控制循环中。它既可以管理内置工作负载，也可以通过自定义 API 表达领域需求；执行能力取决于具体实现。
 
 例如，Operator 可以在 Kubernetes 中部署和维护 MySQL、Elasticsearch 或 GitLab Runner 等工具，自动配置这些工具，根据事件调整系统状态，并对故障做出反应。
 
 Operator 由两个组件组成：
 
-- **CRD（Custom Resource Definition）**：Kubernetes 自定义类型的资源蓝图，用于描述其规范（Spec）和状态（Status）。CRD 的实例称为自定义资源（CR）
-- **Controller（控制器）**：持续监视集群状态，并根据事件做出变更，目标是将资源的当前状态变为用户在 CR Spec 中定义的期望状态
+- CRD（Custom Resource Definition）：Kubernetes 自定义类型的资源蓝图，用于描述其规范（Spec）和状态（Status）。CRD 的实例称为自定义资源（CR）
+- Controller（控制器）：持续监视集群状态，并根据事件做出变更，目标是将资源的当前状态变为用户在 CR Spec 中定义的期望状态
 
-控制器的类比：恒温器。设置温度 = 期望状态，房间实际温度 = 当前状态，恒温器通过打开或关闭空调使实际状态接近期望状态。
+Reconcile 每次都以对象的当前状态为依据。事件只负责把对象键加入队列，控制器不能假定收到一次事件就只运行一次；重复事件、失败重试和进程重启都要求调谐逻辑保持幂等。
 
-**Manager（管理器）** 负责启动所有控制器，并使控制循环共存。假设项目中有两个 CRD 和两个控制器，管理器将启动这两个控制器并使它们共存。
+Manager 负责组织缓存、客户端、控制器和进程生命周期。一个 Manager 可以注册多个控制器；同一进程中的控制器通常共享缓存，不需要各自全量拉取资源。
 
 ## 构建 Operator
 
-可以使用 controller-runtime 从头构建，也可以使用框架加速开发：**Kubebuilder** 或 **OperatorSDK**（两个项目目前正在合并）。本文选择 Kubebuilder。
+可以直接使用 controller-runtime，也可以使用 Kubebuilder 或 Operator SDK 生成项目。本文按 Kubebuilder 的 Go 项目结构编写；工具版本与 Go、Kubernetes 客户端依赖需要配套，不能把不同年代的脚手架和代码片段混用。
 
 ### 开发环境准备
 
 ```bash
 # 必备工具
-# Go v1.17.9+
+# Go：按选定Kubebuilder发布版与生成go.mod的要求安装；当前快速开始要求v1.24.6+
 # Docker 17.03+
-# kubectl v1.11.3+
-# K8s v1.11.3+ 集群（建议用 kind 设置本地集群）
+# kubectl：与测试集群版本兼容
+# Kubernetes：使用选定controller-runtime支持的测试版本，可用kind搭建
 
 # 安装 kubebuilder
 curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH) \
@@ -52,10 +56,14 @@ curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go e
 kubebuilder version
 ```
 
+安装前可核对 [Kubebuilder 快速开始](https://book.kubebuilder.io/quick-start.html) 的版本要求。上面的 `latest` 下载方式用于首次体验；团队项目应记录并固定 Kubebuilder 发布版，同时以提交的 `go.mod`、`go.sum` 锁定依赖。下面的控制器使用当前 `Watches(object, handler)` 接口，不能配合旧版 `source.Kind{Type: ...}` 写法。
+
 ### 初始化项目
 
 ```bash
-# 初始化新项目（下载 controller-runtime 二进制文件并准备项目）
+# 在空目录中初始化项目；生成Go模块、Makefile、配置与入口
+mkdir foo-operator
+cd foo-operator
 kubebuilder init --domain my.domain --repo my.domain/tutorial
 
 # 创建新的 API（CRD）和 Controller
@@ -66,16 +74,16 @@ kubebuilder create api --group tutorial --version v1 --kind Foo
 生成的项目结构（Go 项目）：
 
 ```
-├── main.go          # 项目入口，设置并运行管理器
+├── cmd/main.go      # 项目入口，设置并运行管理器
 ├── config/          # K8s 部署 Operator 的 manifest
 ├── Dockerfile       # 构建管理器镜像的容器文件
 ├── api/v1/          # Foo CRD 定义
-└── controllers/     # Foo 控制器
+└── internal/controller/  # Foo 控制器
 ```
 
 ### 自定义 CRD
 
-Foo CRD 的定义中有 `name` 字段（Foo 正在寻找的朋友的名称）。如果 Foo 找到了一个朋友（一个和朋友同名的 Pod），`happy` 状态将被设置为 true。
+`spec.name` 表示要寻找的 Pod 名称。查找范围限定在 Foo 所在命名空间；这里的“找到”仅表示 Pod 对象存在，不表示它处于 Ready 或 Running。`status.observedGeneration` 则记录控制器已经处理到哪一代配置。保留脚手架生成的 group/version 注册文件，并将 `foo_types.go` 中的 API 类型补为以下内容：
 
 ```go
 // api/v1/foo_types.go
@@ -88,13 +96,15 @@ import (
 // FooSpec defines the desired state of Foo
 type FooSpec struct {
     // Name of the friend Foo is looking for
+    // +kubebuilder:validation:MinLength=1
     Name string `json:"name"`
 }
 
 // FooStatus defines the observed state of Foo
 type FooStatus struct {
     // Happy will be set to true if Foo found a friend
-    Happy bool `json:"happy,omitempty"`
+    Happy bool `json:"happy"`
+    ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -108,22 +118,36 @@ type Foo struct {
     Spec   FooSpec   `json:"spec,omitempty"`
     Status FooStatus `json:"status,omitempty"`
 }
+
+// +kubebuilder:object:root=true
+// FooList contains a list of Foo.
+type FooList struct {
+    metav1.TypeMeta `json:",inline"`
+    metav1.ListMeta `json:"metadata,omitempty"`
+    Items []Foo `json:"items"`
+}
+
+func init() {
+    SchemeBuilder.Register(&Foo{}, &FooList{})
+}
 ```
 
 ### 实现 Controller
 
-控制器逻辑：通过 Reconcile 请求获取 Foo 资源 → 获取 Foo 朋友的名称 → 列出所有同名的 Pod → 如果找到则设置 `happy=true`，否则设为 `false`。
+控制器先读取 Foo，再按同一命名空间和名称 Get Pod。读取出错时返回错误重试；只有明确 NotFound 才认为不存在，避免把 API 连接或权限故障写成 `happy=false`。状态没有变化时不重复写回，减少无意义的自身事件。
 
-控制器也会对 Pod 事件做出反应——如果创建了一个新 Pod，Foo 资源能够相应更新其状态。
+控制器还监听 Pod 事件，把发生变化的 Pod 映射到引用它的 Foo。这样创建或删除 jack Pod 时，相关 Foo 都会重新检查。下面使用当前[资源 Watch 的事件映射方式](https://book.kubebuilder.io/reference/watching-resources/predicates-with-watch.html)。
 
 ```go
-// controllers/foo_controller.go
-package controllers
+// internal/controller/foo_controller.go
+package controller
 
 import (
     "context"
+    "time"
 
     corev1 "k8s.io/api/core/v1"
+    apierrors "k8s.io/apimachinery/pkg/api/errors"
     "k8s.io/apimachinery/pkg/runtime"
     "k8s.io/apimachinery/pkg/types"
     ctrl "sigs.k8s.io/controller-runtime"
@@ -131,7 +155,6 @@ import (
     "sigs.k8s.io/controller-runtime/pkg/handler"
     "sigs.k8s.io/controller-runtime/pkg/log"
     "sigs.k8s.io/controller-runtime/pkg/reconcile"
-    "sigs.k8s.io/controller-runtime/pkg/source"
 
     tutorialv1 "my.domain/tutorial/api/v1"
 )
@@ -141,86 +164,83 @@ type FooReconciler struct {
     Scheme *runtime.Scheme
 }
 
-// RBAC 权限标记
-//+kubebuilder:rbac:groups=tutorial.my.domain,resources=foos,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=tutorial.my.domain,resources=foos/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+// 此控制器只读Foo和Pod，只写Foo状态，不需要对象创建/删除权限。
+// +kubebuilder:rbac:groups=tutorial.my.domain,resources=foos,verbs=get;list;watch
+// +kubebuilder:rbac:groups=tutorial.my.domain,resources=foos/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 
 func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
-    log.Info("reconciling foo custom resource")
-
-    // 1. 获取触发 reconciliation 的 Foo 资源
+    logger := log.FromContext(ctx)
     var foo tutorialv1.Foo
     if err := r.Get(ctx, req.NamespacedName, &foo); err != nil {
-        log.Error(err, "unable to fetch Foo")
         return ctrl.Result{}, client.IgnoreNotFound(err)
     }
-
-    // 2. 列出所有 Pod，查找与 Foo 朋友同名的 Pod
-    var podList corev1.PodList
-    var friendFound bool
-    if err := r.List(ctx, &podList); err != nil {
-        log.Error(err, "unable to list pods")
-    } else {
-        for _, item := range podList.Items {
-            if item.GetName() == foo.Spec.Name {
-                log.Info("pod linked to a foo custom resource found", "name", item.GetName())
-                friendFound = true
-            }
-        }
+    if !foo.DeletionTimestamp.IsZero() {
+        return ctrl.Result{}, nil
     }
 
-    // 3. 更新 Foo 的 happy 状态
-    foo.Status.Happy = friendFound
-    if err := r.Status().Update(ctx, &foo); err != nil {
-        log.Error(err, "unable to update foo's happy status")
+    var friend corev1.Pod
+    err := r.Get(ctx, types.NamespacedName{
+        Namespace: foo.Namespace,
+        Name: foo.Spec.Name,
+    }, &friend)
+    if err != nil && !apierrors.IsNotFound(err) {
         return ctrl.Result{}, err
     }
+    friendFound := err == nil
 
-    log.Info("foo custom resource reconciled")
-    return ctrl.Result{}, nil
+    if foo.Status.Happy != friendFound || foo.Status.ObservedGeneration != foo.Generation {
+        foo.Status.Happy = friendFound
+        foo.Status.ObservedGeneration = foo.Generation
+        if err := r.Status().Update(ctx, &foo); err != nil {
+            return ctrl.Result{}, err
+        }
+        logger.Info("updated Foo status", "happy", friendFound)
+    }
+
+    // 周期复查作为事件映射失败等情况的恢复路径。
+    return ctrl.Result{RequeueAfter: time.Minute}, nil
 }
 
-// 设置 Controller：监听 Foo 资源 + 监听 Pod 事件
 func (r *FooReconciler) SetupWithManager(mgr ctrl.Manager) error {
     return ctrl.NewControllerManagedBy(mgr).
         For(&tutorialv1.Foo{}).
-        Watches(
-            &source.Kind{Type: &corev1.Pod{}},
-            handler.EnqueueRequestsFromMapFunc(r.mapPodsReqToFooReq),
-        ).
+        Watches(&corev1.Pod{}, handler.EnqueueRequestsFromMapFunc(r.mapPodsReqToFooReq)).
         Complete(r)
 }
 
-// Pod 事件映射：只有当 Pod 名称是某个 Foo 的"朋友"时，才触发该 Foo 的 reconciliation
-func (r *FooReconciler) mapPodsReqToFooReq(obj client.Object) []reconcile.Request {
-    ctx := context.Background()
-    log := log.FromContext(ctx)
-
-    req := []reconcile.Request{}
+func (r *FooReconciler) mapPodsReqToFooReq(ctx context.Context, obj client.Object) []reconcile.Request {
     var list tutorialv1.FooList
-    if err := r.Client.List(context.TODO(), &list); err != nil {
-        log.Error(err, "unable to list foo custom resources")
-    } else {
-        for _, item := range list.Items {
-            if item.Spec.Name == obj.GetName() {
-                req = append(req, reconcile.Request{
-                    NamespacedName: types.NamespacedName{Name: item.Name, Namespace: item.Namespace},
-                })
-                log.Info("pod linked to a foo custom resource issued an event", "name", obj.GetName())
-            }
+    if err := r.List(ctx, &list, client.InNamespace(obj.GetNamespace())); err != nil {
+        log.FromContext(ctx).Error(err, "unable to list Foo for Pod event")
+        return nil
+    }
+
+    requests := make([]reconcile.Request, 0)
+    for _, foo := range list.Items {
+        if foo.Spec.Name == obj.GetName() {
+            requests = append(requests, reconcile.Request{
+                NamespacedName: types.NamespacedName{
+                    Namespace: foo.Namespace,
+                    Name: foo.Name,
+                },
+            })
         }
     }
-    return req
+    return requests
 }
 ```
 
-### 运行与测试
+### 生成清单并运行
+
+API 类型变化后先生成 DeepCopy 代码，再生成 CRD 与 RBAC。`make install` 会修改当前 kubeconfig 指向的集群，只能对测试集群执行；`make run` 则在本机运行控制器，并使用本机凭据，不代表已经验证集群内 ServiceAccount 权限。
+
 
 ```bash
-# 1. 更新 manifest
+# 1. 更新生成代码与清单
+make generate
 make manifests
+go test ./...
 
 # 2. 安装 CRD 到集群
 make install
@@ -231,7 +251,9 @@ kubectl get crds
 make run
 ```
 
-**测试流程**：
+### 用两个 Foo 检查状态变化
+
+将下面清单保存为 `foo-samples.yaml`。Foo 与测试 Pod 都放在当前命名空间；如改用其他命名空间，后续命令统一加 `-n`。
 
 ```yaml
 # 创建两个 Foo 自定义资源
@@ -251,24 +273,42 @@ spec:
 ```
 
 ```bash
-kubectl apply -f config/samples
+kubectl apply -f foo-samples.yaml
 # 此时两个 Foo 的 happy 状态都为 false（没有同名 Pod）
 
-# 部署一个名为 jack 的 Pod
+# 将下文的测试Pod保存为jack-pod.yaml后部署
 kubectl apply -f jack-pod.yaml
 # 控制器检测到 Pod 创建事件 → 触发 foo-01 的 reconciliation → happy 变为 true
 # foo-02 不受影响（它的朋友是 joe）
 
 # 修改 foo-02 的 spec.name 为 jack
+kubectl patch foo foo-02 --type=merge -p '{"spec":{"name":"jack"}}'
 # 控制器触发 reconciliation → foo-02 的 happy 也变为 true
 
-# 删除 jack Pod → 两个 Foo 的 happy 都回到 false
+# 测试资源可丢弃时删除jack Pod，两个Foo最终都会回到false
+kubectl delete pod jack
+kubectl get foos -o custom-columns=NAME:.metadata.name,FRIEND:.spec.name,HAPPY:.status.happy,OBSERVED:.status.observedGeneration
 ```
 
-## 进阶方向
+测试 Pod 的清单如下。它只为创建和删除事件提供一个可观察对象，不需要进入容器执行命令。
 
-- 优化事件过滤（避免事件重复提交）
-- 完善 RBAC 权限
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jack
+spec:
+  containers:
+  - name: web
+    image: nginx:1.28
+```
+
+启动控制器后，先确认两个 Foo 的 `observedGeneration` 已追上 `metadata.generation`。创建 jack 后只有 foo-01 变为 true，修改 foo-02 后两者均为 true，删除 jack 后均为 false。状态是异步更新的，应等待下一次调谐，不能要求 apply 返回时已经完成。
+
+## 从教学控制器走向应用管理
+
+- 为 `spec.name` 建立字段索引，避免每次 Pod 事件遍历命名空间内所有 Foo；不要依赖事件不会重复。
+- 在集群内使用专用 ServiceAccount，并按需要设置 namespace-scoped cache、Role 和 RoleBinding；生成的 ClusterRole 不代表必须全局绑定。
 - 改进日志记录系统
 - 当 Operator 更新资源时触发 Kubernetes 事件
 - 获取 Foo 自定义资源时添加自定义字段（如显示 happy 状态）
@@ -278,9 +318,9 @@ kubectl apply -f jack-pod.yaml
 
 | 工具 | 定位 | 语言 | 说明 |
 |------|------|------|------|
-| **Kubebuilder** | 官方推荐框架 | Go | 文档清晰、久经考验，与 OperatorSDK 正在合并 |
-| **OperatorSDK** | Red Hat 主导 | Go/Ansible/Helm | 支持多种方式构建 Operator |
-| **controller-runtime** | 底层库 | Go | Kubebuilder/OperatorSDK 的底层依赖，可从头构建 |
-| **Metacontroller** | 轻量级 | 任意语言 | 通过 Webhook 方式，用任意语言实现控制器逻辑 |
+| Kubebuilder | API与控制器项目脚手架 | Go | 生成类型、控制器和部署文件 |
+| OperatorSDK | Red Hat 主导 | Go/Ansible/Helm | 支持多种方式构建 Operator |
+| controller-runtime | 底层库 | Go | Kubebuilder/OperatorSDK 的底层依赖，可从头构建 |
+| Metacontroller | 轻量级 | 任意语言 | 通过 Webhook 方式，用任意语言实现控制器逻辑 |
 
-**GitHub 完整代码**：项目提供了完整的示例代码，可直接参考。
+选择框架后，先固定生成器和依赖版本，再保存可重复的生成、构建与测试流程。这个 Foo 示例验证的是读取、事件映射和状态回写；真正管理外部应用时，还需要补充 ownerReferences、finalizer、错误条件、升级和恢复流程。

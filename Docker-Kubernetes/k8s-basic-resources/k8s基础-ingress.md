@@ -7,56 +7,55 @@ aliases:
   - k8sIngress
 ---
 
-# K8s基础-Ingress
+# Kubernetes Ingress：从 HTTP 路由到灰度发布与故障排查
 
+Service 为应用提供了稳定入口，但多个 Web 服务共用同一个公网地址时，还需要根据域名和 URL 路径分配请求。Ingress 负责描述这类 HTTP/HTTPS 规则，Ingress Controller 则把规则落实为真正的代理行为。理解这两个对象的分工后，TLS、重写、限流和灰度发布就能放回各自的位置。
 
-## Ingress和 Ingress Controller概述
+先说明版本边界：Kubernetes 社区的 ingress-nginx 项目已在 2026 年 3 月退役，停止发布和安全修复。存量实例仍可能继续转发流量，但新部署应选择维护中的 Gateway API 实现或其他受支持的 Ingress Controller，见[官方退役说明](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)。本文的 ingress-nginx 注解、调优和 v1.1.0 安装清单用于理解存量配置与隔离实验，不应直接用于新建生产入口。
 
-### OSI七层模型
+退役的是一个具体控制器实现。Ingress API 本身仍然可用，已冻结功能演进；Gateway API 通过 GatewayClass、Gateway、HTTPRoute 等资源继续发展入口能力，也需要相应控制器，不能仅改资源名称就完成迁移。两者的定位可对照[Kubernetes Ingress 说明](https://kubernetes.io/docs/concepts/services-networking/ingress/)。
+
+本文先解释访问链路，再建立最小路由，逐步加入认证、会话、流式响应、重写和访问控制，随后处理常见故障及灰度发布，最后完成两组历史高可用与 Tomcat 实验。阅读前需要掌握 Pod、Deployment、Service、Namespace 和基本 TCP/IP，并准备有权限的隔离集群、可解析的测试域名或本机 hosts 记录。所有命令都应先核对上下文；域名、IP、镜像和资源名称需与自己的实验保持一致。
+
+## 从网络分层理解 Ingress
+
+### OSI 模型与 HTTP 路由
 
 ![image-20231209104609983](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091046041.png)
 
-### 四层代理-service
+定位入口功能时，先关注传输层和应用层。TCP/UDP 提供连接或数据报传输，HTTP 则在连接上携带 Host、路径、请求方法和请求头；同一个 IP:443 上要根据域名与路径选择服务，代理必须具备相应的 HTTP/TLS 处理能力。
 
-- 如何把这个动态的Pod IP暴露出去？借助 Service，Service可以以标签的形式选定一组带有指定标签的Pod，并监控和自动负载他们的Pod IP，向外暴露只暴露Service IP就行了；这就是NodePort模式：即在每个节点上开起一个端口，然后转发到内部Pod IP 上。
+### Service 解决稳定入口，HTTP 入口继续处理路由
 
-- 如果Service想要被k8s集群外部访问，需要用NodePort类型，但是NodePort类型的svc有如下几个问题：
-  - nodeport会在物理机映射一个端口，绑定到物理机上，这样就导致每个服务都要映射一个端口，端口过多，维护困难。
-  - 还有Service底层使用的是iptables或者ipvs，仅支持四层代理，无法基于https协议做代理。
-  - 实际使用中，一般用域名，根据不同域名跳转到不同端口服务中。
+Service 用 selector 关联一组 Pod，由 EndpointSlice 描述实际后端，再由 kube-proxy 或替代数据平面维护转发。ClusterIP 提供集群内入口，NodePort 和 LoadBalancer 则是常见的外部接入方式。
 
-### 四层vs七层代理
+如果每个 Web 服务都使用独立 NodePort，调用方要记住不同端口，端口与防火墙规则也会增加。四层 Service 可以传输 TLS 流量，但通常不会解密 HTTP 内容，也不会根据 HTTP Host 和 URL 路径选择不同应用。多个域名共用 80/443 时，需要能理解应用层请求的入口代理。
 
-1. 四层负载：四层的负载均衡就是基于`IP+端口`的负载均衡：在三层负载均衡的基础上，通过发布三层的IP地址（VIP），然后加四层的端口号，来决定哪些流量需要做负载均衡，对需要处理的流量进行NAT处理，转发至后台服务器，并记录下这个TCP或者UDP的流量是由哪台服务器处理的，后续这个连接的所有流量都同样转发到同一台服务器处理。
+### 四层与七层代理分别依据什么转发
 
-2. 七层的负载均衡就是基于虚拟的URL或主机IP的负载均衡：在四层负载均衡的基础上（没有四层是绝对不可能有七层的），再考虑应用层的特征，比如同一个Web服务器的负载均衡，除了根据VIP加80端口辨别是否需要处理的流量，还可根据七层的URL、浏览器类别、语言来决定是否要进行负载均衡。举个例子，如果你的Web服务器分成两组，一组是中文语言的，一组是英文语言的，那么七层负载均衡就可以当用户来访问你的域名时，自动辨别用户语言，然后选择对应的语言服务器组进行负载均衡处理。
+四层负载均衡依据源/目标 IP、端口和协议选择后端，常通过 NAT、直接路由或隧道等机制完成转发。TCP 连接建立后，通常需要维持该连接到同一后端的映射。
 
-3. 四层负载均衡工作在传输层，七层负载均衡工作在应用层
+七层代理进一步读取 HTTP Host、URL 路径或请求头。例如，同一入口可以将 `/api` 交给 API 服务，将静态页面交给 Web 服务；也可以根据语言或客户端特征选择不同后端。HTTPS 场景若要读取这些 HTTP 信息，需要在相应位置终止 TLS；仅透传加密数据时看不到 URL 路径。
 
-### Ingress
+### Ingress：声明请求如何匹配后端
 
-- Ingress官网定义：Ingress提供了一个统一的入口，可以把进入到集群的请求转发到集群中的一些服务上，从而可以把服务映射到集群外部。Ingress 能把集群内Service 配置成外网能够访问的 URL，流量负载均衡，提供基于域名访问的虚拟主机等。
-- Ingress 是k8s中的资源，主要是管理ingress-controller这个代理的配置文件。件通过它定义某个域名的请求过来之后转发到集群中指定的 Service。它可以通过 Yaml 文件定义，可以给一个或多个 Service 定义一个或多个 Ingress 规则。
+Ingress 是 Kubernetes API 资源，主要描述 HTTP/HTTPS 的域名、路径和后端 Service。例如，把 `shop.example.com/api` 路由到同一 Namespace 中名为 `api` 的 Service。它还可以引用 TLS Secret，但资源本身不会监听端口或转发请求。
 
 ![image-20240725225555680](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252255843.png)
 
-### Ingress Controller
+### Ingress Controller：运行代理并协调配置
 
-- Ingress Controller是一个七层负载均衡调度器，客户端的请求先到达这个七层负载均衡调度器，由七层负载均衡器在反向代理到后端pod，常见的七层负载均衡器有nginx、traefik、HAProxy、Istio（工作在6层）等。
-  - 以我们熟悉的nginx为例，假如请求到达nginx，会通过upstream反向代理到后端pod应用，但是后端pod的ip地址是一直在变化的，因此在后端pod前需要加一个service，这个service只是起到分组的作用，那么我们upstream只需要填写service地址即可。
+Ingress Controller 观察 Ingress、Service、EndpointSlice、Secret 等资源，将它们翻译为代理配置或云负载均衡配置。具体实现可以基于 Nginx、Traefik、HAProxy 等。Istio 的网关也属于应用层入口能力，不能把整个 Istio 归为“OSI 第六层代理”。
 
-- 简单理解就是封装了nginx/traefik的代理。
+以 ingress-nginx 为例，控制器维护 Nginx 配置并在需要时重新加载；调用者修改 Kubernetes 资源即可，不必进入每个 Pod 手工编辑 `nginx.conf`。不同控制器支持的注解与高级功能有差异，本文的 `nginx.ingress.kubernetes.io/*` 不能直接移植到其他实现。
 
-### Ingress Controller vs ingress
+### 规则和实现如何关联
 
-- 在**ingress**里定义多个映射规则，**ingress controller**监听这些规则，转化为反向代理配置，对外提供服务。
-- 核心概念：
-  - Ingress：k8s中的一个对象，定义请求是如何转发到svc的规则
-  - Ingress controller：具体实现反向代理和负载均衡的程序，解析ingress的规则，根据配置的规则进行转发。实现方式很多，比如可以用nginx等。nginx配置文件一改动，还需要手动reload一下才可以生效。但是如果用ingress-controller封装的nginx，在ingress维护配置，ingress创建好之后，会自动的把配置文件传到ingress-controller这个pod里，会自动进行reload，然后配置就生效了。
+Ingress 的 `spec.ingressClassName` 引用集群级的 IngressClass，由它的 `spec.controller` 标识对应实现。控制器按自身配置处理属于自己的规则。IngressClass 名称并不一定是 `nginx`，应先检查实际安装结果；本文普通实验统一使用 `nginx`，多控制器实验另用 `ngx-ds`。完整资源清单可保存为文件后用 `kubectl apply -f 文件名.yaml` 提交；标注为片段的内容需要合并到指定位置，不能单独 apply。
 
-- ingress提供了一个统一的路由规则资源，我们只需要维护ingress的规则就行，ingress controller自动翻译成对应的代理的配置文件（比如nginx的nginx.conf）。
+可以把这几个对象按职责连接起来：Ingress 定义路由，IngressClass 选择实现，控制器维护数据平面，Service 和 EndpointSlice 描述后端。配置更新是否生效，需要结合控制器事件、日志和实际代理配置确认。
 
-### Ingress代理pod的流程
+### 从部署顺序看资源依赖
 
 #### 流程
 
@@ -70,52 +69,72 @@ aliases:
 
 5. 创建Ingress https，测试通过https访问应用
 
-#### 数据流向
+#### 实际数据流向
 
 使用七层负载均衡调度器ingress controller时，当客户端访问kubernetes集群内部的应用时，数据包走向如下图流程所示：
 
 ![image-20231209111616791](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091116867.png)
 
 > [!warning] 注意
-> 上图其实能看出来，svc只是起到了分组的作用，ingress controller里面的nginx通过label直接找到了pod，流量不经过service直接到了pod上！
+> ingress-nginx 通常通过 Service 对应的后端记录获取 Pod IP，默认可以直接代理到这些地址，而不是先访问 ClusterIP。它并非仅凭标签绕过 Service；`service-upstream` 等配置还可能改变路径。其他控制器的数据路径需按实现确认。
 
-## 生产环境推荐架构
+## 入口高可用：先选择暴露方式
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172346336.png" alt="image-20250717234628958" style="zoom:50%;" />
 
-1. 在生产环境，建议找几个节点，至少2-3个，去独占部署ingress-controller。
+入口通常至少需要多个副本和跨节点部署，避免单个 Pod 或节点故障使所有应用不可达。上图是一种“前置负载均衡器 → 专用入口节点 → 应用后端”的架构。具体副本数应由容量和故障域决定，2–3 个节点只是常见起点。
 
-   - 独占的node打label(ingress=true)
+如果使用专用节点，可以打上 `ingress=true` 标签，再为入口 DaemonSet 配置 nodeSelector；也可以用 Deployment 配合反亲和性或拓扑分布约束。DaemonSet 并不是部署入口的唯一方式。
 
-   - daemonset打nodeSelector：
+~~~yaml
+nodeSelector:
+  kubernetes.io/os: linux
+  ingress: "true"
+~~~
 
-     ~~~yaml
-     nodeSelector:
-       kubernetes.io/os: linux
-       ingress: "true"
-     ~~~
+入口本身也要接收集群外的流量，常见方式各有约束：
 
-2. ingress-controller作为集群网络入口，也需要把自己暴露到集群外面：
+| 暴露方式 | 适合考虑的条件 | 需要验证的边界 |
+| --- | --- | --- |
+| LoadBalancer Service | 集群有受支持的云 LB 或裸机 LB 实现 | 健康检查、源 IP、跨节点转发和费用 |
+| NodePort Service | 前置 LB 可转发到节点端口，或用于实验 | 节点端口范围、防火墙、外部流量策略 |
+| hostNetwork | 希望代理直接绑定节点的 80/443 | 端口冲突、调度隔离、主机网络权限、DNS 策略 |
 
-   - 通过NodePort暴露controller是可以的，但是不推荐，因为多走一层service就多一层性能损耗。
-   - 推荐的做法是通过`hostNetwork: true`，controller直接在宿主机上监听80和443端口。性能是最好的。
-   - daemonset去部署controller，通过daemonset的nodeSelector去部署
+`hostNetwork: true` 可能减少部分转发步骤，但不能由此断言性能一定最好。它还会使同一节点上的端口竞争更直接，通常需 `dnsPolicy: ClusterFirstWithHostNet`。选型应根据当前受支持控制器和实际压测结果决定；对于已退役的 ingress-nginx，应先规划迁移。
 
-3. 前端的网关（F5、阿里云SLB、LVS、HAProxy），配置IP和upstream代理到这几个节点的80和443端口即可。这些网关服务都有健康检查机制，不需要再搞一个keepalived+VIP了。因为VIP同时只能绑在一个节点上，总是只有一个节点在高负载工作。不推荐这种架构。
+前置 F5、SLB、LVS 或 HAProxy 可以把请求分发给多个健康入口节点，入口域名在生产中通常解析到这个前置 LB。ExternalDNS 可按环境自动管理 DNS，但不是 Ingress 生效的必要条件。测试时可用 hosts 或 `curl --resolve` 指定目标，确保请求中的 Host 与规则一致。
 
-4. 在测试环境没有前端网关的时候，把ingress域名解析到任一个ingress-controller的节点IP即可（hosts文件手动加解析）。
+没有前置 LB 的裸机场景也可用 Keepalived 维护 VIP。单个 VIP 通常由一个节点持有，入口节点和前置转发层的容量与故障检测仍需独立评估；后面的完整实验用于说明这种架构，不能把它简单等同于多个后端节点都无法分担流量。
 
-5. 在生产环境，ingress配的域名要被解析成**前端网关的IP**，由前端网关转发到ingres-controller，再到pod。（这里就涉及到部署external-DNS把集群内的ingress域名通过公有云dns去解析。这样用户浏览器可以直接访问域名）
+## 创建最小可用的 HTTP 路由
 
-## Ingress资源
+### 准备后端和测试方式
 
-### yaml定义
+先确认已有控制器和 IngressClass。下面创建 `study-ingress` Namespace，以及后续示例使用的 `nginx` Deployment 和同名 Service。后续章节中的资源清单是独立演示，同名 Ingress 会覆盖之前配置，实验时一次应用一组；`auth.test.com`、`nginx.rewrite.com` 等域名也要指向同一个入口地址。
+
+~~~sh
+kubectl get ingressclass
+kubectl create namespace study-ingress
+kubectl create deployment nginx --image=nginx:stable -n study-ingress
+kubectl expose deployment nginx --port=80 --target-port=80 -n study-ingress
+kubectl get pods,svc -n study-ingress
+~~~
+
+`nginx:stable` 便于说明操作，复现实验应固定已验证的具体版本或摘要。取得入口地址后，可用如下方式同时指定 DNS 和 Host，无须先配置公共 DNS：
+
+~~~sh
+# 示例入口IP，请替换成自己的入口地址
+curl --resolve nginx.test.com:80:192.168.40.6 http://nginx.test.com/
+~~~
+
+### YAML 定义
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1 # k8s >= 1.22  必须  v1
 kind: Ingress
 metadata:
   name: nginx-ingress
+  namespace: study-ingress
 spec:
   ingressClassName: nginx # 指定该 Ingress 被哪个 Controller 解析
   rules:  # 定义路由匹配规则，可以配置多个
@@ -129,10 +148,11 @@ spec:
             name: nginx # 访问nginx.test.com/ 就会代理到这个service的80端口
             port:
               number: 80
-  tls: # https配置
-  - hosts:
-    - nginx.test.com
-    secretName: secret-nginx-test-com # 证书的secret存放
+  # HTTPS 在下一节配置证书后再添加以下字段
+  # tls:
+  # - hosts:
+  #   - nginx.test.com
+  #   secretName: ca-secret
 ~~~
 
 pathType：路径的匹配方式，目前有 ImplementationSpecific、Exact 和 Prefix 方式。
@@ -140,17 +160,13 @@ pathType：路径的匹配方式，目前有 ImplementationSpecific、Exact 和 
 - Exact：精确匹配，比如配置的 path 为/bar，那么/bar/将不能被路由；
 - Prefix：前缀匹配，基于以 / 分隔的URL路径。比如 path 为/abc，可以匹配到/abc/bbb等，比较常用的配置；
 - ImplementationSpecific：这种类型的路由匹配根据 Ingress Controller 来实现。
-  - 可以当做一个单独的类型，也可以当做 Prefix 和 Exact。这取决于controller的具体实现。大部分controller都是按照Prefix来做的。
-  - ImplementationSpecific 是 1.18 版本引入 Prefix 和 Exact 的默认配置。
+  - 具体行为由控制器确定，不能假定一定等同于 Prefix。常规路径优先明确使用 Prefix 或 Exact，正则表达式等实现特性再按控制器要求配置。
 
-### 配置更改
+### 全局配置与单条路由配置
 
-对于ingress-nginx：
+对于 ingress-nginx，控制器引用的 ConfigMap 通常影响它管理的全部 Ingress，见[ConfigMap 配置](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)；Ingress 上的注解则配置相应路由能力，见[Annotations 说明](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/)。部分配置会按 host 合并，因此不能把不同 Ingress 资源视为绝对隔离的配置边界。
 
-- 更改configMap是全局的ingress更改：[ConfigMap - Ingress-Nginx Controller](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
-- 更改某个ingress的annotations是仅对这一个ingress生效：[Annotations - Ingress-Nginx Controller](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/)
-
-### 特殊配置-不配域名发布服务
+### 不配置域名，仅按路径发布
 
 有些时候可能因为公司确实不支持域名或者内部dns解析，但是还是需要一个统一的入口，可以不配域名，只配path，通过controller IP+path来访问：
 
@@ -159,6 +175,7 @@ apiVersion: networking.k8s.io/v1 # k8s >= 1.22  必须  v1
 kind: Ingress
 metadata:
   name: nginx-ingress-no-host
+  namespace: study-ingress
 spec:
   ingressClassName: nginx # 指定该 Ingress 被哪个 Controller 解析
   rules:  # 定义路由匹配规则，可以配置多个
@@ -173,18 +190,22 @@ spec:
               number: 80
 ~~~
 
-只要域名到了controller，符合path /no-host，就能给转发到后端pod
+不设置 host 时，这条规则可匹配到达该入口且路径符合 `/no-host` 的请求，不要求某个特定域名。仍需确保后端本身能处理这个路径；Ingress 不会自动去掉 `/no-host` 前缀。
 
-### 通过https发布服务
+## 添加 TLS、认证与应用层代理能力
 
-一般情况下https证书是要绑定到前端LB网关上，后面到ingress-pod走80端口就行。有些情况下也是需要把证书绑定到ingress-controller上。
+最小 HTTP 路由通了以后，再逐项加入额外能力。每次修改后先确认清单被控制器接受，再验证实际响应；控制器注解无法替代后端本身的认证、会话或协议实现。
 
-由于我们是学习环境，并没有权威证书，所以需要使用 OpenSSL 生成一个测试证书。如果是生产环境，证书为在第三方公司购买的证书，无需自行生成。
+### 通过 HTTPS 发布服务
+
+TLS 可以在前置 LB 终止，也可以在入口控制器终止，必要时还可加密入口到后端的链路。应按信任边界设计，不能假设“LB 后面永远走明文即可”。这里演示控制器终止 TLS：证书 Secret 与 Ingress 放在同一 Namespace，证书名称覆盖访问域名。
+
+实验使用带 Subject Alternative Name（SAN）的自签证书，浏览器不会默认信任它。生产证书可由受信任的公共或企业 CA 签发，也可以采用自动签发与续期方案，并非必须购买。
 
 生成证书：
 
 ~~~sh
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=nginx.test.com"
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=nginx.test.com" -addext "subjectAltName=DNS:nginx.test.com"
 kubectl create secret tls ca-secret --cert=tls.crt --key=tls.key  -n study-ingress
 ~~~
 
@@ -203,12 +224,12 @@ spec:
     http:
       paths:
       - backend:
-        service:
-          name: nginx
-          port:
-            number: 80
-    path: /
-    pathType: ImplementationSpecific
+          service:
+            name: nginx
+            port:
+              number: 80
+        path: /
+        pathType: ImplementationSpecific
   tls:
     - hosts:
       - nginx.test.com
@@ -217,10 +238,10 @@ spec:
 
 ### 域名添加用户名密码认证
 
-有些开源工具本身不提供密码认证，如果暴露出去会有很大风险，对于这类工具可以使用Nginx 的 basic-auth 设置密码访问，具体方法如下，由于需要使用 htpasswd 工具，所以需要安装httpd：
+有些开源工具本身不提供密码认证，如果暴露出去会有很大风险，可以在入口增加 Basic Auth。它通过用户名和密码校验限制访问，应配合 HTTPS 使用。RPM 系实验环境可安装提供 htpasswd 的工具包：
 
 ~~~sh
-yum install httpd -y
+yum install httpd-tools -y
 ~~~
 
 使用 htpasswd 创建 foo 用户的密码：
@@ -231,7 +252,7 @@ htpasswd -c auth foo
 #Re-type new password: 
 #Adding password for user foo
 cat auth 
-#foo:sssssssss
+# foo:<password-hash>
 ~~~
 
 基于之前创建的密码文件创建 Secret：
@@ -256,11 +277,11 @@ spec:
   ingressClassName: nginx
   rules:
   - host: auth.test.com
-    path: /
-    pathType: ImplementationSpecific
     http:
       paths:
-      - backend:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
           service:
             name: nginx 
             port:
@@ -279,7 +300,7 @@ kubectl scale deploy nginx --replicas=3 -n study-ingress
 
 未开启会话保持，同一个主机访问可以看到流量会在三个副本中都有。
 
-通过以下配置，即可看到流量只会进入到一个 Pod：
+通过以下配置，支持并携带同一会话 Cookie 的客户端会倾向于访问同一 Pod；后端不可用或 Cookie 失效时仍可能重新选择：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -300,11 +321,11 @@ spec:
   ingressClassName: nginx
   rules: 
   - host: nginx.test.com
-    path: /
-    pathType: ImplementationSpecific
     http:
       paths:
-      - backend:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
           service:
             name: nginx
             port:
@@ -313,13 +334,15 @@ spec:
 
 同时浏览器的 request headers 会添加一个 Cookie 的属性。
 
-如果需要流量重新分配，更改 `nginx.ingress.kubernetes.io/affinity-mode: balanced` 即可。再次扩容后，就会发现流量会重新分配到其他节点。（更推荐用persistent模式，）
+如果需要流量重新分配，更改 `nginx.ingress.kubernetes.io/affinity-mode: balanced` 即可。再次扩容后，就会发现流量会重新分配到其他节点。（persistent 保持已有会话，balanced 有助于扩容后分配流量，需按业务选择）
 
 详细的会话保持配置：[Sticky Sessions - Ingress-Nginx Controller](https://kubernetes.github.io/ingress-nginx/examples/affinity/cookie/)
 
 ### 配置流式返回 SSE（代理大模型服务）
 
-如果后端服务需要持续的输出数据，或者需要长连接，此时需要更改请求头升级链接为长连接：
+本节 `nginx` Service 只表示后端位置，实际实验需换成已实现 SSE 的应用 Service；普通 Nginx 欢迎页不会因为增加注解就变成流式接口。
+
+SSE（Server-Sent Events）通过普通 HTTP 响应持续发送事件，不需要 WebSocket 的协议升级。对于大模型逐段返回等场景，先确认后端使用 `text/event-stream` 并及时 flush，再关闭代理响应缓冲，设置与业务心跳间隔匹配的读超时。下面的超时值用于实验，不是统一的生产推荐：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -330,28 +353,28 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
-    # snippet用于配置一些ingress annotation不支持或者复杂的参数，比如配置请求头，或者逻辑控制等。里面直接写nginx原生支持的参数。
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Updrade $http_updrade;
-      proxy_set_header Connection 'upgrade';
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
 spec:
   ingressClassName: nginx
   rules: 
   - host: nginx.test.com
-    path: /
-    pathType: ImplementationSpecific
     http:
       paths:
-      - backend:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
           service:
             name: nginx
             port:
               number: 80
 ~~~
 
-### 域名重定向Redirect
+可以用 `curl -N` 观察数据是否逐段到达；`-N` 关闭 curl 自身的输出缓冲。如果仍是整段出现，需继续检查应用、前置 LB、压缩或其他代理层。WebSocket 则使用 `Upgrade`/`Connection` 握手，ingress-nginx 对其有专门支持，不应把 Upgrade 头强加给 SSE。有关超时和缓冲的控制器行为见[注解说明](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#custom-timeouts)。
 
-在使用 Nginx 作为代理服务器时，Redirect 可用于域名的重定向，比如访问 old.com 被重定向到 new.com。Ingress 也可以实现 Redirect 功能，接下来用 nginx.redirect.com 作为旧域名，baidu.com 作为新域名进行演示：
+### 域名重定向 Redirect
+
+在使用 Nginx 作为代理服务器时，Redirect 可用于域名的重定向，比如访问 old.com 被重定向到 new.com。Ingress 也可以实现 Redirect 功能，接下来用 nginx.test.com 作为旧域名，baidu.com 作为新域名进行演示：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -361,27 +384,27 @@ metadata:
   namespace: study-ingress
   annotations:
     nginx.ingress.kubernetes.io/permanent-redirect: https://www.baidu.com
-    nginx.ingress.kubernetes.io/permanent-redirect-code: "308" # 301、307、308都可以，都是重定向状态码。
+    nginx.ingress.kubernetes.io/permanent-redirect-code: "308" # 本例为永久重定向；临时重定向应使用对应annotation
 spec:
   ingressClassName: nginx
   rules: 
   - host: nginx.test.com
-    path: /
-    pathType: ImplementationSpecific
     http:
       paths:
-      - backend:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
           service:
             name: nginx
             port:
               number: 80
 ~~~
 
-使用 curl -I nginx.redirect.com，可以看到 308
+使用 `curl -I http://nginx.test.com` 可检查响应状态及 `Location`。本例应返回 308；重定向目标不再经过此处的后端 Service。
 
-### 访问地址重写Rewrite
+### 访问地址重写 Rewrite
 
-对于一个大的项目，前后端分离，后端微服务有很多，**共用同一个域名比如nginx.test.com**。用户访问是通过path路径去区分访问，比如/api-a到用户中心/api-b到支付中心等。但是后端去开发的时候，并不是按照/api-a、/api-b等接口去开发的，可能留的接口都是/api。这样访问怎么找到每一个微服务？
+对于一个大的项目，前后端分离，后端微服务有很多，共用同一个域名比如nginx.test.com。用户访问是通过path路径去区分访问，比如/api-a到用户中心/api-b到支付中心等。但是后端去开发的时候，并不是按照/api-a、/api-b等接口去开发的，可能留的接口都是/api。这样访问怎么找到每一个微服务？
 
 我们直接去访问/api-a肯定是不行的，因为后端服务根本没有这个名字的接口。我们可以自定义/api-a这个路径，重写为 /api (或者比如开发留的接口就是/，那就重写为/) 就能访问到后端的服务了。如下图：
 
@@ -390,7 +413,7 @@ spec:
 创建一个应用模拟后端服务：
 
 ~~~sh
-kubectl create deploy backend-api --image=registry.cnbeijing.aliyuncs.com/dotbalo/nginx:backend-api -n study-ingress
+kubectl create deploy backend-api --image=registry.cn-beijing.aliyuncs.com/dotbalo/nginx:backend-api -n study-ingress
 ~~~
 
 创建 Service 暴露该应用
@@ -418,8 +441,8 @@ spec:
             name: backend-api
             port:
               number: 80
-    path: /api-a
-    pathType: ImplementationSpecific
+        path: /api-a
+        pathType: ImplementationSpecific
 ~~~
 
 这个示例服务的后端接口留的是 /，而不是/api-a，现在我们直接访问/api-a，浏览器访问会报404。因为pod里面的容器根本没有/api-a接口。人家留的是/接口。
@@ -436,6 +459,7 @@ metadata:
     # 告诉Ingress Controller重写请求的目标路径。
     # $2 是一个正则表达式捕获组的引用。匹配到第二个捕获组。
     nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -447,11 +471,11 @@ spec:
             name: backend-api
             port:
               number: 80
-    path: /api-a(/|$)(.*)
-    # /api-a - 匹配以 "/api-a" 开头的路径
-    # (/|$) - 第一个捕获组：匹配 "/" 或字符串结尾
-	# (.*) - 第二个捕获组：匹配后面的任意字符
-    pathType: ImplementationSpecific
+        path: /api-a(/|$)(.*)
+        # /api-a - 匹配以 "/api-a" 开头的路径
+        # (/|$) - 第一个捕获组：匹配 "/" 或字符串结尾
+        # (.*) - 第二个捕获组：匹配后面的任意字符
+        pathType: ImplementationSpecific
 ~~~
 
 | 原始请求路径        | 匹配结果 | 重写后路径    |
@@ -461,12 +485,16 @@ spec:
 | `/api-a`            | ✅ 匹配   | `/`           |
 | `/api-b/test`       | ❌ 不匹配 | -             |
 
-再次访问 nginx.test.com/api-a 即可访问到后端服务。
+再次访问 `http://nginx.rewrite.com/api-a`，后端收到的路径应为 `/`。
 
 > [!info] 说明
 >
 > - 如果希望把/api-a重写为/api，annotation就写`nginx.ingress.kubernetes.io/rewrite-target: /api/$2`
-> - 这个ingress里面配了rewrite，里面所有的host都会被重写。所以需要rewrite的不需要rewrite的ingress要分开创建ingress.yaml
+> - 注解附着在 Ingress 资源上。同一 host 中只要使用 use-regex 或 rewrite-target，ingress-nginx 可能对该 host 的其他路径也采用正则匹配；把资源拆开并不必然隔离这种影响。需要同时检查同一 host 下所有 Ingress 的路径顺序和匹配结果，见[正则路径说明](https://kubernetes.github.io/ingress-nginx/user-guide/ingress-path-matching/)。
+
+## 控制访问范围与请求行为
+
+对外入口既要找到正确后端，也要识别请求来源、限制异常流量。以下控制基于入口实际看到的请求信息；前置 LB 的转发头和源地址处理应先确认。
 
 ### 限制访问速率
 
@@ -474,13 +502,13 @@ spec:
 
 首先没有加速率限制，使用 ab 进行访问，Failed 为 0：
 
-~~~yaml
-ab -c 10 -n 100 http://auth.test.com/ | grep requests
+~~~sh
+ab -A foo:YOUR_LAB_PASSWORD -c 10 -n 100 http://auth.test.com/ | grep requests
 # Complete requests: 100
 # Failed requests: 0
 ~~~
 
-添加速率限制，限制只能有一个连接，只需要添加 `nginx.ingress.kubernetes.io/limitconnections` 为 1 即可：
+添加速率限制，限制只能有一个连接，只需要添加 `nginx.ingress.kubernetes.io/limit-connections` 为 1 即可：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -494,7 +522,7 @@ metadata:
     nginx.ingress.kubernetes.io/auth-type: basic
     nginx.ingress.kubernetes.io/limit-connections: "1"
 spec:
-  ingressClassName: ingress-nginx
+  ingressClassName: nginx
   rules:
   - host: auth.test.com
     http:
@@ -504,36 +532,36 @@ spec:
             name: backend-api
             port:
               number: 80
-    path: /
-    pathType: ImplementationSpecific
+        path: /
+        pathType: ImplementationSpecific
 ~~~
 
-再次使用 ab 测试，Failed 为 67:
+再次使用 ab 测试，下面是一组示例输出。失败数受突发阈值、时序和副本数影响，不会固定为 67，还应检查响应状态码：
 
 ~~~sh
-ab -c 10 -n 100 http://auth.test.com/ | grep requests:
+ab -A foo:YOUR_LAB_PASSWORD -c 10 -n 100 http://auth.test.com/ | grep requests:
 # Complete requests: 100
 # Failed requests: 67
 ~~~
 
 还有很多其它方面的限制，常用的配置如下：
 
-~~~sh
-# 限制每秒的连接，单个 IP：
-nginx.ingress.kubernetes.io/limit-rps:
-# 限制每分钟的连接，单个 IP：
-nginx.ingress.kubernetes.io/limit-rpm:
-# 限制客户端每秒传输的字节数，单位为 K，需要开启 proxy-buffering：
-nginx.ingress.kubernetes.io/proxy-buffering: "on"
-nginx.ingress.kubernetes.io/limit-rate:
-
-# 速率限制白名单
-nginx.ingress.kubernetes.io/limit-whitelist:
+~~~yaml
+# Ingress.metadata.annotations片段，示例值需按业务调整
+annotations:
+  nginx.ingress.kubernetes.io/limit-rps: "10"
+  # 如需按分钟限制，可改用以下配置
+  # nginx.ingress.kubernetes.io/limit-rpm: "600"
+  nginx.ingress.kubernetes.io/proxy-buffering: "on"
+  nginx.ingress.kubernetes.io/limit-rate: "100"
+  nginx.ingress.kubernetes.io/limit-whitelist: "192.0.2.0/24"
 ~~~
+
+限流按控制器副本执行，不是集群全局计数；多个副本或 HPA 会影响总体额度。`limit-connections` 限制并发连接，`limit-rps/rpm` 限制请求速率，`limit-rate` 限制每条连接的响应传输速率。还要确认控制器看到的源 IP，前置 LB 或不可信的转发头可能改变识别结果，见[官方限流说明](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#rate-limiting)。Basic Auth 应搭配 HTTPS，示例密码不要写入正式脚本或命令历史。
 
 ### 黑名单配置
 
-**局部黑名单：**只针对这一个ingress的域名
+路由级黑名单用于相应 Ingress 的访问控制，注意同一 host 下的合并行为。
 
 使用 `nginx.ingress.kubernetes.io/denylist-source-range` 添加黑名单，支持 IP、网段，多个黑名单逗号分隔：
 
@@ -549,7 +577,7 @@ metadata:
     nginx.ingress.kubernetes.io/auth-type: basic
     nginx.ingress.kubernetes.io/denylist-source-range: 192.168.181.134,10.0.0.0/24,172.10.0.1
 spec:
-  ingressClassName: ingress-nginx
+  ingressClassName: nginx
   rules:
   - host: auth.test.com
     http:
@@ -559,19 +587,23 @@ spec:
             name: backend-api
             port:
               number: 80
-    path: /
-    pathType: ImplementationSpecific
+        path: /
+        pathType: ImplementationSpecific
 ~~~
 
-**全局黑名单：**所有controller代理的ingress都生效
+全局黑名单：所有controller代理的ingress都生效
 
-Ingress-nginx 支持全局的黑白名单（**全局白名单慎用**），只需要在 ingress nginx 的配置文件中添加即可，添加后无需重启Controller，加一个全局黑名单：
+Ingress-nginx 支持全局的黑白名单（全局白名单慎用），只需要在 ingress nginx 的配置文件中添加即可，添加后无需重启Controller，加一个全局黑名单：
+
+~~~sh
+kubectl edit cm ingress-nginx-controller -n ingress-nginx
+~~~
+
+在该 ConfigMap 的 `data` 中设置：
 
 ~~~yaml
-kubectl edit cm ingress-nginx-controller -n ingress-nginx
 data:
-  allow-snippet-annotations: "true" 
-  denylist-source-range: 192.168.181.134
+  denylist-source-range: "192.168.181.134"
 ~~~
 
 ### 白名单配置
@@ -590,7 +622,7 @@ metadata:
     nginx.ingress.kubernetes.io/auth-type: basic
     nginx.ingress.kubernetes.io/whitelist-source-range: 192.168.181.141
 spec:
-  ingressClassName: ingress-nginx
+  ingressClassName: nginx
   rules:
   - host: auth.test.com
     http:
@@ -600,18 +632,15 @@ spec:
             name: backend-api
             port:
               number: 80
-    path: /
-    pathType: ImplementationSpecific
+        path: /
+        pathType: ImplementationSpecific
 ~~~
 
 ### 自定义错误页
 
 每个项目在对外发布时，难免不了会有一些未知的错误，比如 404/502/503 等，为了给客户更加友好的提示，可以使用 default backend 自定义错误页。
 
-需要提前部署一个自定义页面的pod来提供自定义页面：
-
-- 官方文档提供了配置说明：[Custom Errors - Ingress-Nginx Controller](https://kubernetes.github.io/ingress-nginx/examples/customization/custom-errors/)
-- yaml文件在这里：[ingress-nginx/docs/examples/customization/custom-errors/custom-default-backend.yaml at main · kubernetes/ingress-nginx](https://github.com/kubernetes/ingress-nginx/blob/main/docs/examples/customization/custom-errors/custom-default-backend.yaml)
+先部署一个提供错误页的后端，控制器再把指定错误交给它处理。行为见[Custom Errors 说明](https://kubernetes.github.io/ingress-nginx/examples/customization/custom-errors/)，完整后端清单可从[官方示例](https://github.com/kubernetes/ingress-nginx/blob/main/docs/examples/customization/custom-errors/custom-default-backend.yaml)取得；下载后保存为 `custom-default-backend.yaml` 并核对镜像。
 
 部署default backend：
 
@@ -623,39 +652,64 @@ kubectl get po -n ingress-nginx
 nginx-errors-7486ff48d8-zwz6t    1/1 Running 0 6s
 ~~~
 
-按照yaml文件的说明，把自定义的错误页面挂载进去：
+先创建错误页面 ConfigMap，再将 volumeMounts/volumes 合并到后端 Deployment 的对应位置，以下挂载部分是片段：
 
 ~~~yaml
-        # Mounting custom error page from configMap
-        # volumeMounts:
-        # - name: custom_error_pages
-        #   mountPath: /www
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-error-pages
+  namespace: ingress-nginx
+data:
+  "404": "<html><body><h1>404: Page not found</h1></body></html>"
+  "502": "<html><body><h1>502: Bad gateway</h1></body></html>"
+  "503": "<html><body><h1>503: Service unavailable</h1></body></html>"
+~~~
 
-      # Mounting custom error page from configMap
-      # volumes:
-      # - name: custom_error_pages
-      #   configMap:
-      #     name: custom_error_pages
-      #     items:
-      #     - key: "404"
-      #       path: "404.html"
-      #     - key: "503"
-      #       path: "503.html"
+~~~yaml
+# 位于 nginx-error-server 容器下
+volumeMounts:
+- name: custom-error-pages
+  mountPath: /www
+  readOnly: true
+# 位于 Pod spec 下，与 containers 同级
+volumes:
+- name: custom-error-pages
+  configMap:
+    name: custom-error-pages
+    items:
+    - key: "404"
+      path: "404.html"
+    - key: "502"
+      path: "502.html"
+    - key: "503"
+      path: "503.html"
 ~~~
 
 更改 ingress-nginx 的启动参数，支持自定义错误页：
 
 ~~~sh
-kubectl edit ds -n ingress-nginx
-# 在 -args: 下面添加启动参数
+# 若实际用DaemonSet部署，应改为对应的daemonset名称
+kubectl edit deployment ingress-nginx-controller -n ingress-nginx
+~~~
+
+在控制器容器的 args 中添加：
+
+~~~yaml
 - --default-backend-service=ingress-nginx/nginx-errors
 ~~~
 
-配置 ConfigMap，定义哪些错误码被重定向到自定义错误页：
+配置 ConfigMap，定义哪些错误码交给自定义错误后端处理：
 
 ~~~sh
 kubectl edit cm ingress-nginx-controller -n ingress-nginx
-# custom-http-errors: "404,502,503"
+~~~
+
+在 data 中设置：
+
+~~~yaml
+data:
+  custom-http-errors: "404,502,503"
 ~~~
 
 更新完成以后访问一个不存在的页面，比如之前定义的 nginx.test.com。访问一个不存在的页面 123，就会返回 Error Server 中的页面。
@@ -664,9 +718,18 @@ kubectl edit cm ingress-nginx-controller -n ingress-nginx
 
 比如手机端用户访问，返回手机端页面；电脑端用户访问返回电脑端页面。
 
-需要通过snippet配置来写nginx原生语法来实现。
+下面演示按 User-Agent 跳转移动站点的历史 snippet 方式。User-Agent 可以伪造，不应将它用于安全身份判断。Snippet 可注入原生 Nginx 配置，只有可信的 Ingress 作者才能使用；控制器通常默认关闭 snippet，风险等级也可能阻止配置，不能为跑通实验就在共享生产入口全局放开。安全约束见[allow-snippet-annotations](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#allow-snippet-annotations)。更常见的做法是由应用处理站点适配或在受支持网关中实现相应规则。
 
-先创建一个移动端的ingress：
+先准备移动端和桌面端后端。这里用普通 Nginx 页面演示域名跳转，实际服务可换成自己的应用：
+
+~~~sh
+kubectl create deployment phone --image=nginx:stable -n study-ingress
+kubectl expose deployment phone --port=80 -n study-ingress
+kubectl create deployment laptop --image=nginx:stable -n study-ingress
+kubectl expose deployment laptop --port=80 -n study-ingress
+~~~
+
+创建移动站点的 Ingress：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -675,7 +738,7 @@ metadata:
   name: phone
   namespace: study-ingress
 spec:
-  ingressClassName: ingress-nginx
+  ingressClassName: nginx
   rules:
   - host: m.test.com
     http:
@@ -685,11 +748,11 @@ spec:
             name: phone
             port:
               number: 80
-    path: /
-    pathType: ImplementationSpecific
+        path: /
+        pathType: ImplementationSpecific
 ~~~
 
-电脑端的ingress去检测如果是移动端发来的请求久重定向到移动端的域名：
+桌面站点的 Ingress 检测 User-Agent，匹配移动端时重定向到 `m.test.com`：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -707,7 +770,7 @@ metadata:
             return 301 http://m.test.com;
         }
 spec:
-  ingressClassName: ingress-nginx
+  ingressClassName: nginx
   rules:
   - host: test.com
     http:
@@ -717,11 +780,11 @@ spec:
             name: laptop
             port:
               number: 80
-    path: /
-    pathType: ImplementationSpecific
+        path: /
+        pathType: ImplementationSpecific
 ~~~
 
-### 灰度/金丝雀/蓝绿发布
+## 先用权重理解灰度发布
 
 - 灰度发布：上线了新版本v2代替v1，但是不会直接把全部流量切到v2。先切10%流量到v2，验证一下；再切50%流量；再切100%到v2。
 
@@ -730,11 +793,121 @@ spec:
 > [!tip] 提示
 > 灰度发布里面可以通过请求头设置一部分测试用户的流量可以进来，是更加稳妥的做法。
 
-v2的灰度版本如何设置，才能获取到一小部分比例的流量：创建 v2 版本的 Ingress 时，需要添加两个注释:
+为了观察权重，先准备返回不同内容的 v1/v2 后端，以及指向 v1 的主 Ingress；它们与后面的完整 OpenResty 实验是两种独立演示。以下清单让两个后端分别返回 `Canary v1` 和 `Canary v2`，避免只有注解却没有可比较服务：
 
-1. `nginx.ingress.kubernetes.io/canary`，表明是灰度环境，只接受部分流量
+~~~yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: canary-pages
+  namespace: study-ingress
+data:
+  v1.html: "Canary v1\n"
+  v2.html: "Canary v2\n"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canary-v1
+  namespace: study-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: canary-v1
+  template:
+    metadata:
+      labels:
+        app: canary-v1
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:stable
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: pages
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: v1.html
+      volumes:
+      - name: pages
+        configMap:
+          name: canary-pages
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canary-v2
+  namespace: study-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: canary-v2
+  template:
+    metadata:
+      labels:
+        app: canary-v2
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:stable
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: pages
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: v2.html
+      volumes:
+      - name: pages
+        configMap:
+          name: canary-pages
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-v1
+  namespace: study-ingress
+spec:
+  selector:
+    app: canary-v1
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-v2
+  namespace: study-ingress
+spec:
+  selector:
+    app: canary-v2
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-main
+  namespace: study-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: canary.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: canary-v1
+            port:
+              number: 80
+~~~
 
-2. `nginx.ingress.kubernetes.io/canary-weight` 表明切多少流量到该环境，本示例为10%
+再创建相同 host/path、指向 v2 的 Canary Ingress。`canary: "true"` 标识这是分流规则，`canary-weight: "10"` 指定约 10% 的随机权重；正常验证期间保留主 Ingress：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -746,7 +919,7 @@ metadata:
     nginx.ingress.kubernetes.io/canary: "true"
     nginx.ingress.kubernetes.io/canary-weight: "10"
 spec:
-  ingressClassName: ingress-nginx
+  ingressClassName: nginx
   rules:
   - host: canary.com # 用的是和v1同一个域名，但是后端svc是v2的svc。标注了是灰度环境，仅接收部分流量。
     http:
@@ -756,41 +929,43 @@ spec:
             name: canary-v2
             port:
               number: 80
-    path: /
-    pathType: ImplementationSpecific
+        path: /
+        pathType: Prefix
 ~~~
 
-此时通过 nginx.ingress.kubernetes.io/canary-weight: "10"设置的权重是 10，即 v1:v2 为 9:1。
+在没有 Header/Cookie 优先规则且使用默认总权重时，权重 10 对应期望的 v1:v2 约 9:1；少量请求会有随机波动。
 
 可以用ruby脚本测试流量分布：
 
 ~~~ruby
-# vim test-canary.rb 
+# 保存为 test-canary.rb
 counts = Hash.new(0)
 
 100.times do
-  output = `curl -s canary.com | grep 'Canary' | awk '{print $2}' | awk -
-F"<" '{print $1}'`
-  counts[output.strip.split.last] += 1
-
+  output = `curl -fsS http://canary.com/`
+  version = output[/Canary (v[12])/, 1]
+  counts[version || "unexpected"] += 1
 end
 
 puts counts
+~~~
 
-# 安装 ruby 并测试，可以看到大致的比例是 9:1
+安装并运行 Ruby（RPM 系实验环境），DNS 或 hosts 需要先指向入口。示例输出仅用于说明抽样波动，不能要求每次恰好 90:10：
+
+~~~sh
 yum install ruby -y
-ruby test-canary.rb 
+ruby test-canary.rb
 # {"v1"=>90, "v2"=>10}
-ruby test-canary.rb 
+ruby test-canary.rb
 # {"v1"=>92, "v2"=>8}
-ruby test-canary.rb 
+ruby test-canary.rb
 # {"v1"=>91, "v2"=>9}
 ~~~
 
 实际使用过程中，v2流量全切过去发现没问题，有两种策略：
 
-1. 把v1也更新上去，把流量再逐步切回v1。这样v1还是生产环境，v2还是canary环境，下次更新还是继续这样的操作。
-2. v1不动，就等着下次发版发到v1上，流量再从v2灰度切回到v1。【推荐】因为第一种把流量切回去可能又会产生无法预知的问题。既然流量已经过去了就保持在v2就行了。
+1. 将原主版本工作负载更新为已验证版本，再按既定发布流程恢复主路由。这会产生另一轮发布操作，需要继续验证。
+2. 保持当前承载流量的版本，把另一组工作负载作为下一次发布目标。采用这种交替方式时，要同步维护主路由与 canary 注解，不能让旧权重规则意外参与下一轮分流。
 
 ## 常见问题
 
@@ -805,7 +980,7 @@ ruby test-canary.rb
 
 ### 413 Request Entity Too Large
 
-有时候需要上传一些大文件给程序，但是 nginx 默认允许的最大文件大小只有 8M，不足以满足生产最大上传需求，此时可以通过 `nginx.ingress.kubernetes.io/proxy-body-size` 参数进行更改（也可以在 ConfigMap 中全局添加）。
+上传文件返回 413 时，需要检查入口和后端各层的请求体大小限制。ingress-nginx 的 proxy-body-size 文档默认值为 1m，不是固定 8M；实际值还可能被全局 ConfigMap 或注解覆盖，此时可以通过 `nginx.ingress.kubernetes.io/proxy-body-size` 参数进行更改（也可以在 ConfigMap 中全局添加）。
 
 一般建议在annotation中给每个ingress单独配置。
 
@@ -821,7 +996,7 @@ ruby test-canary.rb
 
 504 一般是代理的服务处理请求的时间过长，导致 Nginx 等待超时，此时需要确认服务的处理时长，或者查看服务是否有问题。或者可能是网络不通（比如代理了外部的地址）。
 
-也可以根据调整超时时间：（[Ingress Nginx超时配置](https://kubernetes.github.io/ingress-nginx/userguide/nginx-configuration/annotations/#custom-timeouts)）
+也可以根据调整超时时间：（[Ingress Nginx超时配置](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#custom-timeouts)）
 
 ~~~yaml
 annotations:
@@ -836,113 +1011,138 @@ annotations:
 
 如果浏览器有如下报错，说明被跨域给拦截了，可以添加跨域配置。
 
-官方文档：[Ingress Nginx CORS配置](https://kubernetes.github.io/ingress-nginx/user-guide/nginxconfiguration/annotations/#enable-cors)
+官方文档：[Ingress Nginx CORS配置](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors)
 
-应该是去跨到别人那里的域名的ingress上添加允许跨域配置。
+CORS 是浏览器对响应施加的访问规则。需要由被请求的 API 服务或它的入口返回允许来源，页面一侧的 Ingress 无法替不受控制的第三方服务授权。
 
 ~~~yaml
 annotations:
   # 允许跨域的请求方法
   nginx.ingress.kubernetes.io/enable-cors: "true"
-  # 允许携带的请求头
+  # 允许的方法
   nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS, DELETE"
+  # 允许携带的请求头
   nginx.ingress.kubernetes.io/cors-allow-headers: "X-Forwarded-For, Xapp123-XPTO"
   # 允许跨域的域名。意思是允许哪个域名跨到你这里来
-  nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+  nginx.ingress.kubernetes.io/cors-allow-origin: "https://frontend.example.com"
 ~~~
 
-## 集群中搭建多套ingress-controller
+使用 Cookie 或其他凭据时，应明确允许的 Origin，并检查 `cors-allow-credentials`、预检请求方法和请求头；CORS 放行不能替代 API 认证和授权。
 
-- ingress可以简单理解为service的service，他通过独立的ingress对象来制定请求转发的规则，把请求路由到一个或多个service中。这样就把服务与请求规则解耦了，可以从业务维度统一考虑业务的暴露，而不用为每个service单独考虑。
+## 集群中部署多套控制器
 
-- 为了满足多租户场景，需要在k8s集群部署多个ingress-controller，给不同用户不同环境使用。
+同一集群可以用不同控制器实例分别承接内网、外网或不同团队的入口。IngressClass 负责规则归属，但多实例本身不会自动实现完整的租户安全隔离。
 
-  主要参数设置：
+下面以历史 ingress-nginx 实例演示 class、controller-class 和 leader election 标识的配合。它们的唯一性应在同一集群内规划。
 
-  ~~~yaml
-  containers:
-    - name: nginx-ingress-controller
-      image: registry.cn-hangzhou.aliyuncs.com/google_containers/nginx-ingress-controller:v1.1.0
-      args:
-      - /nginx-ingress-controller
-      - --ingress-class=ngx-ds
-  #注意：--ingress-class设置该Ingress Controller可监听的目标Ingress Class标识；
-  #注意：同一个集群中不同套Ingress Controller监听的Ingress Class标识必须唯一，且不能设置为nginx关键字（其是集群默认Ingress Controller的监听标识）
-  ~~~
+主要启动参数片段：
 
-- 创建ingress规则的时候，指定ingress class
+~~~yaml
+containers:
+  - name: nginx-ingress-controller
+    image: registry.cn-hangzhou.aliyuncs.com/google_containers/nginx-ingress-controller:v1.1.0
+    args:
+    - /nginx-ingress-controller
+    - --ingress-class=ngx-ds
+    - --controller-class=example.com/ngx-ds
+    - --election-id=ngx-ds-leader
+#注意：--ingress-class设置该Ingress Controller可监听的目标Ingress Class标识；
+# 同集群不同实例使用不同的class及controller标识；nginx不是保留关键字
+# 以下参数还应与对应IngressClass.spec.controller保持一致
+~~~
 
-  ~~~yaml
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    name: ingress-myapp
-    namespace: default
-  spec:
-    ingressClassName: ngx-ds
-    rules:
-    - host: tomcat.lucky.com
-      http:
-        paths:
-        - path: /
-          pathType:  Prefix
-          backend:
-           service:
-             name: tomcat
-             port:
-              number: 8080
-  ~~~
 
-## ingress-nginx高并发优化
+为该实例创建 IngressClass，再由业务 Ingress 引用。实际 Deployment/DaemonSet、RBAC、ConfigMap 和准入 webhook 的名称也需隔离，不能仅改一个启动参数：
 
-1. 大量请求涌入导致负载过高，影响请求的响应速度和稳定性。
-2. 由于大量请求需要处理，可能会导致nginx-ingress-controller的资源（CPU、内存等）耗尽，从而导
-   致服务崩溃。
+~~~yaml
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: ngx-ds
+spec:
+  controller: example.com/ngx-ds
+~~~
 
-3. 高并发场景下的负载均衡器需要快速且准确地将请求分配给后端服务，否则会影响响应速度和服务可用性
+创建 Ingress 规则时指定此 class：
 
-因此，需要对nginx-ingress-controller进行优化以提高其处理高并发请求的能力:
+~~~yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-myapp
+  namespace: default
+spec:
+  ingressClassName: ngx-ds
+  rules:
+  - host: tomcat.lucky.com
+    http:
+      paths:
+      - path: /
+        pathType:  Prefix
+        backend:
+         service:
+           name: tomcat
+           port:
+            number: 8080
+~~~
 
-1. 修改ConfigMap，调整worker进程数和每个进程的最大连接数来优化性能。
+## 存量 ingress-nginx 的性能排查与参数实验
 
-~~~sh
-#可以在nginx-ingress-controller的ConfigMap中增加“worker-processes”和“worker-connections”字段，分别表示worker进程数和每个进程的最大连接数。
+大量请求进入时，入口可能先耗尽 CPU、内存、连接数或文件描述符，后端也可能是瓶颈。调参前先区分“入口处理不过来”与“后端响应慢”，记录 QPS、延迟分位数、错误率、CPU、内存和连接数，并在相同负载条件下逐项对照。对已退役控制器的调优不能替代安全迁移。
+
+### Worker 数量和连接上限
+
+`worker-processes` 控制 worker 数量，ingress-nginx ConfigMap 中对应连接上限的键是 `max-worker-connections`，不能照搬 Nginx 指令名写成 `worker-connections`。下面是参数实验片段；ConfigMap 名称必须与控制器的 `--configmap` 参数一致：
+
+~~~yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-ingress-controller
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
 data:
-  worker-processes: "4" # worker_processes是Nginx服务器进程的数量，通常将其设置为服务器上可用的CPU核心数量-1。
-  worker-connections: "1024" # worker_connections是每个工作进程（worker process）可以同时处理的最大连接数，这个值应该根据服务器资源以及预期的并发量来设置。通常的建议是将它设置为1024或更高，但实际上需要根据实际情况进行调整。
+  worker-processes: "auto"
+  max-worker-connections: "1024"
 ~~~
 
-- 例如，如果你有4个CPU核心，可以将worker_processes设置为3。如果你预计每个连接将占用2MB内存，而服务器有8GB的内存，则可以将worker_connections设置为较小的值，如1k。如果你有更多的内存可用，或者希望处理更多的并发连接，则可以将其设置为更大的值。
-- 备注：如何知道每个连接占用多大内存？
-  - 一般来说，HTTP/HTTPS连接使用的内存量通常较小，通常在几百字节到几千字节之间。但是，在高流量情况下，大量连接的累积内存使用量可能很大。
-  - 最好的方法是使用监控和性能测试工具来实际测量您的应用程序在给定负载下的内存使用情况，并根据的观察结果来调整worker-processes和worker-connections的值
-  - 常用的压测工具：JMeter、Gatling、Vegeta、ab等
+例如，4 核节点并不意味着必须固定“CPU 核数减 1”个 worker。还要考虑控制器容器可用的 CPU 配额、其他进程及工作负载。`1024` 只是一组便于观察的实验值，真实上限还受文件描述符、上游连接和内存影响；代理一个请求可能同时占用客户端连接和后端连接，连接数也不能直接当成 QPS。
 
-2. 开启缓存
+每条连接占多少内存取决于 TLS、缓冲区、请求体、响应体和模块状态，无法用固定的几百字节或 2 MB 估算所有业务。可以用 JMeter、Gatling、Vegeta、ab 等工具逐步施压，观察进程内存和延迟变化，再调整参数。字段含义与文档默认值见[ConfigMap 参数](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#max-worker-connections)。
 
-- nginx-ingress-controller可以使用缓存来缓存请求的响应，从而减少后端服务器的压力。可以通过以下两种方式开启缓存：
+### 缓存：先确认可缓存内容和实现支持
 
-~~~sh
-#在nginx-ingress-controller的ConfigMap中增加“proxy-cache-enabled”字段
+对于可公开缓存的响应，缓存可以减少后端请求。`proxy-cache-enabled` 和 `nginx.ingress.kubernetes.io/proxy-cache` 并不是社区 ingress-nginx 文档支持的通用开关，写入这些键不能证明缓存生效。应优先在应用、专门缓存代理或受支持网关中配置缓存。
+
+维护历史环境时，Nginx 原生 `proxy_cache_path` 需要在 http 上下文声明缓存区，具体 location 再通过 `proxy_cache` 使用。下面给出受信任隔离实验中的完整关联示例，便于理解与原生指令的对应关系。它依赖允许 snippet 的控制器配置，会扩大 Ingress 作者的权限，不可直接用于多租户生产入口；允许条件、风险级别和过滤规则需核对实际控制器版本。管理员还要预先挂载并授权 `/tmp/nginx-cache` 缓存目录，观察磁盘与内存使用量。
+
+~~~yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-ingress-controller
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
 data:
-  proxy-cache-enabled: "true"
-
-#可以在Ingress的Annotations中增加“nginx.ingress.kubernetes.io/proxy-cache: 'on'”来开启缓存。
+  # 仅限可信作者的隔离历史实验，不能作为共享入口默认设置
+  allow-snippet-annotations: "true"
+  annotations-risk-level: "Critical"
+  http-snippet: |
+    proxy_cache_path /tmp/nginx-cache levels=1:2 keys_zone=public_cache:10m max_size=100m inactive=10m;
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example-ingress
+  namespace: study-ingress
   annotations:
-    nginx.ingress.kubernetes.io/proxy-cache: "on"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_cache public_cache;
+      proxy_cache_methods GET HEAD;
+      proxy_cache_key "$scheme$host$request_uri";
+      proxy_cache_valid 200 30s;
+      proxy_cache_bypass $http_authorization $http_cookie;
+      proxy_no_cache $http_authorization $http_cookie;
 spec:
+  ingressClassName: nginx
   rules:
   - host: example.com
     http:
@@ -951,71 +1151,72 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: test-service
+            name: nginx
             port:
-              name: http
+              number: 80
 ~~~
 
-3. nginx参数优化
+其中的 `annotations-risk-level` 属于较新版本配置，不应直接拼进后面 v1.1.0 的完整历史安装清单。实验还要确认后端 Cache-Control、Set-Cookie、查询参数和用户身份的语义，不能缓存用户私有响应，也不能关闭默认保护来强行提高命中率。Nginx 指令的完整行为见[官方代理缓存说明](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache)。若控制器拒绝 snippet，应使用受支持的缓存实现，不要通过关闭校验绕过限制。
 
-- 有一个业务应用部署在kubernetes中，如果将该应用以Kubernetes Service NodePort暴露出来，压测可以发现页面响应性能较高，可以达到10w多的QPS；而将这个Kubernetes用Ingress暴露出来，压测只能响应5w多的QPS了。
+### 长连接复用与对照压测
 
-- 参考文档：[Ingress Nginx ConfigMap配置](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/)
+一组历史观察中，同一应用通过 NodePort 暴露时达到十万级 QPS，经 Ingress 后约为五万级。这个数值没有附带完整硬件、TLS、响应大小和压测参数，只能作为“新增代理层后需要定位开销”的案例，不能推导普遍的性能比例。
 
-~~~sh
-#upstream中的keepalive、keepalive_requests、keepalive_timeout这些配置项可以优化下
+维护这类环境时，可对照客户端到入口、入口到后端两段连接的复用。下面是这类案例的参数实验值，不能直接套用为容量配置：
+
+~~~yaml
+# 位于控制器ConfigMap的data中，名称以--configmap指定的资源为准
 keep-alive: "100"
 keep-alive-requests: "110"
 upstream-keepalive-connections: "20000"
 upstream-keepalive-requests: "110"
 upstream-keepalive-timeout: "100"
-#由于Ingress-nginx-controller配置了upstream-keepalive-connections、upstream-keepalive-requests、
-#upstream-keepalive-timeout参数，这样nginx->upstream的HTTP处理是启用了Keep-Alive的，这样到Kuberentes Service的TCP连接可以高效地复用，避免了重建连接的开销。
 ~~~
+
+`keep-alive` 是客户端空闲连接超时（秒），`keep-alive-requests` 是每条客户端连接的请求数上限；`upstream-keepalive-connections` 控制每个 worker 缓存的空闲上游连接数量，不是总并发上限。把它设成 20000 可能显著消耗文件描述符和内存，需结合 worker 数与后端容量计算。上游请求数与空闲超时则分别控制连接回收条件，详见[上游 keepalive 参数](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#upstream-keepalive-connections)。
+
+HTTP 连接复用减少重建开销，但也可能让四层分流集中到少数后端。每次只改变一组参数，比较错误率、延迟和资源占用，才有办法确认改动是否有效。
 
 ## 实战：Ingress灰度发布
 
-### 场景1-基于header/cookie
+### 场景一：按 Header 或 Cookie 识别用户
 
-- 假设线上运行了一套对外提供 7 层服务的 Service A 服务，后来开发了个新版本 Service A’ 想要上线，但又不想直接替换掉原来的 Service A，希望先灰度一小部分用户，等运行一段时间足够稳定了再逐渐全量上线新版本，最后平滑下线旧版本。
+假设线上运行了一套对外提供 7 层服务的 Service A 服务，后来开发了个新版本 Service A’ 想要上线，但又不想直接替换掉原来的 Service A，希望先灰度一小部分用户，等运行一段时间足够稳定了再逐渐全量上线新版本，最后平滑下线旧版本。
 
-- 这个时候就可以利用 Nginx Ingress 基于 Header 或 Cookie 进行流量切分的策略来发布，业务使用 Header 或 Cookie 来标识不同类型的用户，我们通过配置 Ingress 来实现让带有指定 Header 或 Cookie 的请求被转发到新版本，其它的仍然转发到旧版本，从而实现将新版本灰度给部分用户。
+这个时候就可以利用 Nginx Ingress 基于 Header 或 Cookie 进行流量切分的策略来发布，业务使用 Header 或 Cookie 来标识不同类型的用户，我们通过配置 Ingress 来实现让带有指定 Header 或 Cookie 的请求被转发到新版本，其它的仍然转发到旧版本，从而实现将新版本灰度给部分用户。
 
-  <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281017402.png" alt="image-20231228101712175" style="zoom:50%;" />
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281017402.png" alt="image-20231228101712175" style="zoom:50%;" />
 
-### 场景2-按比例切分流量
+### 场景二：按比例随机分配请求
 
-- 假设线上运行了一套对外提供 7 层服务的 Service B 服务，后来修复了一些问题，需要灰度上线一个新版本 Service B’，但又不想直接替换掉原来的 Service B，而是让先切 10% 的流量到新版本，等观察一段时间稳定后再逐渐加大新版本的流量比例直至完全替换旧版本，最后再平滑下线旧版本，从而实现切一定比例的流量给新版本。
+假设线上运行了一套对外提供 7 层服务的 Service B 服务，后来修复了一些问题，需要灰度上线一个新版本 Service B’，但又不想直接替换掉原来的 Service B，而是让先切 10% 的流量到新版本，等观察一段时间稳定后再逐渐加大新版本的流量比例直至完全替换旧版本，最后再平滑下线旧版本，从而实现切一定比例的流量给新版本。
 
-  <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281018356.png" alt="image-20231228101848227" style="zoom:50%;" />
+<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281018356.png" alt="image-20231228101848227" style="zoom:50%;" />
 
-### 实现方法
 
-- 部署ingress来切分流量，在ingress的metadata.annotations字段中，定义下列annotation，实现流量控制。假设有老版本和Canry
+### 分流规则及优先级
 
-  - `nginx.ingress.kubernetes.io/canary-by-header`：
-    - 基于Request Header的流量切分，适用于灰度发布以及 A/B 测试。当Request Header 设置为 always时，请求将会被一直发送到 Canary 版本；当 Request Header 设置为 never时，请求不会被发送到 Canary 入口。
+先创建指向 v1 的普通 Ingress，再创建相同 host/path、指向 v2 的 Canary Ingress，并在后者设置 `canary: "true"`。常用注解如下，均为 ingress-nginx 实现特性：
 
-  - `nginx.ingress.kubernetes.io/canary-by-header-value`：
-    - 要匹配的 Request Header 的值，用于通知 Ingress 将请求路由到 Canary Ingress 中指定的服务。当 Request Header 设置为此值时，它将被路由到 Canary 入口。
+| 注解后缀 | 作用 |
+| --- | --- |
+| `canary-by-header` | 指定请求头名；值为 always 时进入 Canary，never 时不进入 |
+| `canary-by-header-value` | 指定请求头的精确匹配值 |
+| `canary-by-header-pattern` | 对请求头值进行正则匹配 |
+| `canary-by-cookie` | 指定 Cookie 名；always 进入 Canary，never 排除，其他值忽略此规则 |
+| `canary-weight` | 按权重随机分配流量，默认总权重为 100；可以另设 canary-weight-total |
 
-  - `nginx.ingress.kubernetes.io/canary-weight`：
-    - 基于服务权重的流量切分，适用于蓝绿部署，权重范围 0 - 100 按百分比将请求路由到 Canary Ingress 中指定的服务。权重为 0 意味着该金丝雀规则不会向 Canary 入口的服务发送任何请求。权重为60意味着60%流量转到canary。权重为 100 意味着所有请求都将被发送到 Canary 入口。
+完整键均以 `nginx.ingress.kubernetes.io/` 开头，规则优先级为 Header → Cookie → Weight。因此，权重为 0 不会阻止由 Header/Cookie 明确导入的请求，权重为 100 也不会覆盖明确排除的请求。详见[Canary 注解说明](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#canary)。
 
-  - `nginx.ingress.kubernetes.io/canary-by-cookie`：
-    - 基于 Cookie 的流量切分，适用于灰度发布与 A/B 测试。用于通知 Ingress 将请求路由到 Canary Ingress 中指定的服务的cookie。当 cookie 值设置为 always时，它将被路由到 Canary 入口；当 cookie 值设置为 never时，请求不会被发送到 Canary 入口。
+A/B 测试通常希望固定分组比较用户行为，金丝雀发布则逐步扩大新版本流量并观察风险，两者都可以使用这些分流机制，但发布是否安全还要看错误率、延迟、业务指标及回滚设计。少量请求的随机结果不会严格等于配置百分比。
 
-- 注：以上的annotations是ingress nginx所官方支持的：
+### 实验：从两个后端到三种分流方式
 
-  [Annotations - Ingress-Nginx Controller (kubernetes.github.io)](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/)
+本组资源使用 `default` Namespace，与前面的 `study-ingress` 示例分开。实验控制器需支持这些历史注解；`openresty/openresty:centos` 是旧实验镜像，执行前应检查可获取性与兼容性并固定已验证版本，不应直接拿它构建生产镜像。
 
-> A/B测试：是一种数据驱动的决策制定方式。在A/B测试中，会将用户分为两组，一组使用A版本，一组使用B版本，然后收集用户的反馈，通过数据分析来决定哪个版本更好。A/B测试可以帮助开发者理解哪些改变可以提高用户体验或者达到其他的业务目标。
->
-> - 和金丝雀发布（灰度发布）的区别就是灰度发布是从小比例用户使用逐步平滑增加到大比例用户使用新版本。
+先创建 v1/v2 两个 Deployment、配置和 Service，返回不同文本以便观察。后续 Header、Cookie、Weight 三组示例使用相同的 `ing-nginx-canary` 名称，按顺序替换实验；换下一组时应移除上一组特定注解，避免被优先级影响。
 
-### Lab
-
-#### 搭建v1和v2版本的两个服务
+#### 第一步：搭建 v1 和 v2 两个服务
 
 ~~~yaml
 #v1
@@ -1074,7 +1275,7 @@ data:
             listen 80;
             location / {
                 access_by_lua '
-                    local header_str = ngx.say("nginx-v1") #指定到根目录的请求返回nginx-v1
+                    local header_str = ngx.say("nginx-v1") -- 指定到根目录的请求返回nginx-v1
                 ';
             }
         }
@@ -1152,7 +1353,7 @@ data:
             listen 80;
             location / {
                 access_by_lua '
-                    local header_str = ngx.say("nginx-v2") #指定根目录的url返回nginx-2
+                    local header_str = ngx.say("nginx-v2") -- 指定根目录的url返回nginx-2
                 ';
             }
         }
@@ -1173,7 +1374,7 @@ spec:
     version: v2
 ~~~
 
-#### 创建ingress
+#### 第二步：创建主 Ingress
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -1186,7 +1387,7 @@ spec:
   - host: canary.example.com
     http:
       paths:
-      - path: /  #配置访问路径，如果通过url进行转发，需要修改；空默认为访问的路径为"/"
+      - path: /  #配置访问路径；v1规则必须显式提供pathType，本例匹配根路径
         pathType:  Prefix
         backend:  #配置后端服务
          service:
@@ -1200,151 +1401,161 @@ spec:
 curl -H "Host: canary.example.com" http://192.168.40.6 #ingress暴露的ip
 ~~~
 
-#### 基于header的流量切分
+#### 第三步：验证 Header 分流
 
-- 创建 Canary Ingress，指定 v2 版本的后端服务，且加上一些 annotation，实现仅将带有名为 Region 且值为 cd 或 sz 的请求头的请求转发给当前 Canary Ingress，模拟灰度新版本给成都和深圳地域的用户。
+创建 Canary Ingress，指定 v2 版本的后端服务，且加上一些 annotation，实现仅将带有名为 Region 且值为 cd 或 sz 的请求头的请求转发给当前 Canary Ingress，模拟灰度新版本给成都和深圳地域的用户。
 
-- 需要定义新的ingress配置，指定annotation字段。
+在 Canary Ingress 中配置如下：
 
-  ~~~yaml
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    name: ing-nginx-canary
-    annotations:
-      nginx.ingress.kubernetes.io/canary: "true"
-      nginx.ingress.kubernetes.io/canary-by-header: "Region"
-      nginx.ingress.kubernetes.io/canary-by-header-pattern: "cd|sz"
-  spec:
-    ingressClassName: nginx
-    rules:
-    - host: canary.example.com
-      http:
-        paths:
-        - path: /  #配置访问路径，如果通过url进行转发，需要修改；空默认为访问的路径为"/"
-          pathType:  Prefix
-          backend:  #配置后端服务
-           service:
-             name: svc-nginx-v2
-             port:
-              number: 80
-  ~~~
+~~~yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ing-nginx-canary
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: "Region"
+    nginx.ingress.kubernetes.io/canary-by-header-pattern: "^(cd|sz)$"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: canary.example.com
+    http:
+      paths:
+      - path: /  #配置访问路径；v1规则必须显式提供pathType，本例匹配根路径
+        pathType:  Prefix
+        backend:  #配置后端服务
+         service:
+           name: svc-nginx-v2
+           port:
+            number: 80
+~~~
 
-  ~~~bash
-  #测试模拟带header的请求
-  curl -H "Host: canary.example.com" -H "Region: cd" http://192.168.40.6
-  curl -H "Host: canary.example.com" -H "Region: sz" http://192.168.40.6
-  curl -H "Host: canary.example.com" http://192.168.40.6
-  #可以看到，只有header带了Region并且值为cd | sz代理到v2
-  ~~~
+~~~bash
+#测试模拟带header的请求
+curl -H "Host: canary.example.com" -H "Region: cd" http://192.168.40.6
+curl -H "Host: canary.example.com" -H "Region: sz" http://192.168.40.6
+curl -H "Host: canary.example.com" http://192.168.40.6
+#可以看到，只有header带了Region并且值为cd | sz代理到v2
+~~~
 
-#### 基于cookie的流量切分
+#### 第四步：验证 Cookie 分流
 
-- 与前面 Header 类似，不过使用 Cookie 就无法自定义 value 了（带了某种cookie就会被路由到canary版本）。
+先从上一步资源移除 Header 相关注解，否则更高优先级的规则仍会参与分流：
 
-- 这里以模拟灰度成都地域用户为例，仅将带有名为 user_from_cd 的 cookie 的请求转发给当前 Canary Ingress 。
+~~~sh
+kubectl annotate ingress ing-nginx-canary -n default nginx.ingress.kubernetes.io/canary-by-header- nginx.ingress.kubernetes.io/canary-by-header-pattern-
+~~~
 
-- 需要定义新的ingress配置，指定annotation字段。
+Cookie 分流使用指定的 Cookie 名，并要求值为 `always` 或 `never`；仅仅存在 Cookie 不足以保证进入 Canary。其他值会忽略这条规则，继续检查后续规则。
 
-  ~~~yaml
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    annotations:
-      nginx.ingress.kubernetes.io/canary: "true"
-      nginx.ingress.kubernetes.io/canary-by-cookie: "user_from_cd"
-    name: ing-nginx-canary
-  spec:
-    ingressClassName: nginx
-    rules:
-    - host: canary.example.com
-      http:
-        paths:
-        - path: /  #配置访问路径，如果通过url进行转发，需要修改；空默认为访问的路径为"/"
-          pathType:  Prefix
-          backend:  #配置后端服务
-           service:
-             name: svc-nginx-v2
-             port:
-              number: 80
-  ~~~
+这里以模拟灰度成都地域用户为例，仅将带有名为 user_from_cd 的 cookie 的请求转发给当前 Canary Ingress 。
 
-  ~~~bash
-  #测试带cookie的请求
-  curl -s -H "Host: canary.example.com" --cookie "user_from_cd=always" http://192.168.40.6
-  curl -s -H "Host: canary.example.com" --cookie "user_from_bj=always" http://192.168.40.6
-  ~~~
+在 Canary Ingress 中配置如下：
 
-#### 基于服务权重的流量切分
+~~~yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-cookie: "user_from_cd"
+  name: ing-nginx-canary
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: canary.example.com
+    http:
+      paths:
+      - path: /  #配置访问路径；v1规则必须显式提供pathType，本例匹配根路径
+        pathType:  Prefix
+        backend:  #配置后端服务
+         service:
+           name: svc-nginx-v2
+           port:
+            number: 80
+~~~
 
-- 直接定义需要导入的流量比例，这里以导入 10% 流量到 v2 版本为例。
+~~~bash
+#测试带cookie的请求
+curl -s -H "Host: canary.example.com" --cookie "user_from_cd=always" http://192.168.40.6
+curl -s -H "Host: canary.example.com" --cookie "user_from_bj=always" http://192.168.40.6
+~~~
 
-- 需要定义新的ingress配置，在annotation中指定。
+#### 第五步：验证权重分流
 
-  ~~~yaml
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    annotations:
-      nginx.ingress.kubernetes.io/canary: "true"
-      nginx.ingress.kubernetes.io/canary-weight: "10"
-    name: ing-nginx-canary
-  spec:
-    ingressClassName: nginx
-    rules:
-    - host: canary.example.com
-      http:
-        paths:
-        - path: /  #配置访问路径，如果通过url进行转发，需要修改；空默认为访问的路径为"/"
-          pathType:  Prefix
-          backend:  #配置后端服务
-           service:
-             name: svc-nginx-v2
-             port:
-              number: 80
-  ~~~
+先移除上一步的 Cookie 分流规则，再应用下面的权重清单：
 
-  ~~~bash
-  #测试比例
-  for i in {1..20}; do curl -H "Host: canary.example.com" http://192.168.40.6; done;
-  ~~~
+~~~sh
+kubectl annotate ingress ing-nginx-canary -n default nginx.ingress.kubernetes.io/canary-by-cookie-
+~~~
 
-# 
+直接定义需要导入的流量比例，这里以导入 10% 流量到 v2 版本为例。
 
-## 实战：基于nginx+keepalived的Ingress-Controller高可用架构【不推荐】
+在 Canary Ingress 的注解中指定权重：
+
+~~~yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "10"
+  name: ing-nginx-canary
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: canary.example.com
+    http:
+      paths:
+      - path: /  #配置访问路径；v1规则必须显式提供pathType，本例匹配根路径
+        pathType:  Prefix
+        backend:  #配置后端服务
+         service:
+           name: svc-nginx-v2
+           port:
+            number: 80
+~~~
+
+~~~bash
+#测试比例
+for i in {1..20}; do curl -H "Host: canary.example.com" http://192.168.40.6; done;
+~~~
+
+## 历史完整实验：Nginx + Keepalived 的入口高可用
+
+本组实验使用社区 ingress-nginx v1.1.0 和旧 Linux 环境，目的是说明 hostNetwork、多副本代理、前置 TCP 代理与 VIP 漂移如何协作。完整安装清单中的旧镜像、RBAC 和准入组件不适配所有现代集群，也不再具备持续安全维护；只能在隔离、无敏感数据的历史环境理解和复现。新建入口应选受支持实现。
+
+VIP 漂移要求节点网络允许 VRRP、地址通告及相应的二层邻居更新，公有云不能假设默认支持。提前为两台节点规划地址和网卡，本文沿用 `192.168.40.5`、`192.168.40.6` 及 VIP `192.168.40.8`。前面实验使用的入口地址应按这里的实际拓扑调整。
 
 ### 架构示意图
 
-- Ingress Controller是集群流量的接入层，对它做高可用非常重要，可以基于keepalive实现nginx-ingress-controller高可用，具体实现如下：
+两个工作节点分别运行一个入口 Pod，通过 Deployment、nodeSelector 和 Pod 反亲和性保证分开部署。入口 Pod 使用 hostNetwork，直接监听节点的 80/443。两台节点另外运行前置 Nginx，Keepalived 让其中一台持有 VIP，前置 Nginx 再把请求分发给两台入口。
 
-  - Ingress-controller根据Deployment+ nodeSeletor+pod反亲和性方式部署在k8s指定的两个work节点
+![image-20231209114749417](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091147480.png)
 
-  - nginx-ingress-controller这个pod共享宿主机ip，然后通过keepalive+nginx实现nginx-ingress-controller高可用
+### 搭建高可用入口的五个步骤
 
-    ![image-20231209114749417](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091147480.png)
+#### 第一步：准备节点和历史镜像
 
-### Lab - 搭建高可用架构
+先给两台实验入口节点加标签，完整清单中的 nodeSelector 会据此限制调度；节点名按实际替换：
 
-#### 解压镜像
+~~~sh
+kubectl label nodes node-01 node-02 ingress=true
+~~~
 
 ~~~bash
-#解压课件镜像到工作节点，ctr解压
+# 解压历史课件镜像到工作节点；核对归档内部标签与下方清单一致
 ctr -n=k8s.io images import ingress-nginx-controllerv1.1.0.tar.gz
 ctr -n=k8s.io images import kube-webhook-certgen-v1.1.0.tar.gz
 ~~~
 
-#### 部署 ingress-controller
+#### 第二步：部署历史控制器
 
 > [!warning] 注意
-> k8s官方维护的叫`ingress-nginx`，nginx维护的叫`nginx-ingress`
+> 社区项目名是 `ingress-nginx`，NGINX 自己的控制器属于另一个项目。两者配置和维护周期不同，不能根据名称互换镜像或注解；这里的社区实现已退役。
 
-- nginx-ingress-controller是以pod形式部署，demo的yaml文件从github下载：
-
-  [ingress-nginx baremetal部署](https://github.com/kubernetes/ingress-nginx/tree/main/deploy/static/provider/baremetal)
-
-  (不做高可用的话直接在这里下载apply就行)
-
-- 但是这里为了做成高可用的nginx-ingress-controller，添加了反亲和性，对原始的yaml做了调整，yaml如下：
+这份清单基于[历史 baremetal 部署模板](https://github.com/kubernetes/ingress-nginx/tree/main/deploy/static/provider/baremetal)，加入节点选择和必须满足的 Pod 反亲和性；两台目标节点应有足够资源且允许调度。清单中启用 snippet 是旧实验设置，只适用于可信用户的隔离环境。镜像导入归档的文件名不代表其内部镜像标签，应检查 `ctr -n=k8s.io images list` 是否包含清单要求的 controller v1.1.0 和 certgen v1.1.1，缺少时先取得匹配归档。
 
 ~~~yaml
 apiVersion: v1
@@ -1610,7 +1821,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
+  annotations: {}
   labels:
     helm.sh/chart: ingress-nginx-4.0.10
     app.kubernetes.io/name: ingress-nginx
@@ -1673,13 +1884,11 @@ spec:
       hostNetwork: true
       affinity:
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  app.kubernetes.io/name: ingress-nginx
-              topologyKey: kubernetes.io/hostname
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: ingress-nginx
+            topologyKey: kubernetes.io/hostname
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: controller
@@ -1757,6 +1966,7 @@ spec:
               memory: 90Mi
       nodeSelector:
         kubernetes.io/os: linux
+        ingress: "true"
       serviceAccountName: ingress-nginx
       terminationGracePeriodSeconds: 300
       volumes:
@@ -1778,7 +1988,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: controller
   name: nginx
-  namespace: ingress-nginx
 spec:
   controller: k8s.io/ingress-nginx
 ---
@@ -2041,13 +2250,12 @@ spec:
         runAsUser: 2000
 ~~~
 
-- 部署完会在两个worker node上建出来两个pod：ingress-nginx-controller-64bdc78c96-8t25x
-- ingress-nginx-admission-create-2qqzl和ingress-nginx-admission-patch-8nzwm是生成证书用的两个一次性pod
+部署后应在两台目标节点上各运行一个入口 Pod。`ingress-nginx-admission-create-*` 和 `ingress-nginx-admission-patch-*` 是创建证书、更新 webhook 的一次性 Job，不应把它们误认为入口副本。裸清单中的 Helm hook 注解不会由 kubectl 自动执行，Job 会按普通资源创建，失败时需看日志和依赖状态。
 
 > [!warning] 注意
-> 如果部署完ingress，访问ingress的80端口被拒绝，原因一般是： ingress-controller的官方yaml默认注释了hostNetwork 工作方式，以防止端口的在宿主机的冲突，没有绑定到宿主机 80 端口。需要在ingress-class的deployment.spec.template.spec中加上hostNetwork: true
+> 访问节点 80 端口被拒绝时，先核对暴露方式。NodePort 应访问实际 nodePort，hostNetwork 才直接占用节点端口；还要检查 Pod 就绪状态、端口冲突、监听地址和防火墙。本实验的 hostNetwork 位于 Deployment.spec.template.spec，与 IngressClass 无关。
 
-#### 安装配置nginx和keeplived
+#### 第三步：安装前置 Nginx 和 Keepalived
 
 ~~~bash
 #两个工作节点上安装
@@ -2057,7 +2265,7 @@ yum install  epel-release  nginx keepalived nginx-mod-stream  -y
 ~~~bash
 #修改nginx配置文件，nginx监听30080端口
 vim /etc/nginx/nginx.conf
-chmod o+w nginx.conf #vscode加上w权限才能编辑器里面保存
+# 使用sudo或管理员权限编辑配置，不要把系统配置设为所有用户可写
 
 user nginx;
 worker_processes auto;
@@ -2082,8 +2290,18 @@ stream {
     }
     
     server {
-       listen 30080; 
+       listen 30080;
        proxy_pass k8s-ingress-controller;
+    }
+
+    upstream k8s-ingress-controller-tls {
+       server 192.168.40.5:443 max_fails=3 fail_timeout=30s;
+       server 192.168.40.6:443 max_fails=3 fail_timeout=30s;
+    }
+
+    server {
+       listen 30443;
+       proxy_pass k8s-ingress-controller-tls;
     }
 }
 
@@ -2110,7 +2328,7 @@ http {
 #weight 权重
 #max_fails 失败多少次，认为主机已挂掉，则踢出
 #fail_timeout 踢出后重新探测时间
-#注意：nginx监听端口变成大于30000的端口，比方说30080,这样访问域名:30080就可以了，必须是满足大于30000以上，才能代理ingress-controller
+# 本例30080转发HTTP、30443透传TLS；端口只需合法、未占用且防火墙放行，不要求大于30000
 ~~~
 
 ~~~bash
@@ -2127,16 +2345,22 @@ global_defs {
    smtp_server 127.0.0.1 
    smtp_connect_timeout 30 
    router_id NGINX_MASTER
+   enable_script_security
+   script_user root
 } 
 
 vrrp_script check_nginx {
     script "/etc/keepalived/check_nginx.sh"
+    interval 3
+    timeout 3
+    fall 2
+    rise 2
 }
 
 vrrp_instance VI_1 { 
     state MASTER 
     interface eth0  # 修改为实际网卡名
-    virtual_router_id 51 # VRRP 路由 ID实例，每个实例是唯一的 
+    virtual_router_id 51 # 同一主备组保持一致，不同VIP组避免冲突 
     priority 100    # 优先级，备服务器设置 90 
     advert_int 1    # 指定VRRP 心跳包通告间隔时间，默认1秒 
     authentication { 
@@ -2168,17 +2392,23 @@ global_defs {
    notification_email_from Alexandre.Cassen@firewall.loc  
    smtp_server 127.0.0.1 
    smtp_connect_timeout 30 
-   router_id NGINX_MASTER
+   router_id NGINX_BACKUP
+   enable_script_security
+   script_user root
 } 
 
 vrrp_script check_nginx {
     script "/etc/keepalived/check_nginx.sh"
+    interval 3
+    timeout 3
+    fall 2
+    rise 2
 }
 
 vrrp_instance VI_1 { 
     state BACKUP 
     interface eth0  # 修改为实际网卡名
-    virtual_router_id 51 # VRRP 路由 ID实例，每个实例是唯一的 
+    virtual_router_id 51 # 同一主备组保持一致，不同VIP组避免冲突 
     priority 90    # 优先级，备服务器设置 90 
     advert_int 1    # 指定VRRP 心跳包通告间隔时间，默认1秒 
     authentication { 
@@ -2197,36 +2427,32 @@ vrrp_instance VI_1 {
 #virtual_ipaddress：虚拟IP（VIP）
 ~~~
 
-- 访问keepalived VIP + 30080端口 ==> 请求代理给了网卡eth0的30080端口 ==> nginx在监听 ==> 继续代理给upstream定义的两个node的80端口 ==> 两个ingress controller的nginx会监听node的80端口 ==> nginx转发给upstream的svc的8080端口 ==> svc转发给后端pod
+本例 HTTP 数据路径为 `VIP:30080 → 前置 Nginx stream → 某入口节点:80 → ingress-nginx → 后端 Pod`。Service 提供后端关联，默认数据路径不必先经过其 ClusterIP；HTTPS 则使用 `VIP:30443 → 节点:443` 透传 TLS。
 
-#### nginx存活脚本
+#### 第四步：让 Keepalived 跟踪前置 Nginx
 
-- \#注：keepalived根据脚本返回状态码（0为工作正常，非0不正常）判断是否故障转移。
+Keepalived 根据脚本退出码判断健康：0 表示成功，非 0 表示失败。本例连续两次失败进入故障状态，连续两次成功恢复，配置含义见[官方配置手册](https://keepalived.org/documentation/keepalived-conf/)。脚本检测的是前置 Nginx 进程状态，不代表每个后端应用都健康，还需配合 LB 与入口探针。
 
 ~~~bash
 #!/bin/bash
-#1、判断Nginx是否存活
-counter=$(ps -ef |grep nginx | grep sbin | egrep -cv "grep|$$" )
-if [ $counter -eq 0 ]; then
-    #2、如果不存活则尝试启动Nginx
-    service nginx start
+# Nginx不活跃时尝试启动，再通过退出码向Keepalived报告状态。
+if ! /usr/bin/systemctl is-active --quiet nginx; then
+    /usr/bin/systemctl start nginx
     sleep 2
-    #3、等待2秒后再次获取一次Nginx状态
-    counter=$(ps -ef |grep nginx | grep sbin | egrep -cv "grep|$$" )
-    #4、再次进行判断，如Nginx还不存活则停止Keepalived，让地址进行漂移
-    if [ $counter -eq 0 ]; then
-        service  keepalived stop
-    fi
 fi
+/usr/bin/systemctl is-active --quiet nginx
 ~~~
 
 ~~~sh
-chmod +x /etc/keepalived/check_nginx.sh
+chown root:root /etc/keepalived/check_nginx.sh
+chmod 750 /etc/keepalived/check_nginx.sh
 ~~~
 
-#### 启动服务
+#### 第五步：检查配置并启动服务
 
 ~~~bash
+nginx -t
+keepalived --config-test
 systemctl daemon-reload
 systemctl enable nginx keepalived
 systemctl start nginx
@@ -2235,9 +2461,11 @@ systemctl start keepalived
 
 > `systemctl daemon-reload`命令用于重新加载systemd管理器配置。这包括重新加载所有的systemd服务单元。当你修改了任何systemd服务单元的配置文件后，例如`/etc/systemd/system/`目录下的文件，你需要运行这个命令来使改动生效。
 
-## Lab - 部署ingress
+## 实验：通过 HTTP 入口发布 Tomcat
 
-### 部署后端svc和pod
+有了入口后，再从后端到路由逐步验证。这里使用 `default` Namespace，并沿用历史镜像 `tomcat:8.5.34-jre8-alpine` 演示端口关系；该镜像和 Tomcat 分支属于旧实验环境，生产应换成受支持版本。
+
+### 第一步：创建后端 Service 和 Deployment
 
 ~~~yaml
 apiVersion: v1
@@ -2252,10 +2480,10 @@ spec:
   ports:
   - name: http
     targetPort: 8080
-    port: 8080 #svc暴露这个8080是给外部通信用的
+    port: 8080 # HTTP服务端口，由Ingress引用
   - name: ajp
     targetPort: 8009
-    port: 8009 #8009是给内部通信用的
+    port: 8009 # AJP实验端口，不由本例HTTP Ingress转发
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -2281,11 +2509,11 @@ spec:
         ports:
         - name: http
           containerPort: 8080
-          name: ajp
+        - name: ajp
           containerPort: 8009
 ~~~
 
-### 部署ingress
+### 第二步：创建 HTTP Ingress
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -2293,8 +2521,7 @@ kind: Ingress
 metadata:
   name: ingress-tomcat
   namespace: default
-  #1.23的k8s，需要在annotations: kubernetes.io/ingress.class: "nginx"指定是关联到哪个ingress controller上面去
-  #1.25以上的k8s，在spec中，ingressClassName中指定
+  # ingressClassName自Kubernetes 1.18引入，优先使用此字段；旧annotation按控制器兼容性处理
 spec:
   ingressClassName: nginx
   rules:
@@ -2310,14 +2537,14 @@ spec:
         pathType: Prefix
 ~~~
 
-### 验证ingress controller配置
+### 第三步：检查控制器生成的配置
 
 ~~~bash
-k exec -it ingress-nginx-controller-64bdc78c96-mkf2s -n ingress-nginx  -- /bin/sh
+kubectl exec -it ingress-nginx-controller-64bdc78c96-mkf2s -n ingress-nginx  -- /bin/sh
 cat nginx.conf
 #可以看到ingress里面定义的规则，已经定义到ingress controller的nginx规则里面了
 server {
-                server_name tomcat.hangx.com ;
+                server_name tomcat.hanxux.com ;
 
                 listen 80  ;
                 listen [::]:80  ;
@@ -2338,47 +2565,51 @@ server {
                         set $service_port   "8080";
                         set $location_path  "/";
                         set $global_rate_limit_exceeding n;
-                      
+                        # 其余配置省略：这是查看输出的片段，不是完整nginx.conf
 ~~~
 
-### 访问入口
+### 第四步：按暴露方式访问
 
-- Ingress Controller的暴露方式：
-  - NodePort
-  - HostNetwork
-  - LoadBalancer
-  - external name
+控制器可由 NodePort、LoadBalancer Service 或 hostNetwork 对外暴露，也可以在前面加 LB/VIP。ExternalName 只返回 DNS 别名，不负责把控制器暴露到外网。
 
-- 如果用的是NodePort暴露的Service，就用宿主机的IP作为入口（ingress controller在node-01上，IP是192.168.40.5）
-  - Node IP：ingress controller的NodePort高位端口 ==> ingress controller nginx ==> 代理给svc ==> 代理给后端pod
+如果使用 NodePort，先查看实际端口，下面是历史示例输出：
 
 ~~~bash
-k get svc -n ingress-nginx
-ingress-nginx   ingress-nginx-controller             NodePort    10.105.87.199   <none>        80:31414/TCP,443:31126/TCP   7d19h
+kubectl get svc -n ingress-nginx
+# NAME                       TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)
+# ingress-nginx-controller   NodePort   10.105.87.199    <none>        80:31414/TCP,443:31126/TCP
 ~~~
 
-- 示例这里用的Keepalived暴露的VIP作为入口:
-  - 访问keepalived VIP + 30080端口 ==> 请求代理给了主node上网卡eth0的30080端口 ==> node上自己装的nginx在监听30080 ==> 继续代理给upstream定义的两个node IP:80端口 ==> 两个ingress controller的nginx会监听node的80端口 ==> nginx转发给upstream的svc的8080端口 ==> svc转发给后端pod
+此时应请求 `节点IP:31414`，并让 Host 匹配 `tomcat.hanxux.com`。若使用本章的 hostNetwork，直接访问对应节点 80 端口；若使用 Keepalived，则请求 VIP 的 30080：
 
-- hostnetwork模式需要显式在ingress controller的deployment上指定hostnetwork=true，然后必须配置hosts文件，让自定义的域名指向ingress的ip，然后根据设定的路由来访问。直接访问ingress的ip是不行的，nginx会报404.
+~~~sh
+# NodePort示例：节点IP和端口按实际结果替换
+curl -H 'Host: tomcat.hanxux.com' http://192.168.40.5:31414/
+# 本章Keepalived示例
+curl --resolve tomcat.hanxux.com:30080:192.168.40.8 http://tomcat.hanxux.com:30080/
+~~~
 
-## Lab - 部署ingress HTTPS代理pod
+直接访问 IP 只会携带该 IP 的 Host，无法命中特定域名规则时，控制器可能返回默认后端的 404。可以通过 DNS、hosts 或 curl 的 Host/resolve 参数发送正确域名；不是所有路由都要求配置 hosts 文件。
 
-#### 构建TLS站点
+## 实验：通过 HTTPS 入口发布 Tomcat
+
+TLS Secret、域名和后端 Service 需要对应起来。前面的 Keepalived 配置中，HTTP 是 30080，TLS 透传使用新增的 30443；不能把 HTTPS 请求发送到仅转发 HTTP 的 30080 端口。
+
+### 第一步：创建测试证书
 
 ~~~bash
 cd /root/
 openssl genrsa -out tls.key 2048 #tls.key是私钥
-openssl req -new -x509 -key tls.key -out tls.crt -subj /C=CN/ST=SH/L=SH/O=CKA/CN=hangx.tomcat.com #用私钥签发证书
+openssl req -new -x509 -key tls.key -out tls.crt -days 365 -subj /C=CN/ST=SH/L=SH/O=CKA/CN=hangx.tomcat.com -addext "subjectAltName=DNS:hangx.tomcat.com" # SAN匹配测试域名
 ~~~
 
-#### 生成secret
+### 第二步：创建 TLS Secret
 
 ~~~bash
-kubectl create secret tls secret-tomcat-ingress --cert=tls.crt --key=tls.key
+kubectl create secret tls secret-tomcat-ingress --cert=tls.crt --key=tls.key -n default
 ~~~
 
-#### 创建基于https的ingress
+### 第三步：配置 HTTPS Ingress
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -2400,9 +2631,19 @@ spec:
         pathType:  Prefix
         backend:
          service:
-           name: tomcat
+           name: svc-tomcat
            port:
             number: 8080
 ~~~
 
-- 后续访问中，如果是采用上述keepalived的方案，就在hosts文件中将VIP对应ingress的hosts。如果没采用keepalived方案，就用ingress controller所在的node IP作为入口。
+### 第四步：验证 TLS 和后端响应
+
+使用 Keepalived 时，域名指向 VIP 并访问 30443。`--resolve` 同时保证请求 Host 与 TLS SNI 使用目标域名，`--cacert` 信任本次自签证书；不要以长期关闭证书校验替代证书配置。
+
+~~~sh
+curl --cacert tls.crt --resolve hangx.tomcat.com:30443:192.168.40.8 https://hangx.tomcat.com:30443/
+# 直接使用hostNetwork时，改为入口节点的443
+curl --cacert tls.crt --resolve hangx.tomcat.com:443:192.168.40.5 https://hangx.tomcat.com/
+~~~
+
+若 TLS 握手失败，先检查端口、Secret、SAN/SNI 和信任链；握手成功但返回 404，应检查 Host/path 与后端接口；返回 503 时再检查 Service 端口、EndpointSlice 和 Pod 就绪状态。按这几层分别验证，可以避免把证书、路由与应用故障混在一起。

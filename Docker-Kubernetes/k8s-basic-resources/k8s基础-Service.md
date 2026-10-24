@@ -11,19 +11,19 @@ aliases:
 
 应用运行起来以后，还需要解决“其他应用从哪里访问它”。直接记录 Pod IP 很容易在重建、扩缩容后失效，Service 为一组后端提供稳定的名称和访问入口。理解 Service，可以帮助我们把应用自身的监听端口、集群内部发现和集群外部接入分开处理。
 
-本文从传统服务发布讲起，再沿着 Service、EndpointSlice、节点转发规则这条链路解释原理，最后通过四种 Service 类型、外部数据库和代理模式实验串起操作。阅读前需要熟悉 Pod 标签、Deployment 和基本 TCP/IP；实验要求有可用集群及对应 Namespace 的操作权限。文中的 IP、Pod 名称和镜像仓库是实验示例，运行前应替换并检查当前上下文。
+本文从传统服务发布讲起，先理解 Service 与 EndpointSlice，接着配置 DNS、端口和四种 Service 类型，再接入外部数据库，最后深入节点转发规则与代理模式实验。阅读前需要熟悉 Pod 标签、Deployment 和基本 TCP/IP；实验要求有可用集群及对应 Namespace 的操作权限。文中的 IP、Pod 名称和镜像仓库是实验示例，运行前应替换并检查当前上下文。
 
-## 背景
+## 从应用地址变化说起
 
 ### 传统服务发布
 
 服务发布通常要覆盖外部用户访问、服务间调用和数据库等基础组件访问。这些调用方对地址稳定性、服务发现和入口暴露的需求不同。
 
-在无注册中心的情况下：外部用户和服务间访问，往往通过一层代理层（Nginx/SLB）代理到后端服务；基础组件访问是直接配置数据库的IP+端口号来访问。
+没有注册中心时，外部用户和服务间调用往往通过 Nginx、SLB 等代理到达后端；数据库等基础组件则常以固定 IP 和端口写入配置。后端地址改变后，配置或代理规则也要随之更新。
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172057914.png" alt="image-20250717205717693" style="zoom:50%;" />
 
-在有注册中心的情况下：服务间访问，通过注册中心拿到其他服务的IP+端口号直接连。外部用户的请求通过代理层（nginx/SLB）转发请求给网关层（Gateway），网关层转发请求到各个服务。
+引入注册中心后，服务可以先查询目标实例的 IP 和端口，再建立连接。外部请求仍可能经过 Nginx 或 SLB 到达应用网关，再由网关路由到各个服务。注册中心解决实例发现，入口代理承担外部接入，两者的职责不同。
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172055211.png" alt="image-20250717205553958" style="zoom: 50%;" />
 
@@ -58,163 +58,24 @@ kubectl get endpointslices -n default -l kubernetes.io/service-name=svc-nginx -o
 
 一次连接通常由节点数据平面根据规则选定一个后端，不会每个数据包都去实时查询 API Server。Service 定义稳定入口，EndpointSlice 描述可用后端，kube-proxy 等实现负责把二者落实为转发行为。
 
-## 从 API 对象到节点转发规则
-
-Service 是 API 资源。传统集群由各节点的 `kube-proxy` 将 Service 和 EndpointSlice 转换为内核转发规则；采用替代数据平面的集群也可能由 CNI 实现 Service 转发，不运行 kube-proxy。
-
-创建 Service 的请求先经过 API Server 并持久化；kube-proxy 通过 watch 观察 Service 和 EndpointSlice 的变化，将它们转换为节点转发规则。在 iptables、IPVS 或 nftables 模式下，实际请求主要由内核处理，通常不经过 kube-proxy 用户态进程逐个转发。
-
-  ![image-20231111110951734](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111109863.png)
-
-### kube-proxy 的工作模式
-
-#### Userspace
-
-userspace模式下，kube-proxy会为每一个Service创建一个监听端口，发向Cluster IP的请求被Iptables规则重定向到kube-proxy监听的端口上，kube-proxy根据LB算法选择一个提供服务的Pod并和其建立链接，以将请求转发到Pod上。 该模式下，kube-proxy充当了一个四层负载均衡器的角色。由于kube-proxy运行在userspace中，在进行转发处理时会增加内核和用户空间之间的数据拷贝，虽然比较稳定，但是效率比较低。
-
-![image-20231111111348557](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111113677.png)
-
- 目前已废弃不用了。
-
-#### iptables
-
-Iptables 是 Linux 原生提供的一个功能强大的防火墙工具，可以用来设置、维护和检查 IPv4 数据包，并且支持源目地址转换等规则。在 iptables 代理模式下， kube-proxy 通过监听 Kubernetes API Server 中 Service 和 EndpointSlice 对象的变化，动态地更新节点上的 iptables 规则，以实现请求的转发。
-
-iptables模式下，kube-proxy为service后端的每个Pod创建对应的iptables规则，直接将发向Cluster IP的请求重定向到一个Pod IP。该模式下kube-proxy不承担四层负载均衡器的角色，只负责创建iptables规则。
-
-工作流程：
-
-1. 当 Service 被创建或更新时， kube-proxy 会读取 Service 和 EndpointSlice 对象的信息，并生成相应的 iptables 规则
-2. 这些 iptables 规则配置到内核的 netfilter 处理链中，匹配并转发目标为 Service IP 地址的流量
-3. 当客户端访问 Service 的 IP 地址时， iptables 规则通常为新连接随机选择一个可用后端 Pod，连接跟踪维持后续报文的映射
-
-优点与缺点：
-
-- 优点：iptables 是 Linux 内核的一部分，性能稳定、可靠，iptables 规则易于理解和维护，功能多。较userspace模式效率更高。
-
-- 局限：大量 Service 和后端会增加规则规模与同步开销。iptables 不负责应用层失败重试，HTTP 请求失败的重试需要由客户端或代理设计。性能不能只凭 Service 数量判断，Kubernetes v1.28 起的增量更新已明显改善规则同步。
-
-现代 Linux 集群还可以使用 nftables 后端。它在 Kubernetes v1.29 引入，并在 v1.33 达到稳定状态；iptables、IPVS 和 nftables 的兼容性与行为差异应对照[官方代理模式说明](https://kubernetes.io/docs/reference/networking/virtual-ips/)。不要仅根据一段旧版本压测就切换集群数据平面。
-
-![image-20231111111411881](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114959.png)
-
-#### IPVS（存量集群）
-
-IPVS（IP  Virtual Server）是一种基于内核的负载均衡器，ipvs模式和iptables类似，kube-proxy监控Pod的变化并创建相应的ipvs规则。
-
-IPVS 通过哈希表等结构改善了早期大规模 Service 的查找和同步效率，也提供多种连接调度算法。但“超过 4000 个 Service 就一定显著更快”没有普适性，仍取决于内核、版本、后端规模和负载。
-
-在 IPVS 代理模式下， kube-proxy 通过配置 IPVS 负载均衡器规则来代替使用 iptables。IPVS 使用更高效的数据结构（如 Hash表）来存储和查找规则，可以在大量 Service 的情况下也能保持高性能。
-
-工作流程：
-
-1. 当 Service 被创建或更新时，kube-proxy 会读取 Service 和 EndpointSlice 对象的信息，并配置IPVS 负载均衡策略
-2. IPVS 负载均衡器会根据配置的调度算法（如轮询、最少连接等）将请求转发到后端的一个或多个 Pod 上
-3. 当客户端访问 Service 的 IP 地址时，请求会直接被 IPVS 处理并转发到后端 Pod
-
-优点与缺点：
-
-- 优点：IPVS 专为负载均衡设计，在部分大规模场景中有性能优势。并且支持多种调度算法，可以根据实际需求选择合适的算法，同时 IPVS 的更新操作对性能的影响较小
-- 缺点：在某些情况下，IPVS 可能需要依赖 iptables 来实现一些额外的功能（如源地址 NAT）
-
-IPVS 算法用于选择连接后端，排查存量集群时常见以下名称：
-
-| 算法 | 含义与边界 |
-| --- | --- |
-| `rr` | 轮询，默认算法；不感知应用 CPU、内存或请求耗时 |
-| `lc` | 最少连接，优先选择活动连接较少的后端；连接少不一定代表业务负载低 |
-| `sh` | 源地址哈希，相同源地址倾向选择同一后端；不能替代应用会话设计 |
-| `dh` | 目的地址哈希，根据目标地址选择后端 |
-| `nq` | 优先选择空闲后端，全部忙时回退到 `sed` |
-| `sed` | 根据连接数和固定权重估算期望延迟，并非测量真实响应时间 |
-
-例如某节点上的 Pod 响应变慢，轮询仍可能继续分配连接；换成 `lc` 也不能保证解决 CPU 过载，尤其在 HTTP 长连接复用时。应同时检查就绪探针、资源瓶颈、请求分布和连接生命周期，而非统一推荐某个算法。
-
-IPVS 模式从 Kubernetes v1.35 起弃用。新部署或迁移应评估 nftables；旧内核不满足要求时也可考虑已改善的 iptables。下面的 IPVS 配置操作用于存量系统实验，不能视为当前生产默认推荐。
-
-![image-20231111111435638](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114753.png)
-
-#### nftables
-
-nftables 通过内核规则选择后端，减少大规模规则同步和查找开销。使用前需要检查节点内核、nft 工具、CNI 与网络策略组件的兼容性。官方文档要求 Linux 内核至少 5.13，并提醒 NodePort 地址、主机防火墙和连接跟踪等行为可能与 iptables 模式不同。它的上线应经过实验验证和迁移计划。
-
-### 负载分发策略
-
-默认情况下，由数据平面的算法为新连接选择后端，例如 iptables 模式的随机选择、IPVS 的轮询。若业务需要按客户端地址保持亲和性，可在 Service 的 `spec` 中配置 `sessionAffinity: ClientIP`。
-
-ClientIP 亲和性会让相同客户端 IP 的新连接在有效期内倾向于同一个后端；超时或后端变化时仍可能重选。经过 NAT 后，多个真实用户可能共用一个源 IP，因此它不能替代应用登录态或共享会话存储。
-
-### 更改 Service 代理模式（旧版本实验）
-
-以下操作会影响整个集群的 Service 转发，仅用于支持 IPVS 的实验环境。先备份 ConfigMap、确认内核模块与回滚方法；托管集群应使用平台支持的配置入口。
-
-
-~~~sh
-# 查看当前的代理模式：
-curl 127.0.0.1:10249/proxyMode
-iptables
-# 更改 proxy 的代理模式为 ipvs：
-kubectl edit cm kube-proxy -n kube-system
-# mode更改成"ipvs"
-# 二进制安装方式配置文件在每个机器上 
-#重启 kube-proxy 生效（二进制安装方式使用 systemctl restart kube-proxy）：
-kubectl rollout restart daemonset/kube-proxy -n kube-system
-kubectl rollout status daemonset/kube-proxy -n kube-system
-# 再次查看代理模式：
-curl 127.0.0.1:10249/proxyMode
-ipvs
-~~~
-
-### 更改 IPVS 调度算法（旧版本实验）
-
-~~~sh
-# 在机器上查看 ipvs 规则：
-yum install ipvsadm -y
-ipvsadm -ln
-IP Virtual Server version 1.2.1 (size=4096)
-Prot LocalAddress:Port Scheduler Flags
--> RemoteAddress:Port Forward Weight ActiveConn InActConn
-TCP 172.16.32.128:32000 rr
--> 172.16.85.217:8443 Masq 1 0 0 
-TCP 172.16.32.128:32001 rr
--> 192.168.181.141:80 Masq 1 0 0
-
-# 实验中将代理算法改为最少连接：
-kubectl edit cm kube-proxy -n kube-system
-# 把ipvs.scheduler字段改成"lc"
-# 重启 Proxy：
-kubectl rollout restart daemonset/kube-proxy -n kube-system
-kubectl rollout status daemonset/kube-proxy -n kube-system
-# 查看 ipvs 算法：
-ipvsadm -ln
-IP Virtual Server version 1.2.1 (size=4096)
-Prot LocalAddress:Port Scheduler Flags
--> RemoteAddress:Port Forward Weight ActiveConn InActConn
-TCP 172.16.32.128:32000 lc
--> 172.16.85.217:8443 Masq 1 0 0 
-TCP 172.16.32.128:32001 lc
--> 192.168.181.141:80 Masq 1 0 0
-~~~
-
 ## 通过 DNS 访问 Service
 
 Kubernetes 通常使用 CoreDNS 为 Service 提供服务发现。普通 ClusterIP Service 的 DNS 记录指向虚拟 IP；Headless Service 则通常返回后端地址；ExternalName 返回 CNAME。解析成功只说明发现了地址，不代表应用端口一定可达。
 
-- service只要创建完成，我们就可以直接解析它的域名，每一个服务创建完成后都会在集群dns中动态添加一个资源记录，添加完成后我们就可以解析了，资源记录格式是：
+Service 的完整 DNS 名称通常包含服务名、命名空间和集群域。以默认集群域 `cluster.local` 为例，`default` 中的 `svc-nginx` 可通过下面的名称访问：
 
-  ```bash
-  #服务名.命名空间.[域名后缀]
-  SVC_NAME.NS_NAME.[DOMAIN.LTD.]
-  #常见集群域为cluster.local，实际可自定义；svc是Service DNS层级
-  svc_name.ns_name.svc.cluster.local
-  ```
-  
-  ```bash
-  #在pod里面curl svc的域名
-  kubectl exec -it dep-nginx-57886b49fb-f2bk2 -- /bin/bash
-  curl svc-nginx.default.svc.cluster.local
-  ```
-  
+```text
+svc-nginx.default.svc.cluster.local
+```
+
+在 Pod 中测试时，先用实际 Pod 名替换示例中的名称，再执行查询或请求。进入容器后的 `curl` 使用 Service DNS，而非某个后端 Pod 地址：
+
+```bash
+kubectl exec -it dep-nginx-57886b49fb-f2bk2 -- /bin/bash
+curl svc-nginx.default.svc.cluster.local
+```
+
+同一命名空间内通常可以使用短名称 `svc-nginx`，跨命名空间可使用 `svc-nginx.default`。具体搜索后缀由 Pod 的 DNS 配置决定。
 
 ## YAML 字段：重点看地址、选择器和端口
 
@@ -269,8 +130,7 @@ FIELDS:
    targetPort	<integer|string> #后端监听端口，可用数字或Pod容器端口名称指定
 ```
 
-> [!warning] 注意
-> Selector字段：svc通过selector选择对应标签的pod去代理流量。
+选择器应匹配 Pod 模板上的标签，而不是 Deployment 对象自身的标签。匹配不到就绪后端时，Service 仍可能已经创建，但无法把请求送到预期应用。
 
 ## 四种 Service 类型
 
@@ -329,12 +189,11 @@ TCP  10.99.178.109:80 rr
 
 Headless Service 通过 `clusterIP: None` 禁用虚拟 ClusterIP，DNS 通常返回实际后端地址，由客户端选择连接目标；客户端也可以直接使用这些地址。它不是第五种 Service `type`，常用于 StatefulSet 的稳定网络标识。
 
-> [!warning] 注意
-> clusterIP虽然在宿主机上能直接请求，但是svc的FQDN在宿主机上可能无法解析。因为宿主机的DNS不是CoreDNS。
+在节点上能访问 ClusterIP，不代表节点能解析 Service DNS。宿主机通常不使用 CoreDNS 作为默认解析器，DNS 测试应优先放在 Pod 内。
 
 ### NodePort
 
-NodePort 在 ClusterIP 的基础上分配一个节点端口，让客户端可以通过 `NodeIP:nodePort` 访问。默认端口范围是 `30000–32767`，可由 API Server 的 `--service-node-port-range` 配置。
+NodePort 在 ClusterIP 的基础上分配一个节点端口，让客户端可以通过 `NodeIP:nodePort` 访问。默认端口范围是 `30000` 到 `32767`，可由 API Server 的 `--service-node-port-range` 配置。
 
 默认集群转发策略下，请求可从一个节点进入后再转发到其他节点的 Pod。实际可用的节点地址受 kube-proxy 的 `nodePortAddresses`、防火墙和路由约束；`externalTrafficPolicy: Local` 则只转发给本节点符合条件的后端，没有本地后端的节点可能无法服务。
 
@@ -360,9 +219,9 @@ spec:
 
 ### ExternalName
 
-是service的特例，没有selector、端口映射、endpoint。它是通过返回外部服务的别名来提供服务。由 DNS 返回 CNAME，本身不建立数据转发或端口映射。HTTP Host 和 TLS 证书名称也不会被它自动改写，代理外部 HTTPS 站点时需额外留意这一点，见[ExternalName 官方说明](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)。
+ExternalName 通过 DNS 返回 CNAME，把集群内名称映射到另一个域名。它不使用 selector 选择 Pod，也不建立数据转发或端口映射。HTTP Host 和 TLS 证书名称不会自动改写，访问外部 HTTPS 服务时尤其需要核对名称，见[ExternalName 官方说明](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)。
 
-比如可以定义一个 Service，后端设置为一个外部域名，这样通过 Service 的名称即可访问到该域名。使用 nslookup 解析以下文件定义的 Service ，集群的 DNS 服务将返回一个值为 www.taobao.com 的 CNAME 记录：
+下面的 Service 指向外部域名。使用 `nslookup` 查询它时，集群 DNS 返回指向 `www.taobao.com` 的 CNAME；后续连接仍受目标协议和名称校验约束：
 
 ~~~yaml
 kind: Service
@@ -374,13 +233,11 @@ spec:
   externalName: www.taobao.com
 ~~~
 
-使用场景案例：
+#### 用相同名称连接不同环境的 Redis
 
-假设某个项目具备 DEV/UAT 两个环境，每个环境需要链接指定的数据库等基础组件。基础组件同样也是在 K8s 中按照不同的环境进行划分和部署，比如 DEV 环境所用的基础组件均在basic-component-dev 命名空间下，以此类推。
+假设项目有 DEV、UAT 两个环境，各自连接独立的 Redis。基础组件分别部署在 `basic-component-dev` 和 `basic-component-uat` 命名空间，应用则分别部署在 `projecta-dev` 和 `projecta-uat`。
 
-为了降低配置文件的维护复杂度，准备使用 ExternalName 类型的 Service 对基础组件的连接地址进行映射，这样就可以用同名的 Service 区分不同的环境，从而降低配置文件维护的复杂度。
-
-比如配置了在同一个项目的不同环境里面都配置一个同名的 Redis Service，类型为ExternalName，并且按照不同环境指向不同的基础组件地址，这样每个项目的不同环境，都可以用 Redis 这一个地址就可以访问到不同基础组件。
+在两个应用命名空间中各创建名为 `redis` 的 ExternalName Service，分别指向对应环境的 Redis DNS。应用统一连接 `redis:6379`，由所在命名空间决定解析结果，无需在业务配置里写入另一环境的地址。
 
 环境准备：
 
@@ -412,14 +269,14 @@ set a uat
 get a
 ~~~
 
-创建项目的两个环境
+创建项目的两个命名空间：
 
 ~~~sh
 kubectl create ns projecta-dev
 kubectl create ns projecta-uat
 ~~~
 
-在每个项目的环境下，创建一个 externalName 类型的 Service，用于连接到不同环境的基础组件。每个externalName的svc都叫redis，但是连接的是自己环境的对应redis svc。所以不同环境里面写代码的时候，直接写redis就能解析了。
+接着创建两份同名的 ExternalName Service，注意它们属于不同命名空间，`externalName` 也指向不同的后端。这里假设集群 DNS 后缀为 `cluster.local`：
 
 ~~~yaml
 kind: Service
@@ -441,14 +298,14 @@ spec:
   externalName: redis.basic-component-uat.svc.cluster.local
 ~~~
 
-接下来在每个项目的环境下，创建两个 Redis 客户端，用于模拟需要链接 Redis 的应用程序：
+在两个应用环境中分别创建 Redis 客户端，模拟业务连接：
 
 ~~~sh
 kubectl create deploy usercenter --image=registry.cn-beijing.aliyuncs.com/dotbalo/redis:7.2.5 -n projecta-dev
 kubectl create deploy usercenter --image=registry.cn-beijing.aliyuncs.com/dotbalo/redis:7.2.5 -n projecta-uat
 ~~~
 
-测试每个环境下的 externalName：
+分别测试两个环境的 ExternalName：
 
 ~~~sh
 # DEV环境
@@ -479,7 +336,7 @@ Azure 的两种常见入口可分别对照官方部署说明：
 
 ## 无 selector 的 Service：接入外部后端
 
-service不仅仅可以用在集群内部pod上，也可以用在外部IP和域名上。比如外部有一个域名或者IP，可以创建一个svc来实现集群内服务去访问。这样更方便管理，这个后端服务变化，我们只需要去改service就行了，代码不用动。
+Service 的后端也可以位于集群外。调用方继续使用约定的 Service 名称，后端地址变化时，由资源维护者更新映射，减少业务配置对固定 IP 的依赖。
 
 不带 selector 的 Service 不会自动发现 Pod 后端，需要自行维护 EndpointSlice。若后端是域名别名，可以使用前面的 ExternalName；若要代理固定 IP，则使用 Service 与 EndpointSlice。
 
@@ -540,7 +397,6 @@ ports:
   port: 3306
 ```
 
-
 旧集群中可能会看到同名 Endpoints，写法如下。维护旧配置时需要认识这种关联，新配置优先使用上面的 EndpointSlice，不要为同一后端同时手工维护两套来源：
 
 ```yaml
@@ -558,15 +414,147 @@ subsets:
 
 这两种资源的关联方式不同：Endpoints 依赖与 Service 同名，EndpointSlice 依赖标签。MySQL 还需监听可达地址、允许相应用户连接，节点到外部数据库的路由和防火墙也必须放行。Service 不会自动为外部数据库配置认证或高可用。
 
-## 自带svc：kubernetes
+## 集群自带的 kubernetes Service
 
-在 Kubernetes 集群中，名称为 "kubernetes" 的 Service 是一个特殊的 Service，它提供了对 Kubernetes API server 的访问。其他组件去访问api server的时候就是走的kubernetes这个service。
+`default` 命名空间中的 `kubernetes` Service 为集群内应用提供 API server 入口。Pod 可以通过 `kubernetes.default.svc` 等名称访问 API，无需固定某一台控制平面节点的地址。
 
-这个 Service 的主要作用是允许集群内的 Pod 通过 Service 网络（通常是 ClusterIP）来访问 Kubernetes API，而不需要知道 API server 的实际 IP 地址或主机名。这对于运行在 Pod 中的应用程序来说非常有用，因为它们可以使用 Kubernetes API 来查询集群状态、操作资源等，而无需关心 API server 的具体位置。
+能够连接这个入口不等于获得管理权限。调用仍需通过身份认证和授权，Pod 通常使用自己的 ServiceAccount。控制平面组件也可能通过 kubeconfig 中配置的地址连接 API server，并非所有组件都经由这个 Service。
+
+## 从 API 对象到节点转发规则
+
+Service 是 API 资源。传统集群由各节点的 `kube-proxy` 将 Service 和 EndpointSlice 转换为内核转发规则；采用替代数据平面的集群也可能由 CNI 实现 Service 转发，不运行 kube-proxy。
+
+创建 Service 的请求先经过 API Server 并持久化；kube-proxy 通过 watch 观察 Service 和 EndpointSlice 的变化，将它们转换为节点转发规则。在 iptables、IPVS 或 nftables 模式下，实际请求主要由内核处理，通常不经过 kube-proxy 用户态进程逐个转发。
+
+![image-20231111110951734](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111109863.png)
+
+### kube-proxy 的工作模式
+
+#### Userspace
+
+早期的 userspace 模式会为 Service 创建监听端口。发往 ClusterIP 的请求先由 iptables 重定向到 kube-proxy，再由它选择后端并转发。此时 kube-proxy 本身承担四层代理，每条连接都增加了用户态处理和数据拷贝开销。
+
+![image-20231111111348557](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111113677.png)
+
+这一模式已退出当前 Kubernetes 的实现，了解它有助于看懂旧架构图。
+
+#### iptables
+
+iptables 是配置 Linux netfilter 规则的工具，支持数据包过滤和地址转换。在 iptables 代理模式下，kube-proxy 观察 Service 和 EndpointSlice 的变化，并更新节点规则；后续流量由内核处理。
+
+每个 Service 及其后端对应一组规则。新连接匹配 Service 规则后，会被转换到某个 Pod 地址，后续报文沿用连接跟踪记录，无需 kube-proxy 进程逐个代理。
+
+工作流程：
+
+1. 当 Service 被创建或更新时， kube-proxy 会读取 Service 和 EndpointSlice 对象的信息，并生成相应的 iptables 规则
+2. 这些 iptables 规则配置到内核的 netfilter 处理链中，匹配并转发目标为 Service IP 地址的流量
+3. 当客户端访问 Service 的 IP 地址时， iptables 规则通常为新连接随机选择一个可用后端 Pod，连接跟踪维持后续报文的映射
+
+与 userspace 相比，内核转发减少了代理开销，也便于结合节点规则排障。不过，大量 Service 和后端仍会增加规则规模与同步成本。Kubernetes v1.28 起的增量更新已改善规则同步，评估性能时需要结合实际版本和负载。
+
+iptables 不负责应用层失败重试。连接失败、HTTP 错误码与业务重试策略，仍需要客户端或七层代理处理。
+
+现代 Linux 集群还可以使用 nftables 后端。它在 Kubernetes v1.29 引入，并在 v1.33 达到稳定状态；iptables、IPVS 和 nftables 的兼容性与行为差异应对照[官方代理模式说明](https://kubernetes.io/docs/reference/networking/virtual-ips/)。不要仅根据一段旧版本压测就切换集群数据平面。
+
+![image-20231111111411881](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114959.png)
+
+#### IPVS（存量集群）
+
+IPVS（IP Virtual Server）是 Linux 内核中的四层负载均衡机制。kube-proxy 观察 Service 和 EndpointSlice，并据此维护 IPVS 规则。
+
+IPVS 通过哈希表等结构改善了早期大规模 Service 的查找和同步效率，也提供多种连接调度算法。但“超过 4000 个 Service 就一定显著更快”没有普适性，仍取决于内核、版本、后端规模和负载。
+
+与为每个匹配条件组织 iptables 链不同，IPVS 使用专门的连接调度和查找结构。它仍可能借助 iptables 完成源地址转换等功能，不能把切换 IPVS 理解为节点上不再需要任何 iptables 规则。
+
+工作流程：
+
+1. 当 Service 被创建或更新时，kube-proxy 会读取 Service 和 EndpointSlice 对象的信息，并配置IPVS 负载均衡策略
+2. IPVS 负载均衡器会根据配置的调度算法（如轮询、最少连接等）将请求转发到后端的一个或多个 Pod 上
+3. 当客户端访问 Service 的 IP 地址时，请求会直接被 IPVS 处理并转发到后端 Pod
+
+IPVS 的多种调度算法便于适配不同连接分布，但其实现与 Kubernetes Service 语义之间也存在差异。性能、规则同步和行为兼容性需要一起评估。
+
+IPVS 算法用于选择连接后端，排查存量集群时常见以下名称：
+
+| 算法 | 含义与边界 |
+| --- | --- |
+| `rr` | 轮询，默认算法；不感知应用 CPU、内存或请求耗时 |
+| `lc` | 最少连接，优先选择活动连接较少的后端；连接少不一定代表业务负载低 |
+| `sh` | 源地址哈希，相同源地址倾向选择同一后端；不能替代应用会话设计 |
+| `dh` | 目的地址哈希，根据目标地址选择后端 |
+| `nq` | 优先选择空闲后端，全部忙时回退到 `sed` |
+| `sed` | 根据连接数和固定权重估算期望延迟，并非测量真实响应时间 |
+
+例如某节点上的 Pod 响应变慢，轮询仍可能继续分配连接；换成 `lc` 也不能保证解决 CPU 过载，尤其在 HTTP 长连接复用时。应同时检查就绪探针、资源瓶颈、请求分布和连接生命周期，而非统一推荐某个算法。
+
+IPVS 模式从 Kubernetes v1.35 起弃用。新部署或迁移应评估 nftables；旧内核不满足要求时也可考虑已改善的 iptables。下面的 IPVS 配置操作用于存量系统实验，不能视为当前生产默认推荐。
+
+![image-20231111111435638](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114753.png)
+
+#### nftables
+
+nftables 通过内核规则选择后端，减少大规模规则同步和查找开销。使用前需要检查节点内核、nft 工具、CNI 与网络策略组件的兼容性。官方文档要求 Linux 内核至少 5.13，并提醒 NodePort 地址、主机防火墙和连接跟踪等行为可能与 iptables 模式不同。它的上线应经过实验验证和迁移计划。
+
+### 负载分发策略
+
+默认情况下，由数据平面的算法为新连接选择后端，例如 iptables 模式的随机选择、IPVS 的轮询。若业务需要按客户端地址保持亲和性，可在 Service 的 `spec` 中配置 `sessionAffinity: ClientIP`。
+
+ClientIP 亲和性会让相同客户端 IP 的新连接在有效期内倾向于同一个后端；超时或后端变化时仍可能重选。经过 NAT 后，多个真实用户可能共用一个源 IP，因此它不能替代应用登录态或共享会话存储。
+
+### 更改 Service 代理模式（旧版本实验）
+
+以下操作会影响整个集群的 Service 转发，仅用于支持 IPVS 的实验环境。先备份 ConfigMap、确认内核模块与回滚方法；托管集群应使用平台支持的配置入口。
+
+~~~sh
+# 查看当前的代理模式：
+curl 127.0.0.1:10249/proxyMode
+iptables
+# 更改 proxy 的代理模式为 ipvs：
+kubectl edit cm kube-proxy -n kube-system
+# mode更改成"ipvs"
+# 二进制安装方式配置文件在每个机器上 
+#重启 kube-proxy 生效（二进制安装方式使用 systemctl restart kube-proxy）：
+kubectl rollout restart daemonset/kube-proxy -n kube-system
+kubectl rollout status daemonset/kube-proxy -n kube-system
+# 再次查看代理模式：
+curl 127.0.0.1:10249/proxyMode
+ipvs
+~~~
+
+### 更改 IPVS 调度算法（旧版本实验）
+
+~~~sh
+# 在机器上查看 ipvs 规则：
+yum install ipvsadm -y
+ipvsadm -ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+-> RemoteAddress:Port Forward Weight ActiveConn InActConn
+TCP 172.16.32.128:32000 rr
+-> 172.16.85.217:8443 Masq 1 0 0 
+TCP 172.16.32.128:32001 rr
+-> 192.168.181.141:80 Masq 1 0 0
+
+# 实验中将代理算法改为最少连接：
+kubectl edit cm kube-proxy -n kube-system
+# 把ipvs.scheduler字段改成"lc"
+# 重启 Proxy：
+kubectl rollout restart daemonset/kube-proxy -n kube-system
+kubectl rollout status daemonset/kube-proxy -n kube-system
+# 查看 ipvs 算法：
+ipvsadm -ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+-> RemoteAddress:Port Forward Weight ActiveConn InActConn
+TCP 172.16.32.128:32000 lc
+-> 172.16.85.217:8443 Masq 1 0 0 
+TCP 172.16.32.128:32001 lc
+-> 192.168.181.141:80 Masq 1 0 0
+~~~
 
 ## 完整实验：旧集群从 iptables 切换到 IPVS
 
-这一节使用 kubeadm 与传统 Linux 节点的准备流程，用于维护仍使用 IPVS 的实验集群。由于该模式自 v1.35 起弃用，新集群应先评估受支持的 nftables 或 iptables 方案。切换会影响节点转发，应在维护窗口内进行，并先验证回退路径。
+这一节演示 kubeadm 与传统 Linux 节点的准备流程，适用于维护仍使用 IPVS 的实验集群。由于该模式自 v1.35 起弃用，新集群应先评估受支持的 nftables 或 iptables 方案。切换会影响节点转发，应在维护窗口内进行，并先验证回退路径。
 
 ### 第一步：选择 kube-proxy 配置
 
@@ -619,7 +607,6 @@ ipvsadm -Ln
 #修改ipvs模式之后过5-10分钟测试在k8s创建pod是否可以正常访问网络
 kubectl run busybox --image busybox:1.28 --restart=Never --rm -it busybox -- sh
 ~~~
-
 
 不应通过 `iptables -F/-X` 清空 filter、nat 表来完成切换：这会同时移除与 kube-proxy 无关的主机防火墙、CNI 或安全规则。规则迁移和清理应按目标 Kubernetes 版本及集群发行版支持的流程执行。上面的模块列表也需按实际内核核对，旧系统中的 `nf_conntrack_ipv4` 在新内核通常已由 `nf_conntrack` 替代。
 

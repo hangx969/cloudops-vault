@@ -7,11 +7,17 @@ aliases:
   - k8sDeployment
 ---
 
-# K8s基础-Deployment
+# Deployment：从副本管理到滚动更新、蓝绿与金丝雀发布
 
-## ReplicaSet - rs
+服务需要同时运行三个实例时，手工创建三个 Pod 只解决了第一次启动。之后还会遇到 Pod 故障、扩容和镜像升级：谁补齐副本，怎样逐步替换，失败后又如何退回原版本？Deployment 通过管理 ReplicaSet，把这些动作组织成可观察的发布过程。
 
-### 示例
+本文先说明 ReplicaSet 与 Deployment 的关系，再用完整 YAML 练习扩缩容、更新和回滚，最后把 Service 流量切换接入蓝绿与金丝雀实验。实验需要可用集群、kubectl 和镜像拉取条件；NodePort 示例还需要节点端口可达。文中第三方教学镜像保留原实验用途，实际使用前应检查来源与可用性。
+
+## ReplicaSet 先解决副本数量问题
+
+ReplicaSet 根据选择器匹配 Pod，并在副本不足时创建 Pod、副本过多时缩减 Pod。它的 Pod 模板决定新 Pod 使用什么配置；已有 Pod 不会因为修改 ReplicaSet 的镜像字段就按发布策略全部替换。
+
+### 一个三副本示例
 
 ```yaml
 apiVersion: apps/v1
@@ -40,60 +46,44 @@ spec:
         - containerPort: 80
 ```
 
-### 缺点
+### 为什么通常在它上面再使用 Deployment
 
-- 更新管理上不如deployment灵活。现在不推荐使用。都使用deployment来管理。
+ReplicaSet 适合维持数量，Deployment 则负责新旧 ReplicaSet 之间的更新和历史管理。日常发布通常直接操作 Deployment，不手工修改它拥有的 ReplicaSet。删除 Pod 后能自动补齐副本，只能证明副本控制生效，还不能证明有版本发布与回滚能力。
 
-## deployment
+## Deployment 如何管理新旧 ReplicaSet
 
-### 概述
+Deployment 声明副本数、选择器和 Pod 模板。控制器为对应模板创建或复用 ReplicaSet，再调整各 ReplicaSet 的副本数量，使实际状态逐步接近期望状态。内置策略是 `RollingUpdate` 与 `Recreate`；蓝绿和按流量比例灰度还需要额外的对象与路由配置。基本行为见[Deployment 官方说明](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)。
 
-- Deployment是kubernetes中最常用的资源对象，为ReplicaSet和Pod的创建提供了一种声明式的定义方法，在Deployment对象中描述一个期望的状态，Deployment控制器就会按照一定的控制速率把实际状态改成期望状态，通过定义一个Deployment控制器会创建一个新的ReplicaSet控制器。
-- 使用Deployment而不直接创建ReplicaSet是因为Deployment对象拥有许多ReplicaSet没有的特性，例如滚动升级、金丝雀发布、蓝绿部署和回滚。
+### 更新期间可以有多个活跃 ReplicaSet
 
-### 工作原理
+`.spec.template` 发生变化会触发 rollout，通常对应新的 ReplicaSet；如果模板回到已有历史版本，也可能复用已有 ReplicaSet。只改 `.spec.replicas` 不会生成新的模板版本。
 
-#### RS管理
-
-- Deployment控制器是建立在rs之上的一个控制器，可以管理多个rs：
-  - 每次更新，都会生成一个新的rs，把旧的rs替换掉；多个rs同时存在，但是只有一个rs运行。
-
-- 如下图：rs-v1控制三个pod，删除一个pod，在rs-v2上重新建立一个，依次类推，直到全部都是由rs-v2控制，如果rs-v2有问题，还可以回滚。Deployment是建构在rs之上的，多个rs组成一个Deployment，但是只有一个rs处于活跃状态。
+滚动过程中，新旧 ReplicaSet 可以同时拥有运行中的 Pod。例如旧 ReplicaSet 原来有三个副本，控制器逐步增加新版本、缩减旧版本，直到旧 ReplicaSet 降为 0。旧 ReplicaSet 保留模板后，才有机会按历史版本回滚。不能把这个过程理解为“任何时候只有一个 ReplicaSet 活跃”。
 
 ![image-20231029220956699](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310292209817.png)
 
-#### 更新管理
+### 用更新预算控制替换节奏
 
-> [!info] 说明
-> 只有在`deploytment.spec.template`产生变化之后，deployment才会触发更新，产生新的RS
+`RollingUpdate` 用 `maxSurge` 与 `maxUnavailable` 控制额外副本和允许的不可用数量。两者都可写整数或百分比，默认均为 25%，不能同时为 0。
 
-- 比如说Deployment控制5个pod副本，pod的期望值是5个，但是升级的时候需要额外多几个pod，控制器可以控制在5个pod副本之外还能再增加几个pod副本：
-  - 比方说能多一个，但是不能少，那么升级的时候就是先增加一个，再删除一个，始终保持pod副本数是5个
-  - 比如最多允许多一个，最少允许少一个；也就是最多6个，最少4个；加一个，删除两个，依次类推。
-- 可以自己控制更新方式，这种滚动更新需要加readinessProbe和livenessProbe探测，确保pod中容器里的应用都正常启动了才删除之前的pod。
+| 参数 | 百分比计算 | 5 个期望副本、配置 25% 时 |
+| --- | --- | --- |
+| `maxSurge` | 向上取整 | 可额外创建 2 个副本，常规更新预算为 7 个 |
+| `maxUnavailable` | 向下取整 | 允许 1 个不可用，目标是至少 4 个可用副本 |
 
-- 更新策略定义：
+例如希望更新时仍保持五个可用副本，可以选择 `maxUnavailable: 0`、`maxSurge: 1`，先补一个可用的新 Pod，再缩减旧 Pod。如果允许一个不可用且允许一个额外副本，则控制器可以在四到六个的更新预算内推进，实际动作不保证严格“一次加一个、一次删两个”。
 
-  ```bash
-  kubectl explain deploy.spec.strategy.rollingUpdate
-  
-     maxSurge	<string>
-  # 更新过程最多允许超出的指定的目标副本数有几个。
-  # 它有两种取值方式，第一种直接给定数量；第二种根据百分比，如最多可以超出20%，滚动更新开始时，马上scale up pod数为120%。然后逐渐的kill旧的，创建新的。
-  # Absolute number is calculated from percentage by rounding up. ==> 出现小数向上取整
-     maxUnavailable	<string>
-  # 最多允许几个不可用，数字或百分比。如果是30%，滚动更新开始，旧pod马上scale down到70%，然后随着新pod ready，旧pod再进一步scale down。
-  # Absolute number is calculated from percentage by rounding down. ==> 出现小数向下取整
-  
-  replicas： 5
-  maxSurge: 25%         5*25%=1.25  ->5+2=7
-  maxUnavailable: 25%    5%25%=1.25  -> 5-1=4 #滚动更新时最少4个，最多7个
-  ```
+这些预算也不等于操作系统中绝不会超过该数量。正在 Terminating 的 Pod 仍可能占用资源，因此节点容量还要容纳优雅终止期间的额外消耗。应用的 readiness probe 决定能否接流量；liveness probe 用于恢复不健康容器，不能替代 readiness。需要启动缓冲时还可配合 startup probe 与 `minReadySeconds`。
 
+可以直接查询目标集群支持的字段：
 
-### yaml示例
+```sh
+kubectl explain deployment.spec.strategy.rollingUpdate
+```
 
-- 用kubectl explain一层一层的查下去慢慢写完yaml文件
+### 先创建一份完整 Deployment
+
+选择器必须匹配 Pod 模板标签，且 Deployment 创建后不能随意修改选择器。下面的 `version: v1` 是这个实验中的分组标签，实际应用不要每次修改镜像时都去修改不可变的 selector。后续示例继续使用 `dep-myapp-blue` 名称：
 
 ```yaml
 apiVersion: apps/v1
@@ -120,140 +110,101 @@ spec:
         - containerPort: 80
 ```
 
-### 重启deployment
+## 日常操作：重启与扩缩容
 
-`kubectl rollout restart deploy nginx`: 会轮替重启deployment里面的pod
+`rollout restart` 会给 Pod 模板增加重启时间注解，从而触发一次新的 rollout；它不保证重新拉取同一标签下的镜像，也不代表应用配置已正确更新：
 
-### 扩缩容
-
-- 修改yaml文件replicas的值，重新kubectl apply -f
-- kubectl scale deploy --replicas=5
-
-注意不要盲目扩容，特别是对于后端服务，连了数据库的那种。如果访问慢的原因并不是由于并发数不够，而是由于后端数据库有压力，比如慢查询太多、数据库CPU内存满了，盲目扩容java程序可能会导致适得其反。所以要去分析慢的原因再看优化。
-
-### 滚动更新
-
-> 滚动更新是一种自动化程度较高的发布方式，用户体验比较平滑，是目前成熟型技术组织所采用的主流发布方式，一次滚动发布一般由若干个发布批次组成，每批的数量一般是可以配置的（可以通过发布模板定义），例如第一批1台，第二批10%，第三批50%，第四批100%。每个批次之间留观察间隔，通过手工验证或监控反馈确保没有问题再发下一批次，所以总体上滚动式发布过程是比较缓慢的
-
-#### yaml定义
-
-```bash
-#查看rolling update的参数定义
-kubectl explain deploy.spec.strategy
-  #type：指定策略类型，支持两种策略
-    #Recreate：在创建出新的Pod之前会先杀掉所有已存在的Pod
-    #RollingUpdate：滚动更新，就是杀死一部分，就启动一部分，在更新过程中，存在两个版本Pod。（默认值）
-  #rollingUpdate：当type为RollingUpdate时生效，用于为RollingUpdate设置参数，支持两个属性：
-    #maxUnavailable：用来指定在升级过程中不可用Pod的最大数量，默认为25%。
-    #maxSurge： 用来指定在升级过程中可以超过期望的Pod的最大数量，默认为25%。
-    
-#查看当前deploy的rolling update策略
-kubectl describe deploy
+```sh
+kubectl rollout restart deployment/dep-myapp-blue
 ```
 
-#### 查看滚动更新历史版本
+扩缩容可以修改 YAML 中的 `replicas` 后 apply，也可以临时使用命令：
 
-- `kubectl rollout <参数> deploy <deploy name>`： 版本升级相关功能，支持下面的选项：
-  -   status 显示当前升级状态
-  
-  -   history 显示 升级历史记录
-  
-  -   pause 暂停版本升级过程
-  
-  -   resume 继续已经暂停的版本升级过程
-  
-  -   restart 重启版本升级过程
-  
-  -   undo 回滚到上一级版本（可以使用--to-revision回滚到指定版本）
-    - --to-version：指的是rollout history里面显示的`REVISION`字段
+```sh
+kubectl scale deployment/dep-myapp-blue --replicas=5
+```
 
-```bash
-kubectl rollout history deploy dep-myapp-blue 
+声明式配置、手工 scale 与 HPA 如果同时管理副本数，需要约定字段归属，避免下一次发布又覆盖副本数。扩容前还应确认瓶颈：如果延迟来自数据库慢查询或连接压力，增加应用实例可能继续放大数据库负载。
 
-deployment.apps/dep-myapp-blue 
+## 滚动更新与历史版本
+
+滚动更新逐步替换副本，能降低一次性切换全部实例的影响。原生 Deployment 根据副本预算推进，不直接提供“第一批一台、第二批 10%、再观察半小时”这样的完整分批审批流程。固定批次、自动指标判断和审批等待，通常由发布流水线或专门的渐进式交付控制器补充。
+
+### 选择 Recreate 还是 RollingUpdate
+
+| 策略 | 更新时的行为 | 适用前提 |
+| --- | --- | --- |
+| `Recreate` | rollout 时先终止旧版本，再创建新版本 | 可接受中断，或新旧版本不能同时运行 |
+| `RollingUpdate` | 在预算内逐步增减新旧版本 | 应用允许版本共存，有正确的就绪检查和额外容量 |
+
+```sh
+kubectl explain deployment.spec.strategy
+kubectl describe deployment dep-myapp-blue
+```
+
+Recreate 的保证针对控制器组织的版本升级，不能把它当成跨进程、跨故障场景下的全局单实例锁。回滚也只恢复 Pod 模板，不会自动回滚数据库 schema、外部配置或已写入数据。
+
+### 查看发布状态与历史
+
+`kubectl rollout` 提供发布相关命令：
+
+| 子命令 | 用途 |
+| --- | --- |
+| `status` | 等待并显示当前发布进度 |
+| `history` | 查看保留的版本 |
+| `pause` / `resume` | 暂停或继续 Deployment 发布 |
+| `restart` | 修改模板中的重启注解并触发发布 |
+| `undo` | 回到上一版本，或用 `--to-revision` 指定版本 |
+
+```sh
+kubectl rollout status deployment/dep-myapp-blue
+kubectl rollout history deployment/dep-myapp-blue
+kubectl get rs
+```
+
+历史输出可能类似：
+
+```text
 REVISION  CHANGE-CAUSE
 1         <none>
 2         <none>
-
-kubectl get rs #能看到两个rs，有一个旧版本的rs都是0.
 ```
 
-- change cause字段:
-  - 如果用kubectl set --record去改，会自动帮你加上，内容就是这个命令本身。
-  - 也是可以自己指定的，在deploy的annotation里面写：`kubernetes.io/change-cause: kubectl set image deployment nginx nginx=registry.cn-beijing.aliyuncs.com/dotbalo/canary:v1 --record=true`
+`CHANGE-CAUSE` 来自 `kubernetes.io/change-cause` 注解。旧资料里的 `--record` 方式已经过时，可以显式记录发布原因：
 
-#### 回滚到历史版本
+```sh
+kubectl annotate deployment dep-myapp-blue kubernetes.io/change-cause="upgrade myapp to v2" --overwrite
+```
+
+### 回滚到历史版本
 
 ```bash
 kubectl rollout undo deploy dep-myapp-blue --to-revision=1 
-# 也是滚动的方式，ready一个新的干掉一个旧的。
+# 回滚仍按当前部署策略推进，实际替换节奏取决于预算与就绪状态。
 ```
 
-#### 历史保留策略
+### 历史保留多少个版本
 
-在默认情况下，revision 保留 10 个旧的 ReplicaSet，其余的将在后台进行垃圾回收.
+`.spec.revisionHistoryLimit` 默认保留 10 个旧 ReplicaSet。设为 0 后，旧的零副本 ReplicaSet 会在发布完成后的清理流程中删除，无法再依靠这些对象回滚。发布持续失败或多次更新尚未完成时，实际保留数量可能暂时超过这个值。
 
-可以在`deploy.spec.revisionHistoryLimit` 设置保留 ReplicaSet 的个数。
+### 怎样选择更新预算
 
-当设置为 0 时，不保留历史记录。
+百分比适合副本数变化较大的服务，整数则更便于小副本服务控制步长。`maxUnavailable` 越小，主动减少可用副本越谨慎；`maxSurge` 越大，需要的额外容量越多，也可能加快推进。它们不会单独保证业务稳定，仍需配合探针、下游容量与观察指标。
 
-#### 自定义更新策略
+例如十个副本配置 5% 时，`maxUnavailable` 向下取整为 0，`maxSurge` 向上取整为 1。对于需要保留全部可用副本的网关，可以从 `maxUnavailable: 0`、`maxSurge: 1` 开始；副本较多且容量充足时再考虑把 surge 提高到 2 或 3。五副本、十副本没有通用分界，默认的 25% 也需要按业务容错能力评估。
 
-maxSurge和maxUnavailable用来控制滚动更新的更新策略:
-
-1. maxUnavailable: [0, 副本数]
-
-2. maxSurge: [0, 副本数]
-
-比例:
-
-1. maxUnavailable: [0%, 100%] 向下取整，比如10个副本，5%的话==0.5个，但计算按照0个；
-
-2. maxSurge: [0%, 100%] 向上取整，比如10个副本，5%的话==0.5个，但计算按照1个；
-
-总结：
-
-- maxUnavailable：和期望的副本数比，不可用副本数最大比例（或最大值），这个值越小，越能保证服务稳定，更新越平滑；
-
-
-- maxSurge：和期望的副本数比，超过期望副本数最大比例（或最大值），这个值调的越大，副本更新速度越快。
-- 建议采用百分比的形式设置两者的值。
-
-##### 最佳实践
-
-对于非常重要的服务比如网关，建议这样配置:
-
-1. 副本数低于5个：
-
-- maxUnavailable == 0
-
-- maxSurge == 1
-
-> [!tip] 最佳实践
-> 这是我们生产环境提供给用户的默认配置。即”一上一下，先上后下”最平滑原则：1个新版本pod ready（结合readiness）后，才销毁旧版本pod。此配置适用场景是平滑更新、保证服务平稳，但也有缺点，就是太慢了。
-
-
-2. 副本数高于5个：这样设会稍微快一些
-
-- maxUnavailable == 0
-
-- maxSurge == 2-3
-
-对于普通服务，用默认的25%+25%就行了。
-
-##### 修改策略
+### 修改策略
 
 修改deployment的更新策略:
 
 ```bash
 #通过kubectl patch改
-kubectl patch deployment myapp-v1 -p '{"spec":{"strategy":{"rollingUpdate": {"maxSurge":1,"maxUnavailable":0}}}}'
+kubectl patch deployment dep-myapp-blue -p '{"spec":{"strategy":{"rollingUpdate": {"maxSurge":1,"maxUnavailable":0}}}}'
 ```
 
+下面把策略写入完整清单，更新时使用四个期望副本：
+
 ```yaml
-#通过yaml文件改
-kubectl explain deploy.spec.strategy
-#yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -281,67 +232,55 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
-        ...
 ```
 
-#### 暂停和恢复更新
+### 暂停后合并多项模板修改
 
-kubectl set命令去更改配置，更改后立即触发更新，大多数情况下可能需要针对一个资源文件更改多处地方，而并不需要多次触发更新。
-
-（如果使用的是 kubectl edit 命令，可以直接进行多次修改，无需暂停更新。有些场景，kubectl set 命令集成在 CICD 流水线中）：
-
-此时可以使用 Deployment 暂停功能，临时禁用更新操作，对 Deployment 进行多次修改后在进行更新。使用 `kubectl rollout pause` 命令即可暂停 Deployment 更新：
+连续运行多个 `kubectl set` 命令，可能分别触发 rollout。如果希望先改镜像再改资源限制，可以暂停 Deployment，完成修改后统一恢复。一次编辑同一份 YAML 再 apply，通常无需为每个字段单独暂停。
 
 ~~~sh
-kubectl rollout pause deploy nginx
-deployment.extensions/nginx paused
+kubectl rollout pause deployment/dep-myapp-blue
+# 在暂停期间提交计划中的镜像、资源等模板修改
+kubectl rollout resume deployment/dep-myapp-blue
 ~~~
 
-然后对 Deployment 进行相关更新操作，比如先更新镜像，然后对其资源进行限制
+暂停不撤销已经创建的新 Pod，也不是流量暂停。处于暂停状态的 Deployment 需要先恢复后才能执行回滚。恢复后应继续检查 `rollout status` 与应用指标；发布超时会报告失败进展条件，不会默认替我们完成业务回滚。
 
-进行完最后一处配置更改后，使用 `kubectl rollout resume deploy nginx` 恢复 Deployment 更新
+## 蓝绿部署：用 Service 选择流量目标
 
-### 蓝绿部署
+### 两套版本如何切换
 
-#### 原理
-
-- 蓝绿部署中，一共有两套系统：一套是正在提供服务系统，标记为“绿色”；另一套是准备发布的系统，标记为“蓝色”。两套系统都是功能完善的、正在运行的系统，只是系统版本和对外服务情况不同。
-
-- 开发新版本，要用新版本替换线上的旧版本，在线上的系统之外，搭建了一个使用新版本代码的全新系统。 这时候，一共有两套系统在运行，正在对外提供服务的老系统是绿色系统，新部署的系统是蓝色系统。
+蓝绿部署同时保留旧版和新版两套运行环境。这里把当前服务用户的旧版称为绿色，把准备上线的新版称为蓝色；颜色本身没有版本高低之分。蓝色环境先接受验证，确认后把入口切过去，旧版保留一段观察时间以便回退。
 
 ![image-20231111095318581](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110953730.png)
 
-- 蓝色系统不对外提供服务，用来做发布前测试，测试过程中发现任何问题，可以直接在蓝色系统上修改，不干扰用户正在使用的系统。（注意，两套系统没有耦合的时候才能百分百保证不干扰）蓝色系统经过反复的测试、修改、验证，确定达到上线标准之后，直接将用户切换到蓝色系统：
+测试环境与线上环境仍可能共享数据库、队列或存储。即使入口没有切换，新版本也可能产生写入或消费，因此测试账号、消息消费和数据兼容都需要设计。新版通过验证后，再修改入口路由：
 
-  ![image-20231111095615746](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110956844.png)
+![image-20231111095615746](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110956844.png)
 
-- 切换后的一段时间内，依旧是蓝绿两套系统并存，但是用户访问的已经是蓝色系统。这段时间内观察蓝色系统（新系统）工作状态，如果出现问题，直接切换回绿色系统。
+切换后需要观察错误率、延迟和业务结果，出现问题时把入口切回旧版。确认新版本稳定后，才按计划释放旧环境资源。切回入口只能恢复流量去向，不能自动撤销新版本已执行的数据写入。
 
-- 当确信对外提供服务的蓝色系统工作正常，不对外提供服务的绿色系统已经不再需要的时候，蓝色系统正式成为对外提供服务系统，成为新的绿色系统。 原先的绿色系统可以销毁，将资源释放出来，用于部署下一个蓝色系统。
+| 方面 | 优点或代价 |
+| --- | --- |
+| 切换与回退 | 可以通过入口路由快速更换后端，保留旧版便于恢复 |
+| 资源容量 | 观察期间需同时容纳两套环境，成本更高 |
+| 数据兼容 | 共享数据库与外部依赖时，版本共存和回退都需兼容 |
+| 流量状态 | Service、代理、DNS 缓存及已有长连接都会影响实际切换过程 |
+| 环境管理 | 需要独立标签、配置和发布操作范围，避免误改另一套环境 |
 
-#### 优缺点
+Deployment 没有名为“蓝绿”的内置策略，但可以用两个 Deployment 加一个 Service 实现基本切换；更复杂的流量与分析流程可以交给专门控制器。
 
-优点：
+### 实验：先部署绿色 v1
 
-1、更新过程无需停机，风险较少
+先准备命名空间。离线镜像导入命令在节点主机执行，且只影响当前节点；Pod 可能调度到的其他节点也要有镜像，或能从仓库拉取。
 
-2、回滚方便，只需要更改路由或者切换DNS服务器，效率较高
+```sh
+kubectl create namespace blue-green
+ctr -n=k8s.io images import myapp-blue.tar.gz
+ctr -n=k8s.io images import myapp-green.tar.gz
+```
 
-缺点：
-
-1、成本较高，需要部署两套环境。如果新版本中基础服务出现问题，会瞬间影响全网用户；如果新版本有问题也会影响全网用户。
-
-2、需要部署两套机器，费用开销大
-
-3、在非隔离的机器（Docker、VM）上操作时，可能会导致蓝绿环境被摧毁风险
-
-4、负载均衡器/反向代理/路由/DNS处理不当，将导致流量没有切换过来情况出现
-
-#### 实现
-
-K8S本身不支持原生的蓝绿部署，目前最好方法是：部署deployment，更新应用程序的service以指向新的deployment部署的应用
-
-- 部署green应用
+把下面第一份清单保存为 `dep-green.yaml`：
 
 ```yaml
 #部署deployment
@@ -355,26 +294,22 @@ spec:
   selector:
    matchLabels:
     app: myapp
-    version: v2
+    version: v1
   template:
    metadata:
     labels:
      app: myapp
-     version: v2
+     version: v1
    spec:
     containers:
     - name: myapp
-      image: janakiramm/myapp:v2
+      image: janakiramm/myapp:v1
       imagePullPolicy: IfNotPresent
       ports:
       - containerPort: 80
 ```
 
-```bash
-kubectl create ns blue-green
-ctr -n=k8s.io images import myapp-blue.tar.gz
-ctr -n=k8s.io images import myapp-green.tar.gz
-```
+将 Service 清单保存为 `svc-myapp.yaml`，它初始只选择绿色 v1：
 
 ```yaml
 #创建前端service
@@ -393,10 +328,12 @@ spec:
     name: http
   selector:
     app: myapp
-    version: v2
+    version: v1
 ```
 
-- 部署blue应用
+### 再部署蓝色 v2
+
+把下面清单保存为 `dep-blue.yaml`，确认两套版本分别就绪后，再进行流量切换：
 
   ```yaml
   #创建deployment
@@ -410,50 +347,71 @@ spec:
     selector:
      matchLabels:
       app: myapp
-      version: v1
+      version: v2
     template:
      metadata:
       labels:
        app: myapp
-       version: v1
+       version: v2
      spec:
       containers:
       - name: myapp
-        image: janakiramm/myapp:v1
+        image: janakiramm/myapp:v2
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
   ```
 
-- 修改svc yaml文件，使其标签选择器指向blue应用
+Service 初始选择 `version: v1`，因此流量进入绿色版本。验证蓝色版本后，将 Service 的选择器切到 `v2`：
 
-### 金丝雀发布
+```sh
+kubectl apply -f dep-green.yaml
+kubectl apply -f dep-blue.yaml
+kubectl apply -f svc-myapp.yaml
+kubectl rollout status deployment/myapp-v1 -n blue-green
+kubectl rollout status deployment/myapp-v2 -n blue-green
+# 确认验证完成后再切流量；也可修改Service清单后apply
+kubectl patch service myapp-lan-lv -n blue-green --type=merge -p '{"spec":{"selector":{"app":"myapp","version":"v2"}}}'
+```
 
-> - 金丝雀发布的由来：17 世纪，英国矿井工人发现，金丝雀对瓦斯这种气体十分敏感。空气中哪怕有极其微量的瓦斯，金丝雀也会停止歌唱；当瓦斯含量超过一定限度时，虽然人类毫无察觉，金丝雀却早已毒发身亡。当时在采矿设备相对简陋的条件下，工人们每次下井都会带上一只金丝雀作为瓦斯检测指标，以便在危险状况下紧急撤离。
->
-> - 金丝雀发布（又称灰度发布、灰度更新）：金丝雀发布一般先发1台，或者一个小比例，例如2%的服务器，主要做流量验证用，也称为金丝雀 **(Canary)** 测试 （国内常称**灰度测试**）。
-> - 简单的金丝雀测试一般通过手工测试验证，复杂的金丝雀测试需要比较完善的监控基础设施配合，通过监控指标反馈，观察金丝雀的健康状况，作为后续发布或回退的依据。 如果金丝测试通过，则把剩余的V1版本全部升级为V2版本。如果金丝雀测试失败，则直接回退金丝雀，发布失败。
+Service 清单也需要在使用前提交；NodePort `30062` 应未被其他 Service 占用。切换主要影响后续连接，已有连接、应用会话和下游数据不会因此瞬间迁移。回退时将选择器改回 `v1`，并保留两套版本的数据兼容性。
+
+## 金丝雀发布：先让一部分请求接触新版
+
+金丝雀发布先把少量实例或流量交给新版本，观察错误率、延迟和业务指标，再决定继续放量或回退。名称源自矿井中用金丝雀预警有害气体的做法；在发布中，承担预警作用的是可观测的运行结果。
 
 ![image-20231111103236653](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111032729.png)
 
-#### 实现
+### 暂停 rollout 可以观察，但不能精确锁定一份新副本
 
-```yaml
-# 创建deployment
+原实验尝试在更新镜像后立即暂停 Deployment：
+
+```sh
 kubectl apply -f dep-green.yaml
-# 更新镜像 && 暂停rollout
-kubectl set image deployment myapp-v1 myapp=nginx:latest  -n blue-green && kubectl rollout pause deployment myapp-v1 -n blue-green
-# 注：把myapp这个容器的镜像更新到nginx:latest版本 更新镜像之后，创建一个新的pod就立即暂停，这就是我们说的金丝雀发布；如果暂停几个小时之后没有问题，那么取消暂停，就会依次执行后面步骤，把所有pod都升级。
-# 验证没问题，取消暂停更新，让deployment执行完滚动更新
+kubectl set image deployment myapp-v1 myapp=nginx:latest -n blue-green
+kubectl rollout pause deployment myapp-v1 -n blue-green
+# 观察完成且决定继续后恢复
 kubectl rollout resume deployment myapp-v1 -n blue-green
 ```
 
-> [!tip] 提示
-> 金丝雀发布功能，用istio实现，更加方便
+这组命令用于观察控制器如何响应更新与暂停，不适合保证“恰好一个新 Pod”。两次 API 操作之间存在竞争，控制器可能还未创建新副本，也可能已经推进多个副本；暂停也不会撤回已发出的操作。`nginx:latest` 在这里只是改变模板的实验值，不代表业务兼容的升级目标，生产应使用经过验证的固定版本或摘要。
 
-## 迁移服务到k8s
+### 让新旧 Deployment 独立伸缩
 
-1. 查看镜像版本
-2. 查看暴露的端口号
-3. 查看是否需要配置环境变量、配置文件、启动参数等。（有些服务需要配置环境变量才能启动，比如mysql密码等）
-4. 查看数据目录，是否需要持久化数据目录
+更容易控制的基本方式，是复用前面的两个 Deployment：旧版保持多个副本，新版先保留一个副本，让 Service 只选择共同的 `app: myapp`，同时包含两个版本。选择器去掉版本字段的 merge patch 示例为：
+
+```sh
+# 若做过上面的暂停实验，先重新提交绿色清单以恢复原应用镜像
+kubectl apply -f dep-green.yaml
+kubectl rollout status deployment/myapp-v1 -n blue-green
+kubectl scale deployment/myapp-v2 -n blue-green --replicas=1
+kubectl patch service myapp-lan-lv -n blue-green --type=merge -p '{"spec":{"selector":{"app":"myapp","version":null}}}'
+```
+
+这只是按可用后端数量近似分摊连接，不能保证每个请求严格按某个百分比分配。长连接、会话亲和与负载差异都会改变观察到的比例。若需要 2% 流量、指定用户或请求头规则，可使用具备加权路由能力的网关或 Istio 等方案，并配合发布控制器组织放量与回退。Kubernetes 官方的[金丝雀模式说明](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#canary-deployments)也建议用多个 Deployment 承载不同版本。
+
+## 迁移应用前先整理运行条件
+
+把已有服务迁入 Kubernetes 前，先确认镜像来源、固定版本与架构，记录实际监听端口；再列出环境变量、配置文件和启动参数，例如 MySQL 初始化时需要的密码配置。最后检查数据目录：哪些只是缓存，哪些必须持久化，是否需要 PVC、备份和恢复验证。
+
+这些信息决定 Pod 模板如何编写，也决定滚动、蓝绿或金丝雀是否可行。若应用无法与旧版本同时读写同一份数据，应先解决数据兼容和迁移流程，再选择发布策略。

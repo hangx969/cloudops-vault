@@ -7,74 +7,51 @@ aliases:
   - k8s自定义CRD
 ---
 
-# K8s基础-自定义CRD资源
+# Kubernetes CRD 与 Operator：从注册资源类型到自动管理应用
+
+`kubectl apply` 可以创建 Deployment、Service，也可以创建 `MongoDBCommunity` 这样的自定义对象。它们使用相似的声明式接口，但背后的职责需要分开理解：CRD 让 API Server 认识新类型，Controller 根据这些对象执行操作，Operator 再把某类应用的运维规则组织进控制循环。
+
+本文先注册一个只保存数据的 CronTab 类型，再通过 MongoDB 的历史安装案例观察 CRD、控制器与存储的配合，最后拆解一个 EtcdCluster 控制器的结构。前两部分需要了解 YAML、Pod、Service 和 PV/PVC；代码部分还需要 Go 与 Kubernetes 客户端基础。所有安装、NFS 配置和删除命令只应在隔离实验环境中使用。
+
+## 一、先分清 CRD、CR 与 Controller
+
+### CRD 定义类型，CR 保存一个实例
+
+CRD（CustomResourceDefinition）是 Kubernetes 提供的 API 扩展机制，无需修改 Kubernetes 源码或编写独立 API Server，即可注册新的资源类型。比如 CRD 定义 `Database` 的字段，用户再创建名为 `orders-db` 的 Database 自定义资源，后者简称 CR（Custom Resource）。
+
+创建 CRD 后，API Server 为启用的版本提供 REST 路径、对象校验、存储和 Watch 等通用能力。`spec.scope` 决定 CR 是 Namespaced 还是 Cluster 范围；CRD 对象本身始终是集群级的。删除命名空间会影响其中的命名空间级 CR，删除 CRD 则会影响该类型的所有实例，实验清理前应先确认数据和外部依赖。
+
+CRD 只定义数据结构。例如定义一个 Backup 类型，并不会自动备份 Redis。需要 Controller 读取 Backup 对象，再调用备份程序或创建 Job。官方[自定义资源说明](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) 也将数据定义与控制逻辑分开讨论。
+
+### Controller 持续调谐，Operator 包含应用运维知识
+
+Controller 观察 CR 及关联资源，比较期望状态与当前状态，执行创建、更新或清理，并把结果写入状态。对象变更只是触发它重新检查的信号；由于通知可能重复、进程可能重启，调谐逻辑应能安全重复执行。
+
+Operator 通常由 CRD 与应用专用 Controller 组成。它可以创建原生 Pod、Service、PVC，也可以操作集群外部系统；能力不限于组合原生对象。数据库备份、恢复、成员扩缩和故障处理都需要实际实现，不能仅因使用了 Operator 就假定自动具备这些能力。定义 CRD 本身也不会改变调度器，调度扩展需要额外实现。
+
+### Helm 与 Operator 如何配合
+
+| 工具 | 主要负责什么 | 使用前需要考虑什么 |
+| --- | --- | --- |
+| Helm | 渲染、安装和升级一组 Kubernetes 清单 | 适合配置可由模板表达的部署，也能用于安装 Operator |
+| Operator | 持续执行领域专用的调谐和运维流程 | 开发与维护成本更高，需核实升级、备份恢复及兼容性 |
+
+管理自己的无状态微服务时，Helm 往往足够；数据库等软件若需要持续运维自动化，可以评估已有 Operator。Operator 常用 Go 开发，也有 Helm、Ansible 等实现方式，并非只能使用 Go。
+
+### 安装一个现成 Operator 的顺序
+
+1. 从项目仓库或 OperatorHub 定位产品，并检查维护状态、支持版本与所需权限。
+2. 按该版本说明安装 CRD、ServiceAccount/RBAC 和 Controller。有的安装器会一并处理，不能假定所有项目都使用同一目录布局。
+3. 确认 CRD 已 Established，控制器已就绪，再创建符合 schema 的 CR。
+4. 检查 CR 的 status、事件和关联资源，确认调谐产生了预期结果。
+
+## 二、注册一个 CronTab 类型
 
 
-## Operator
 
-### 什么是operator
+先把类型定义写入 `crontab-crd.yaml`。`group` 与版本组成 CR 的 apiVersion；`plural` 决定 REST 资源名，`kind` 则出现在对象清单中。
 
-Operator是一种用于扩展Kubernetes API的自定义控制器，可以实现**在原生资源对象上**进行自定义的资源类型。（基于原生的pod、svc等资源对象做的扩展！并不是重新造了一个新的原生资源，那得去改k8s源码。）
-
-通过operator，可以降复杂的任务转化成对k8s资源的操作，让应用程序的管理和维护更加简单规范。（比如我想备份一个redis，创建一个叫backup的CRD资源，创建出来他就帮我们自动去做了备份。）
-
-使用场景：
-
-- 简化复杂应用管理，像管理k8s资源一样管理复杂的系统。
-- 一致性操作：通过资源定义决定行为，各个环境可以统一配置。
-
-- 扩展集群能力：自定义资源类型，扩展集群的调度能力
-
-### operator开发模式
-
-- Kubernetes Operator模式是一种自定义控制器的开发模式，它允许开发人员扩展Kubernetes的功能，以管理和自动化特定的应用程序、服务或基础设施。Operator模式利用Kubernetes的自动化、可伸缩和故障恢复功能，使应用程序可以以一种声明性的方式进行管理。
-- 在Operator模式中，开发人员使用自定义控制器来监视、管理和调节应用程序的状态。控制器会根据定义的规则和策略，对资源进行创建、更新和删除操作，以确保应用程序按预期运行。为了开发Operator，通常需要使用自定义资源定义（Custom Resource Definition，CRD）来描述应用程序的自定义资源类型。
-
-### Operator组成
-
-#### CRD
-
-[CRD详解-微信文章](https://mp.weixin.qq.com/s/Ts9MxQOpQVaUtw6YbHXogw)
-
-Operator使用CRD去定义一个新的资源类型。比如定义一个叫database的CRD，一键启动一组高可用数据库实例。
-
-- CRD 是 CustomResourceDefinition 的缩写：
-  - 在 Kubernetes 中，一切都可视为资源。Kubernetes 1.7 之后，增加了通过 CRD 对自定义资源进行二次开发、扩展 Kubernetes API 的能力。我们可以借助 CRD 向 Kubernetes API 添加新的资源类型，无需修改 Kubernetes 源码来创建自定义 API server。该功能大大增强了 Kubernetes 的扩展能力。
-  - 创建 CRD 后，Kubernetes API 服务器会为你指定的每个版本创建新的 RESTful 资源路径。我们可以通过这些 API 路径创建自定义类型的资源。
-  - CRD可以是命名空间的，也可以是集群范围的，由CRD的作用域(scpoe)字段中所指定的，与现有的内置对象一样，删除名称空间将删除该名称空间中的所有自定义对象。CRD本身没有名称空间，所有名称空间都可以使用。
-
-#### Controller
-
-Operator的控制器，监视CRD的状态，根据用户配置执行相应的操作。
-
-比如先创建了一个叫database的CRD，某个controller发现自己管理的资源就叫database，那他就会拿到资源配置，生成原生的资源类型（pod、svc等），也可以执行定义的各种操作。
-
-### 对比helm和operator
-
-- Helm：
-  - 适合简单的程序和微服务，尤其是不需要复杂运维的应用（比如备份、还原、快照等）
-  - 开发简单，无需应用了解开发知识
-
-- Operator：
-  - 适合复杂的应用程序，比如数据库、缓存、消息队列等。除了部署之外，还需要一些额外任务的应用，比如备份、还原、rebalance、快照等。
-  - 开发复杂，需要开发知识（go开发）。
-
-管理自己的项目、微服务，用helm更简单。
-
-部署一些开源中间件，推荐使用operator去部署，有专门的组织写好了operator，不用自己写代码去实现。
-
-### operator使用步骤和工作流程
-
-1. 找到operator（有专门的operator仓库`operatorhub.io`、github也可以）
-2. 创建controller（对应的仓库中会有部署步骤）
-3. 创建CRD
-4. 创建自定义资源（创建yaml文件，kind: CRD的类型，部署即可）
-
-## 自定义CRD资源-crontab
-
-- 定义
-
-~~~yaml
+~~~sh
 tee crontab-crd.yaml<<'EOF'
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -112,17 +89,18 @@ spec:
 EOF
 ~~~
 
-- 创建资源
+然后注册 CRD，并等待 API Server 完成建立：
 
 ~~~sh
 kubectl apply  -f crontab-crd.yaml
+kubectl wait --for=condition=Established crd/crontabs.stable.example.com --timeout=60s
 kubectl get crd
 kubectl get ct
 ~~~
 
-- CRD的对象实例
+接下来创建一个 CronTab 实例。这里的名称与 cron 字段只是自定义数据，不等同于 Kubernetes 内置 CronJob：
 
-~~~yaml
+~~~sh
 tee my-crontab.yaml <<'EOF'
 apiVersion: "stable.example.com/v1"
 kind: CronTab
@@ -132,17 +110,17 @@ spec:
   cronSpec: "* * * * * *"
   image: busybox
 EOF
-kubectl apply -f my-crobtab.yaml
+kubectl apply -f my-crontab.yaml
 kubectl get CronTab
 ~~~
 
-- 可以看到对应类型资源已经创建成功；以上示例只是单纯的crd的使用示例，没有任何实质的作用
+现在可以通过 `kubectl get ct` 读取这个对象，但不会出现定时任务 Pod，因为尚未部署处理 CronTab 的 Controller。这个实验用于验证“API 能保存自定义数据”这一步，而不是验证定时执行。字段的必填、范围和格式校验可继续通过 schema 或 CEL 规则约束，具体能力见官方[CRD 定义文档](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)。
 
-## 自定义CRD-MongoDB
+## 三、用 MongoDB 案例观察控制器与存储的配合
 
-- 项目地址：[MongoDB Kubernetes Operator](https://github.com/mongodb/mongodb-kubernetes-operator.git) （使用0.5.0版本）
-- 下载operator压缩包mongodb-kubernetes-operator-0.5.0.zip
-- 创建crd
+下面是 MongoDB Community Operator 0.5.0 的历史实验。其[原项目仓库](https://github.com/mongodb/mongodb-kubernetes-operator)已经归档，示例用来解释安装结构和 PVC 绑定过程；新部署需另行核查当前 MongoDB Operator 产品、版本和存储要求，不能把这个旧版本作为生产推荐。
+
+先下载 `mongodb-kubernetes-operator-0.5.0.zip` 并解压。以下相对路径都以该版本源码目录为基准，创建 `mongodb` 命名空间后注册 CRD：
 
 ~~~sh
 kubectl create ns mongodb
@@ -152,7 +130,7 @@ kubectl apply -f deploy/crds/mongodb.com_mongodbcommunity_crd.yaml
 kubectl get crd/mongodbcommunity.mongodb.com
 ~~~
 
-- 安装operator
+CRD 只提供类型，接着安装运行调谐逻辑的 Controller：
 
 ~~~sh
 kubectl apply -f deploy/operator/ -n mongodb
@@ -161,7 +139,7 @@ kubectl apply -f deploy/operator/ -n mongodb
 kubectl get pods -n mongodb
 ~~~
 
-- 使用CRD创建一个mongoDB集群
+Controller 就绪后，再创建仓库提供的 MongoDB CR，并观察它生成的 Pod 和 PVC：
 
 ~~~sh
 cat deploy/crds/mongodb.com_v1_mongodbcommunity_cr.yaml
@@ -169,10 +147,13 @@ kubectl apply -f deploy/crds/mongodb.com_v1_mongodbcommunity_cr.yaml -n mongodb
 kubectl get pods -n mongodb
 #pod由于没有合适的PVC而创建失败，需要创建PV和PVC
 kubectl get pvc -n mongodb
-kubectl delete pvc --all -n mongodb
+# 只有在可丢弃的初次安装实验中才考虑重建PVC，不能用于已有数据库
+# kubectl delete pvc --all -n mongodb
 ~~~
 
-- 创建PV
+### 为隔离实验提供静态 PV
+
+如果 PVC 一直 Pending，先 `describe pvc` 检查 StorageClass、容量和访问模式，不要先删除卷。下面保留 NFS 静态 PV 绑定实验：NFS 服务地址、目录和权限都应替换为实验环境配置。生产数据库需要评估文件系统语义、延迟、持久性与故障域；`no_root_squash` 会扩大客户端 root 的访问权限，不应直接使用到共享生产存储。
 
 ~~~sh
 #master节点创建nfs共享
@@ -184,10 +165,11 @@ tee /etc/exports <<'EOF'
 /data/p1  *(rw,no_root_squash)
 /data/p2  *(rw,no_root_squash)
 /data/p3  *(rw,no_root_squash)
+EOF
 exportfs -arv
 ~~~
 
-~~~yaml
+~~~sh
 tee pv-demo.yaml <<'EOF'
 apiVersion: v1
 kind: PersistentVolume
@@ -199,6 +181,7 @@ spec:
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
+  storageClassName: ""
   accessModes: ["ReadWriteOnce","ReadWriteMany","ReadOnlyMany"]
   persistentVolumeReclaimPolicy: Retain
   mountOptions:
@@ -218,6 +201,7 @@ spec:
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
+  storageClassName: ""
   accessModes: ["ReadWriteOnce","ReadWriteMany","ReadOnlyMany"]
   persistentVolumeReclaimPolicy: Retain
   mountOptions:
@@ -238,6 +222,7 @@ spec:
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
+  storageClassName: ""
   accessModes: ["ReadWriteOnce","ReadWriteMany","ReadOnlyMany"]
   persistentVolumeReclaimPolicy: Retain
   mountOptions:
@@ -249,9 +234,11 @@ spec:
 EOF
 ~~~
 
-- 创建PVC
+### 为隔离实验提供静态 PV
 
-~~~yaml
+如果 PVC 一直 Pending，先 `describe pvc` 检查 StorageClass、容量和访问模式，不要先删除卷。下面保留 NFS 静态 PV 绑定实验：NFS 服务地址、目录和权限都应替换为实验环境配置。生产数据库需要评估文件系统语义、延迟、持久性与故障域；`no_root_squash` 会扩大客户端 root 的访问权限，不应直接使用到共享生产存储。C
+
+~~~sh
 tee pvc-demo.yaml <<'EOF' 
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -259,6 +246,7 @@ metadata:
   name: data-volume-example-mongodb-0
   namespace: mongodb
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteMany
   volumeMode: Filesystem
@@ -272,6 +260,7 @@ metadata:
   name: data-volume-example-mongodb-1
   namespace: mongodb
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteMany
   volumeMode: Filesystem
@@ -285,30 +274,31 @@ metadata:
   name: data-volume-example-mongodb-2
   namespace: mongodb
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteMany
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 500M
+      storage: 500Mi
+EOF
+kubectl apply -f pv-demo.yaml
+kubectl apply -f pvc-demo.yaml
+kubectl get pv
+kubectl get pvc,pods -n mongodb
 ~~~
 
 
 
-## 自定义CRD资源-Etcd
+## 四、拆解 EtcdCluster 的 API 与事件处理结构
 
-> [!info] 说明
-> Etcd是一个分布式键值存储系统，常用于存储共享配置和服务发现等场景。Etcd Operator是一个基于Operator模式开发的控制器，用于在Kubernetes上管理和运行Etcd集群。
->
-> 1. 自定义资源定义（CRD）：Etcd Operator定义了一个自定义资源类型EtcdCluster，用于描述Etcd集群的配置和规模。这个CRD定义了Etcd集群的规格，包括节点数量、存储大小、版本等信息。
-> 2. 控制器实现：Etcd Operator的控制器监视EtcdCluster资源的状态，并根据定义的规则执行相应的操作。例如，当创建一个新的EtcdCluster资源时，控制器会根据规格创建一个Etcd集群，并将其部署到Kubernetes集群中的适当位置。
-> 3. 状态管理：Etcd Operator控制器负责监控Etcd集群的状态，并确保其符合预期。如果集群中的节点出现故障或状态不一致，控制器会自动进行故障恢复操作，例如替换故障节点或重新配置集群。
-> 4. 扩展和自动化：Etcd Operator可以利用Kubernetes的自动伸缩功能，根据负载情况自动扩展Etcd集群的规模。控制器会根据指标和策略，自动增加或减少Etcd节点的数量，以适应应用程序的需求。
-> 5. 通过Etcd Operator，用户可以以一种声明性的方式定义和管理Etcd集群。他们只需要创建和更新EtcdCluster资源，而不需要手动进行底层的配置和管理操作。Operator模式使Etcd集群的部署、运行和维护变得更加自动化和可靠。
+Etcd 是分布式键值存储。完整的 Etcd Operator 可以把成员创建、替换、备份与恢复组织成调谐流程，但成员扩容并不等于按 CPU 指标水平扩容普通 Web 服务；仲裁、成员变更顺序和数据恢复都需要领域逻辑。
 
-1. 创建CRD
+[CoreOS etcd-operator 仓库](https://github.com/coreos/etcd-operator)已归档。下面保留 EtcdCluster 的 CRD、镜像和事件回调结构，用于理解各部分接口，不作为可安装的现成数据库产品。示意代码中引用的旧依赖 API 未形成可构建项目，也没有真正的成员管理实现；想动手开发完整控制器，可继续阅读 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Operator开发实战-Kubebuilder]]。
 
-- 用于定义和管理EtcdCluster资源。这样，你可以创建、更新和删除EtcdCluster资源，并定义自定义的规格和状态字段来描述Etcd集群的配置和状态信息。
+### 1. 定义 EtcdCluster 的数据结构
+
+`apiextensions.k8s.io/v1` 要求结构化 schema。下面为 `replicas` 和 `storage` 添加类型与基本范围，API Server 才知道哪些字段有效。它仍然不负责启动 etcd。
 
 ~~~sh
 tee etcdcluster-crd.yaml <<'EOF'
@@ -322,6 +312,20 @@ spec:
     - name: v1alpha1
       served: true
       storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [replicas, storage]
+              properties:
+                replicas:
+                  type: integer
+                  minimum: 1
+                storage:
+                  type: string
+                  pattern: '^[1-9][0-9]*(Mi|Gi|Ti)$'
   scope: Namespaced
   names:
     plural: etcdclusters
@@ -332,9 +336,9 @@ spec:
 EOF
 ~~~
 
-2. 创建etcd operator控制器
+### 2. 准备控制器的运行环境
 
-- 监听EtcdCluster资源的事件，并根据事件类型执行相应的操作
+下面 Deployment 是部署结构片段，`your-etcd-operator-image` 与 kubeconfig 路径都是占位符；示例未提供挂载、ServiceAccount/RBAC 和可运行镜像，不能直接 apply 后期望数据库出现。真正部署时应使用专用 ServiceAccount 的集群内配置，并只授予所需命名空间和资源权限。
 
 ~~~sh
 tee etcd-operator.yaml <<'EOF'
@@ -361,7 +365,7 @@ spec:
 EOF
 ~~~
 
-- 镜像制作
+构建镜像时，需要把实际控制器项目放在构建目录内，锁定兼容的 Go 模块与基础镜像。下面保留多阶段构建的结构；`golang:1.16` 是旧实验版本，不能直接用于当前 controller-runtime 项目。
 
   ~~~dockerfile
   FROM golang:1.16 as builder
@@ -386,7 +390,11 @@ EOF
   docker build -t your-etcd-operator-image .
   ~~~
 
-- etcd operator的代码
+### 3. 阅读事件回调与控制器依赖
+
+下面保留原案例的架构代码，展示客户端初始化、控制器配置与 Add/Update/Delete 回调的连接方式。它不是可编译示例：`controller.NewEtcdOperator`、`controller.Operator` 及 `OnAddEtcdCluster` 等接口需要由项目实现，不能假定归档仓库提供同名 API；imports 也包含尚未使用的备份与工具包。缺少 `rest` 的导入、错误类型与实际库版本不一致都需要在真实项目中处理。
+
+回调现在只打印事件，并不会创建 etcd Pod、PVC 或执行扩容。完整实现还需要把事件转成工作队列中的对象键，重新读取状态，幂等地执行调谐，并处理删除 tombstone、重试和退出信号。这里不使用这一骨架来验证数据库管理行为。
 
   ~~~go
   package main
@@ -473,9 +481,11 @@ EOF
   }
   ~~~
 
-3. 制作完前面的镜像、crd、operator后，可以创建一个EctdCluster的实例
+### 4. 提交 CR 并区分 API 成功与应用成功
 
-~~~yaml
+在完成自己的控制器实现、镜像、权限和部署后，可以提交下面的 EtcdCluster 实例。只安装 schema 也能保存这个对象，但没有调谐逻辑就不会得到 etcd 集群。先观察 CR 的创建，再分别检查控制器日志和关联工作负载，不要把两者当作同一项验证。
+
+~~~sh
 tee etcd-cluster.yaml <<'EOF'
 apiVersion: etcd.database.coreos.com/v1alpha1
 kind: EtcdCluster
@@ -487,5 +497,4 @@ spec:
 EOF
 ~~~
 
-> [!info] 说明
-> 一般而言k8s自带的api-resources够用，自定义CRD开发难度较大；一般二次开发是对coreDNS、kube-proxy做开发。
+大多数常规部署可以组合内置资源完成。需要新的声明式接口，且有人维护调谐、升级和故障恢复行为时，再考虑 CRD 与 Controller。修改 CoreDNS 或 kube-proxy 并不是开发自定义业务控制器的前提。
