@@ -7,51 +7,46 @@ aliases:
   - k8sJobCronJob
 ---
 
-# K8s基础-Job-CronJob
+# Job 与 CronJob：在 Kubernetes 中运行一次性和定时任务
 
+数据库备份、数据修复和文件转码都有一个结束条件：任务做完，进程就应退出。如果用 Deployment 承载这类工作，容器成功退出后还会被不断重启。Job 用于追踪任务是否完成，CronJob 则在计划时间创建 Job。
+
+下面从一次性任务开始，逐步加入并行、失败重试、定时调度和两个运维案例。示例需要可用集群与相应命名空间的创建权限；备份案例还需要 MySQL 服务、可写存储和经过验证的备份账号。命令和 YAML 用于实验说明，使用前需要替换镜像、密码与资源名称。
 
 ## Job
 
-### 状态
+### 从进程退出到任务完成
 
-Job控制器用于管理Pod对象运行一次性任务。对于每次任务,job控制器创建一个或多个pod执行相关指令,并确保成功的个数达到预期才会把job标记为成功,否则标记为失败。
+Job 控制器创建一个或多个 Pod，记录成功完成的数量，达到目标后把 Job 标记为完成。Pod 列表中常见的 `Completed` 表示容器正常结束，对应 Pod 的 `Succeeded` 阶段。失败时是否重试、重试多久，由 Job 与 Pod 的配置共同决定；尚未达到成功数量，也不意味着立刻被判定为失败。
 
-比方说对数据库备份,可以直接在k8s上启动一个mysqldump备份程序;也可以启动一个job pod,这个job pod专门用来备份用的,备份结束就可以终止了,不需要重启,而是将job Pod对象置于"Completed"(完成)状态。
-
-若容器中的进程因错误而终止,则需要按照重启策略配置确定是否重启,Job控制器需不需要重建pod,就看任务是否完成,完成就不需要重建;没有完成就需要重建pod。Job控制器的Pod对象的状态转换如下图所示:
+以备份为例，可以把包含 `mysqldump` 的镜像放进 Job，命令成功完成后退出。控制器保留任务状态，运维人员能够查看失败原因与日志，而无需让备份进程一直运行。
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202403231953816.png" alt="image-20240323195342683" style="zoom:67%;" />
 
-### 优点
+与直接在 Linux 上运行脚本相比，Job 能使用独立镜像隔离不同版本的工具，追踪任务状态，按策略重试失败任务，也能把独立工作项分给多个 Pod。但这些能力不保证业务操作只执行一次，任务仍需处理重复执行、临时文件和未完成输出。官方[Job 说明](https://kubernetes.io/docs/concepts/workloads/controllers/job/)明确指出，即使并发数与完成数都为 1，同一程序仍可能被启动多次。
 
-相比较在linux上启动一个docker或者shell去做job,k8s的job有什么优点?
+### 三种任务组织方式
 
-1. 环境隔离:可以使用不同的镜像执行任务,无需考虑版本冲突。(比如有不同版本的mysql,就需要不同版本的mysqldump,直接用包含不同版本的mysqldump的镜像启动job即可)
-2. 状态追踪:job控制器追踪所有pod运行情况,一旦达到指定的成功次数,job才会被标记为完成
-3. 失败重试:任务执行失败,可以按需重新执行
-4. 并行执行:同一个任务可以拆分成不同的pod并行执行2,提高执行速度
+| 方式 | 关键配置 | 完成条件 |
+| --- | --- | --- |
+| 单任务 | `parallelism`、`completions` 均可省略，均默认为 1 | 一个 Pod 成功结束 |
+| 固定完成次数的并行任务 | 显式设置 `completions`，用 `parallelism` 限制并行程度 | 成功 Pod 数达到 `completions` |
+| 工作队列任务 | 不设置 `completions`，设置 `parallelism` | 某个 Pod 成功后不再创建新 Pod，等待其余 Pod 结束 |
 
-### Job使用场景
+工作队列模式要求应用自行分配工作，并协调“队列已经处理完”的判定。某个 Pod 成功不会立即强制终止所有其他 Pod；其他 Pod 应已完成工作或准备退出。Job 常用于发送邮件、渲染帧、文件转码、扫描数据库键等相互独立的工作。通信密集型并行计算还需要额外考虑进程间通信、协同启动与故障处理，不能只设置一个并发数。
 
-1. 非并行任务:只启一个pod,pod成功,job正常结束。
+### 成功次数、重试和超时怎么配
 
-2. 并行任务同时指定成功个数:.spec.completions为指定成功个数,可以指定也可以不指定.spec.parallelism(指定>1,会有多个任务并行运行)。当成功个数达到.spec.completions,任务结束。
+| 配置 | 含义与使用边界 |
+| --- | --- |
+| `.spec.completions` | 需要成功完成的 Pod 数；与并行上限是两个概念 |
+| `.spec.parallelism` | 请求的并行 Pod 数，默认 1；设为 0 可停止启动执行中的工作，通常应使用 `suspend` 表达暂停语义 |
+| `.spec.template.spec.restartPolicy` | Job 只允许 `Never` 或 `OnFailure`。前者让失败容器结束，由控制器按需新建 Pod；后者允许 kubelet 在原 Pod 中重启失败容器 |
+| `.spec.backoffLimit` | Job 的失败重试限制，普通 Job 默认 6；不是每个 Pod 独立的重启次数。`OnFailure` 下容器重试次数也参与计算 |
+| `.spec.activeDeadlineSeconds` | 整个 Job 的执行时限，包含重试时间；到期后终止运行中的 Pod，Job 失败，优先于重试限制 |
+| `.spec.ttlSecondsAfterFinished` | Job 成功或失败后经过多少秒可被自动清理，同时级联清理 Pod；0 表示立即具备清理条件，不设置则不由 TTL 控制器清理 |
 
-3. 有工作队列的并行任务:.spec.completions默认为1,.spec.parallelism为大于0的整数。此时并行启动多个pod,只要有一个成功,任务结束,所有pod结束
-
-4. 适用场景: Job不是设计用来完成通信密集型的并行程序,如科学计算领域常见的场景。它支持并行地处理一组独立但相关的work item,如发送邮件,渲染帧,转码文件和扫描NoSql数据库中的key
-
-### 相关配置
-
-- .spec.completions:完成该Job需要执行成功的Pod数。
-
-- .spec.parallelism:**能够同时运行的Pod数**,意味着job会管理这里指定数目的pod。默认是1,如果是0,job就暂停。
-- .spec.template.spec.restartPolicy: 如果Pod是restartPolicy为Nerver,则失败后会创建新的Pod;如果是OnFailed,则会重启Pod。对于job来说不能设置为Always。
-
-- .spec.backoffLimit:允许执行失败的Pod数,默认值是6。0表示不允许Pod执行失败。只要Pod失败一次就计算一次,不论restartPolicy是啥。当失败的次数达到该限制时,整个Job随即结束,所有正在运行中的Pod都会被删除。
-
-- .spec.activeDeadlineSeconds: Job的超时时间,一旦一个Job运行的时间超出该限制,。该配置指定的值必须是个正整数。不指定则不会超时。
-- .spec.ttlSecondsAfterFinished:默认情况下,job异常或者成功结束后,包括job启动的任务(pod),都不会被清理掉,因为你可以依据保存的job和pod,查看状态、日志,以及调试等。这些可以手动删除,用户手动删除job,job controller会级联删除对应的pod,除了手动删除,通过指定参数ttlSecondsAfterFinished也可以实现自动删除job,以及级联的资源如pod。如果设置为0,job会被立即删除。如果不指定,job则不会被删除。
+失败重试采用退避机制。达到重试限制或超时限制后，Job 会进入终止流程，运行中的 Pod 被终止，Job 不会因为 Pod 的重启策略而自动重新开始。清理前要把诊断日志和任务结果保存在外部系统中，避免短 TTL 让故障现场过早消失。
 
 ### 示例
 
@@ -61,9 +56,9 @@ kind: Job
 metadata:
   name: my-busybox-job
 spec:
-  parallelism: 3 # 并行跑3个,意思是一次建3个pod;再一次再建3个。但是如果completions大于parallelism,那么一次只会创建未完成数量的pod。比如现有配置,第一次建3个pod,第二次只创建1个pod。
-  completions: 4 # 多少个pod执行成功,认为job成功。默认等于parallelism。
-  backoffLimit: 2 # 每个pod最大允许重启的次数。默认是6。生产环境限制成2就够了。搭配restartPolicy为OnFailure。
+  parallelism: 3 # 请求最多并行3个；完成后补充剩余工作，实际并发也受资源限制
+  completions: 4 # 需要累计4个Pod成功完成，不等于parallelism
+  backoffLimit: 2 # Job级别的重试限制，按任务容错需求选择
   ttlSecondsAfterFinished: 100 # job执行结束之后多久自动清理。为0是立即清理。不设置就不清理。
   # 下面是job管理的pod模板字段
   template:
@@ -77,19 +72,13 @@ spec:
           args: ['echo "Welcome to k8s";sleep 60; echo "Next to Meet you"']
 ~~~
 
-## cronjob
+## CronJob：按时间创建 Job
 
-### 用法
+### 调度的是 Job，不是长期运行的进程
 
-CronJob跟Job完成的工作是一样的,只不过CronJob添加了定时任务能力可以指定时间,实现周期性运行。Job,CronJob和Deployment显著区别在于不需要持续在后台运行。cronjob具有多种并发策略;调用job更灵活,并且可以保留多个成功或失败的案例,方便追踪。
+CronJob 在计划时间创建 Job，再由 Job 创建 Pod。它适合周期性备份、发送报表等任务，计划本身常驻集群，而每次执行都有独立 Job 记录。Cron 表达式有五个字段，依次是分钟、小时、日、月、星期。
 
-CronJob的典型用法如下:
-
-1、在给定的时间点调度Job运行。
-
-2、创建周期性运行的Job,例如数据库备份、发送邮件
-
-Cronjob执行时先创建job,再由job创建pod去执行。
+CronJob 的调度是近似的，控制器恢复、网络故障等情况可能造成漏跑或重复创建。因此需要在业务侧实现幂等，例如使用任务日期作为去重键，并监控 Job 的完成状态。`concurrencyPolicy` 只能约束同一个 CronJob 创建的 Job，不能防止其他 CronJob 或手动任务操作同一份数据。相关限制见[CronJob 官方说明](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)。
 
 ### 示例
 
@@ -103,7 +92,7 @@ spec:
   concurrencyPolicy: Allow
   suspend: false # 改成true相当于把计划任务关了
   successfulJobsHistoryLimit: 3 # 保留多少个成功任务
-  failedJobHistoryLimit: 3 # 保留多少个失败任务
+  failedJobsHistoryLimit: 3 # 保留多少个失败任务
   jobTemplate:
     spec:
       backoffLimit: 2
@@ -113,14 +102,14 @@ spec:
           containers:
           - name: hello
             image: busybox
-            imagePullPolicy: IfNotP-resent
+            imagePullPolicy: IfNotPresent
             command:
             - /bin/sh
             - -c
             - date; echo Hello from the Kubernetes cluster
 ~~~
 
-每分钟都会创建一个pod出来运行。
+该计划期望每分钟创建一个 Job，再由 Job 创建 Pod。`suspend: true` 暂停后续调度，已经启动的 Job 不会因此停止；恢复调度时还需结合错过的计划与 `startingDeadlineSeconds` 判断是否补跑。
 
 ### 并发策略
 
@@ -128,7 +117,7 @@ cronjob支持三种并发策略,在`cronjob.spec.concurrencyPolicy`中配置:
 
 1. Allow:允许同时运行多个任务,新job可以和旧job同时执行。(默认值)
 2. Forbid:不允许并发运行,如果之前的任务尚未完成,新的任务不会被创建。(适用于不能同时运行的情况)
-3. Replace:如果之前的任务尚未完成,新的任务会替换之前的任务。
+3. Replace:如果之前的任务尚未完成,控制器取消正在运行的 Job，再用新 Job 替换。任务需要能处理中断与重复执行。
 
 ### 执行记录
 
@@ -145,16 +134,11 @@ CronJob默认的执行记录保留方式如下:
 
 比如创建一个每天凌晨一点开始执行的任务,此时配置的调度表达式可能如下:`schedule: '00 01 * * *'`。但是如果未指定时区,当kube-controller-manager组件的时区和本地时区有差别时,可能会在北京时间每天的九点进行调度(本地时区为Shanghai时区,kube-controller-manager采用UTC时间)
 
-在Kubernetes 1.25 版本时,CronJob 增加了`.spec.timeZone`的字段用于配置CronJob的调度时区。在1.27版本达到稳定,可以直接使用。
+`.spec.timeZone` 在 Kubernetes 1.27 达到稳定，可写入 `Asia/Shanghai` 等 IANA 时区名称。旧版本需核对对应版本的 `CronJobTimeZone` 特性状态与开关默认值，不应一概认为都需要手动开启。不要把 `TZ` 或 `CRON_TZ` 写进 `schedule`，应使用专门的时区字段。
 
-> [!info] 说明
-> 1.25~1.27(不包括1.27)版本之间需要打开`kube-apiserver`的featuregates特性,比如:`--feature-gates=CronJobTimeZone=true` ,1.27及1.27之后不用打开直接用就行。
+下面只展示时区相关字段，应合入包含 `jobTemplate` 的完整清单。它表示每天北京时间 02 点这一小时内，每 5 分钟调度一次：
 
 ~~~yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: example-cronjob
 spec:
   schedule: "*/5 02 * * *"
   timeZone: "Asia/Shanghai"
@@ -170,7 +154,14 @@ kubectl create job mysql-backup-test --from=cronjob/mysql-backup -n cronjob
 
 ## 实战
 
-### 定期备份mysql
+### 定期备份 MySQL
+
+先准备 `cronjob` 命名空间、名为 `nfs-csi` 的 StorageClass，以及 `mysql.default` 对应的 MySQL Service。下面的第三方镜像是原实验所用版本，使用前需要检查来源、工具版本和仓库可访问性。备份文件写入 PVC，Pod 结束后仍可保留。
+
+生产环境应使用受限备份账号，并将凭据放在 Secret 中。这个案例通过 `secretKeyRef` 读取 `mysql-backup-credentials` 的 `password` 键；该 Secret 需预先在 `cronjob` 命名空间创建，`user` 键保存备份用户名。MySQL 客户端配置文件通常比环境变量更适合严格的凭据管理，这里用环境变量展示 Secret 的引用方式。Kubernetes 的[Secret 用法](https://kubernetes.io/docs/concepts/configuration/secret/)说明了相应配置方式。
+
+使用 `Forbid` 避免同一计划的备份重叠。命令失败时保留非零退出码，先写临时文件、成功后再改名，可以避免把不完整 SQL 当成有效备份；备份账号还需要与 `--all-databases` 操作匹配的权限。
+
 
 ~~~yaml
 ---
@@ -195,6 +186,8 @@ metadata:
   namespace: cronjob
 spec:
   schedule: '01 16 * * *'
+  timeZone: Asia/Shanghai
+  concurrencyPolicy: Forbid
   failedJobsHistoryLimit: 5
   successfulJobsHistoryLimit: 5
   jobTemplate:
@@ -213,9 +206,22 @@ spec:
             - sh
             - -c
             - |
-              mysqldump -hmysql.default -P3306 -uroot -p'password_123' -
-all-databases > /mnt/all-`date +%Y%m%d-%H%M%S`.sql;
-              ls /mnt/
+              set -eu
+              backup_file="/mnt/all-$(date +%Y%m%d-%H%M%S).sql"
+              mysqldump -hmysql.default -P3306 -u"$MYSQL_USER" --all-databases > "${backup_file}.tmp"
+              mv "${backup_file}.tmp" "$backup_file"
+              ls -lh "$backup_file"
+            env:
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-backup-credentials
+                  key: user
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-backup-credentials
+                  key: password
             volumeMounts:
             - name: data
               mountPath: /mnt
@@ -223,15 +229,44 @@ all-databases > /mnt/all-`date +%Y%m%d-%H%M%S`.sql;
 
 ### 定时重启k8s服务
 
-有时候需要定期重启K8s中的服务,也可以使用CronJob实现。
+有些应用需要在维护窗口重启。CronJob 可以调用 `kubectl rollout restart`，但它解决不了内存泄漏、连接泄漏等根因，实施前仍需确认副本、探针和滚动发布配置能够承受重启。
 
-~~~sh
-kubectl create clusterrole deployment-restart --verb=get,update,patch --resource=deployments.apps
-# 给cronjob的ns的default service account授权
-kubectl create clusterrolebinding deployment-restart-binding -clusterrole=deployment-restart --serviceaccount=cronjob:default
+这个例子让 `cronjob` 命名空间中的专用 ServiceAccount，只能读取和 patch `default` 命名空间里名为 `mysql` 的 Deployment。RoleBinding 可以引用其他命名空间的 ServiceAccount，因此无需给默认账号授予集群范围权限。授权关系见[RBAC 官方说明](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)。
+
+~~~yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: deployment-restarter
+  namespace: cronjob
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployment-restart
+  namespace: default
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  resourceNames: ["mysql"]
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deployment-restart-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: deployment-restart
+subjects:
+- kind: ServiceAccount
+  name: deployment-restarter
+  namespace: cronjob
 ~~~
 
-创建cronjob:
+创建 CronJob。原案例中的第三方 `kubectl:latest` 镜像保留为环境示例，实际使用应换成来源可信、固定版本且与 API server 版本偏差符合支持范围的镜像：
 
 ~~~yaml
 apiVersion: batch/v1
@@ -240,8 +275,9 @@ metadata:
   name: default-restart
   namespace: cronjob
 spec:
-  schedule: 01 18 * * 5
-  concurrencyPolicy: Allow
+  schedule: "01 18 * * 5"
+  timeZone: Asia/Shanghai
+  concurrencyPolicy: Forbid
   suspend: false
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -249,10 +285,15 @@ spec:
     spec:
       template:
         spec:
+          serviceAccountName: deployment-restarter
           restartPolicy: Never
           containers:
           - name: restart
             image: registry.cn-beijing.aliyuncs.com/dotbalo/kubectl:latest
             command:
-            - /bin/bash - '-c' - >- kubectl rollout restart deploy mysql -n default
+            - /bin/sh
+            - -c
+            - kubectl rollout restart deployment/mysql -n default
 ~~~
+
+这里的成功只表示重启 patch 请求提交成功。若需要确认应用恢复，还要观察 Deployment 的发布状态与业务指标；新增状态查询命令时，也应同步核对其最小 RBAC 权限。对于 StatefulSet 管理的 MySQL，需要改为操作 StatefulSet，不能直接照搬 Deployment 的名称与权限。

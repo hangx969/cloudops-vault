@@ -9,195 +9,207 @@ aliases:
 
 # K8s基础-Calico
 
+同一节点上的两个 Pod 通了，并不代表跨节点网络已经配置正确。跨节点通信需要回答几个问题：Pod 地址由谁分配，节点如何知道目标 Pod 在哪里，底层网络是否能转发这个地址，以及哪些连接应被策略阻止。Calico 将地址管理、路由和网络策略结合起来，负责处理这些问题。
 
-## Calico基础
+理解 Calico 前，建议先熟悉 Pod IP、节点 IP、CIDR、路由表和 CNI。本文先介绍组件分工，再解释 BGP、IPIP、VXLAN 的关系，最后给出安装配置的阅读方法。所有配置都应在实验集群中验证，现有集群切换封装方式可能中断连接。
 
-- Calico是一个开源的网络和安全解决方案，它为容器、虚拟机、主机、k8s提供了高效、可扩展和安全的网络连接和策略管理。
+## Calico 解决什么问题
 
-- Calico在K8s中的功能：
+Calico 是开源的网络和安全方案，可用于 Kubernetes、容器、虚拟机和主机。在 Kubernetes 中，它可以为 Pod 分配 IP，建立跨节点通信，并实现 NetworkPolicy 等网络访问控制。
 
-  1）支持网络隔离和多租户场景；
+“网络连通”和“允许访问”要分开检查：路由、封装和 MTU 决定数据包能否送达；网络策略决定某类流量是否被允许。多租户隔离也需要显式配置策略，安装插件本身不会自动生成符合业务要求的隔离规则。
 
-  2）为pod提供独立的IP地址；
-
-  3）支持跨主机的容器通信，pod可以通过IP地址直接互相访问；
-
-  4）提供网络安全策略，支持网络流量控制和访问授权，实现网络安全隔离。
-
-### 架构图
+### 组件及其分工
 
 ![image-20231023152017200](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310241222817.png)
 
-### Calico主要工作组件
+这张图描述传统的 Calico 架构。部署方式和数据平面不同，实际启用的组件也会变化：
 
-1. Felix：运行在每一台 Host 的 agent 进程，主要负责网络接口管理和监听、路由、ARP 管理、ACL 管理和同步、状态上报等。保证跨主机容器网络互通。
-2. etcd：分布式键值存储，相当于k8s集群中的数据库，存储着Calico网络模型中IP地址等相关信息。主要负责网络元数据一致性，确保 Calico 网络状态的准确性；
+| 组件 | 主要职责 | 阅读配置时需要注意 |
+| --- | --- | --- |
+| Felix | 在每个节点配置接口、路由和策略，维护本机数据平面并上报状态 | 具体实现与所选 Linux 或 eBPF 数据平面有关 |
+| 数据存储 | 保存 Calico 的配置、IP 地址分配等网络状态 | Kubernetes datastore 通过 Kubernetes API 保存资源；etcd datastore 才直接连接独立 etcd，二者不要混用 |
+| BGP 客户端 / BIRD | 与其他节点或网络设备交换路由 | 使用传统 BGP 路由方案时启用；VXLAN-only 方案可以不运行 BGP |
+| Route Reflector | 向 BGP 客户端反射路由，减少全互联会话数量 | 全互联的无向会话数是 N(N−1)/2，大规模时可采用一个或多个反射器 |
 
-3. BGP Client（BIRD）：Calico 为每一台 Host 部署一个 BGP Client，即每台host上部署一个BIRD。 主要负责把 Felix 写入 Kernel 的路由信息分发到当前 Calico 网络，确保 Workload 间的通信的有效性；
+BGP 全互联让各节点直接交换 Pod 网段路由，但节点越多，会话数增长越快。Route Reflector 集中传播路由，业务数据包通常仍按路由直接发送，不需要经过反射器转发。`calico/node` 中 Felix、BIRD 和 confd 的职责可对照[官方组件配置说明](https://docs.tigera.io/calico/latest/reference/configure-calico-node)。
 
-4. BGP Route Reflector：在大型网络规模中，如果仅仅使用 BGP client 形成 mesh 全网互联的方案就会导致规模限制，因为所有节点之间俩俩互联，需要 N^2 个连接，为了解决这个规模问题，可以采用 BGP 的 Router Reflector 的方法，通过一个或者多个 BGP Route Reflector 来完成集中式的路由分发。 
+## 先分清路由与封装
 
-### calico配置文件
+BGP 是交换路由的协议，用来告诉节点“去哪个网段应走哪个下一跳”；IPIP 和 VXLAN 则是数据包封装方式，用来让底层网络只需识别节点地址。它们处在不同层面，因此可以组合。传统 Calico 的 IPIP 方案通常仍通过 BGP 分发路由。
 
-#### Daemonset配置
+BGP 是路径向量路由协议，既可以在自治系统之间运行，也可以用于集群内部的路由分发。运营商的多线路接入只是 BGP 的一种应用，不能用“多线单 IP”概括 Calico 中的作用。
 
-```yaml
-...
-containers:
-        # Runs calico-node container on each Kubernetes node. This container programs network policy and routes on each host.
-        - name: calico-node
-          image: docker.io/calico/node:v3.18.0
-……
-          env:
-          # Use Kubernetes API as the backing datastore.
-           - name: DATASTORE_TYPE
-             value: "kubernetes"
-          # Cluster type to identify the deployment type
-           - name: CLUSTER_TYPE
-             value: "k8s,bgp"
-          # Auto-detect the BGP IP address.
-           - name: IP
-             value: "autodetect"
-          #pod网段
-           - name: CALICO_IPV4POOL_CIDR 
-             value: "10.244.0.0/16"
-          # Enable IPIP
-           - name: CALICO_IPV4POOL_IPIP
-             value: "Always"
-```
+| 方案 | 路由与传输方式 | 对底层网络的要求 |
+| --- | --- | --- |
+| 无封装路由 | Pod 数据包不额外封装；可用 BGP 向节点或上游分发 Pod 网段 | 底层网络和回程路径必须能正确路由 Pod 地址 |
+| IPIP | 在原始 IPv4 包外再加 IPv4 头；传统方案通常结合 BGP | 节点间允许 IP 协议号 4，正确设置 MTU；仅支持 IPv4 |
+| VXLAN | 通过 VXLAN 封装跨节点数据，Felix 可维护集群路由 | 节点间允许对应 UDP 端口；默认常用 4789，并检查 MTU |
 
-#### calico-node服务的主要参数:
+封装的价值是减少底层对 Pod 网段的感知要求，不代表可以绕过节点间的防火墙或路由问题。VXLAN 的包头通常比 IPIP 更大，不能笼统断言其性能一定更好。选择时要结合云平台限制、网络可控程度、MTU 和实际负载，[官方封装说明](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)也列出了 IPv4/IPv6 支持边界。
 
-- CALICO_IPV4POOL_IPIP：
+### 无封装是否要求节点二层互通
 
-  - IP Pool可以使用两种模式：BGP或IPIP。使用IPIP模式时，设置CALICO_IPV4POOL_IPIP="Always"，不使用IPIP模式时，设置CALICO_IPV4POOL_IPIP="Off"，此时将使用BGP模式。
-  - 启用IPIP模式时，Calico将在Node上创建一个名为tunl0的虚拟隧道。
+同一子网中的节点常可以直接将包交给目标节点，但“Calico 无封装只能在二层互通时使用”不成立。如果底层路由器学习了 Pod 网段，并具有正确的下一跳和回程路由，跨三层网络同样可以无封装通信。
 
-- IP_AUTODETECTION_METHOD：
+BGP 会话建立只证明路由控制连接可用，不能证明业务数据面已经可达。遇到“路由看起来存在，Pod 却不通”，需要继续检查下一跳、底层路由、回程路径、源地址检查、安全组和网络策略。
 
-  - 获取Node IP地址的方式，默认使用第1个网络接口的IP地址，对于安装了多块网卡的Node，可以使用正则表达式选择正确的网卡，例如"interface=eth.*"表示选择名称以eth开头的网卡的IP地址。
+### Always、CrossSubnet 和 Never
 
-    ```yaml
-    -  name: IP_AUTODETECTION_METHOD #位置:在calico.yaml-DaemonSet:Containers:env里面配置
-       value: "interface=ens33"
-    ```
+封装可以对所有跨节点流量启用，也可以只对跨子网流量启用：
 
-  - 在安装 Calico 网络插件时，指定 IP_AUTODETECTION_METHOD 环境变量是为了确保该插件能够在正确的网络接口上自动检测 Pod IP 地址。这个环境变量的值 "interface=ens33" 指定了 Calico 插件使用 ens33 接口来分配 IP 地址给 Kubernetes Pod，而不是使用默认的自动检测方式。
+- `Always`：跨节点的对应地址池流量使用封装。
+- `CrossSubnet`：节点位于不同子网时封装，同一子网内可直接路由，减少封装开销。
+- `Never`：不使用该类封装，需要由底层提供 Pod 地址路由能力。
 
-  - 通常情况下，Kubernetes Pod 中容器的 IP 地址是由容器运行时（如 Docker 或 CRI-O）自动分配的。但是，对于某些网络插件（如 Calico）来说，为了能够正确地配置网络，需要手动指定使用哪个网络接口来自动检测 Pod IP 地址。
+这里的子网是节点网络的子网。跨子网封装同时要求 Calico 检测到正确的节点地址和子网掩码。IPIP 中常见的 `tunl0` 是隧道设备，不应据此推导“每节点必须额外申请一个虚拟节点 IP”。VXLAN 也会使用相应的隧道接口和地址，其具体分配由 Calico 管理。
 
-  - 因此，在安装 Calico 网络插件时，需要通过 IP_AUTODETECTION_METHOD 环境变量来指定使用 ens33 接口来分配 IP 地址给 Kubernetes Pod。这样可以确保 Calico 插件能够正确地配置 Pod 网络。
+## 读懂安装清单中的参数
 
-### Calico支持的网络模式对比分析
-
-- IPIP
-
-  - 使用 IPIP 封装技术进行数据传输，每个节点需要分配两个 IP 地址，一个是节点 IP 地址，另一个是虚拟节点 IP 地址。相较于 BGP 模式，IPIP 模式的配置更加简单，但是性能和路由协议的稳定性会受到一定影响。
-  - 把一个IP数据包又套在一个IP包里，即把IP层封装到IP层的一个 tunnel，它的作用其实基本上就相当于一个基于IP层的网桥，一般来说，普通的网桥是基于mac层的，根本不需要IP，而这个ipip则是通过两端的路由做一个tunnel，把两个本来不通的网络通过点对点连接起来；
-  - calico以ipip模式部署完毕后，node上会有一个tunl0的网卡设备，这是ipip做隧道封装用的,也是一种overlay模式的网络。当我们把节点下线，calico容器都停止后，这个设备依然还在，执行 rmmodipip命令可以将它删除。
-
-- BGP
-
-  - 使用 BGP 协议作为路由协议，每个节点会分配一个全局唯一的 IP 地址，可以支持跨 VPC 或者跨云的网络互通。
-  - BGP模式直接使用物理机作为虚拟路由路（vRouter），不再创建额外的tunnel
-
-  > - 边界网关协议（BorderGateway Protocol, BGP）是互联网上一个核心的去中心化的自治路由协议。它通过维护IP路由表或‘前缀’表来实现自治系统（AS）之间的可达性，属于矢量路由协议。BGP不使用传统的内部网关协议（IGP）的指标，而是基于路径、网络策略或规则集来决定路由。因此，它更适合被称为矢量性协议，而不是路由协议，通俗的说就是将接入到机房的多条线路（如电信、联通、移动等）融合为一体，实现多线单IP；
-  > - BGP 机房的优点：服务器只需要设置一个IP地址，最佳访问路由是由网络上的骨干路由器根据路由跳数与其它技术指标来确定的，不会占用服务器的任何系统；
-
-- 官方提供的calico.yaml模板里，默认打开了ip-ip功能，该功能会在node上创建一个设备tunl0，容器的网络数据会经过该设备被封装一个ip头再转发。
-
-  - 这里，calico.yaml中通过修改calico-node的环境变量：CALICO_IPV4POOL_IPIP来实现ipip功能的开关：默认是Always，表示开启；Off表示关闭ipip。
+本文沿用 manifest 安装方式解释参数。Operator 安装通过 `Installation` 等 API 管理配置，不应直接修改其生成的 DaemonSet。下面是 `calico-node` 容器的环境变量片段，不是可独立部署的完整资源：
 
 ```yaml
-- name:  CLUSTER_TYPE
+# 位于 DaemonSet.spec.template.spec.containers 中的 calico-node 容器下
+# 镜像版本应来自与目标 Kubernetes 版本兼容的完整安装清单
+name: calico-node
+env:
+- name: DATASTORE_TYPE
+  value: "kubernetes"
+- name: CLUSTER_TYPE
   value: "k8s,bgp"
-  # Auto-detect the BGP IP address.
 - name: IP
   value: "autodetect"
-  # Enable IPIP
+- name: CALICO_IPV4POOL_CIDR
+  value: "10.244.0.0/16"
 - name: CALICO_IPV4POOL_IPIP
   value: "Always"
 ```
 
-- VXLAN模式
-  - 使用 VXLAN 封装技术进行数据传输，与 IPIP 模式类似，需要为每个节点分配两个 IP 地址，但是 VXLAN 模式相较于 IPIP 模式的性能更好。
+`DATASTORE_TYPE=kubernetes` 表示通过 Kubernetes API 保存配置；`CALICO_IPV4POOL_CIDR` 是默认 Pod 地址池，不能与节点、Service 或其他现有网络重叠。`CLUSTER_TYPE` 中的 `bgp` 是部署类型标识，不应把它当作单独的 BGP 开关。
 
-- hostgateway模式
-  - 将每个节点的主机网络接口作为网关来进行数据传输，不需要额外的 IP 地址分配，但是节点之间的网络互通会受到主机网络接口的限制。
+这些 `CALICO_IPV4POOL_*` 环境变量主要控制首次创建的默认地址池。地址池已经存在后，仅修改环境变量或重启 DaemonSet 通常不会重配现有 IPPool，应检查实际 IPPool；参见[官方安装配置选项](https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/config-options)。
 
-- 总结：
-  - calico BGP通信是基于TCP协议的，所以只要节点间三层互通即可完成，即三层互通的环境bird就能生成与邻居有关的路由。但是这些路由和flannel host-gateway模式一样，需要二层互通才能访问的通，因此如果在实际环境中配置了BGP模式生成了路由但是不同节点间pod访问不通，可能需要再确认下节点间是否二层互通。
-  - 为了解决节点间二层不通场景下的跨节点通信问题，calico也有自己的解决方案——IPIP模式.
+### 多网卡节点如何选择地址
 
-### 配置IPIP模式
+`IP_AUTODETECTION_METHOD` 用于自动检测 Calico 使用的节点 IPv4 地址。多网卡主机上，可以按接口名称筛选：
 
-~~~yaml
-在calico.yaml文件中找到以下内容：
-# Disable IPIP tunneling. (required on Azure)
-# - name: CALICO_IPV4POOL_IPIP
-# value: "Never“
-将注释去掉，并将value修改为"CrossSubnet"，表示启用IPIP模式。
-~~~
+```yaml
+- name: IP_AUTODETECTION_METHOD
+  value: "interface=ens33"
+```
 
-### 配置BGP模式
+`interface=eth.*` 表示匹配名称符合该正则表达式的接口。接口名必须结合节点实际情况填写，不能把虚拟隧道或仅用于管理的接口误选成业务网络。
 
-~~~yaml
-在calico.yaml文件中找到以下内容：
-# Enable BGP. (required to enable bird)
-# - name: CALICO_IPV4POOL_CIDR
-# value: "192.168.0.0/16"
-# - name: CALICO_IPV4POOL_IPIP
-# value: "CrossSubnet"
-# - name: CALICO_NETWORKING_BACKEND
-# value: "bird"
-将注释去掉，并将CALICO_IPV4POOL_CIDR修改为当前网络的CIDR地址，CALICO_IPV4POOL_IPIP修改为
-"CrossSubnet"，CALICO_NETWORKING_BACKEND修改为"bird"，表示启用BGP模式。
-~~~
+该参数选择的是节点地址，不是从 `ens33` 网卡给 Pod 分配 IP。Pod 地址通常由运行时调用 CNI 后，由 Calico IPAM 等地址管理插件分配。默认自动检测可用时无需手动指定，但多网卡、VPN 或复杂路由环境应按[节点地址自动检测说明](https://docs.tigera.io/calico/latest/networking/ipam/ip-autodetection)检查选择结果。
 
-> [!info] 备注
-> 当CALICO_IPV4POOL_IPIP被设置为”CrossSubnet”时，Calico可以为不同子网中的节点创建IPIP隧道，以便它们可以通过隧道相互通信。在 BGP 模式下，IPIP 仍然是 Calico 网络的一部分，用于支持 Kubernetes 网络的内部通信，因此仍需要设置CALICO_IPV4POOL_IPIP 参数。设置为 “CrossSubnet” 表示启用 IPIP 模式，且IPIP 模式的隧道可以跨越多个子网，而不仅仅是在同一子网内（子网值物理机网络）。这有助于支持更大规模的Kubernetes 网络，其中节点分布在多个子网中。
+## 配置不同的封装方案
 
-### 配置VXLAN模式
+以下片段用于说明新安装的配置差异。不要在同一地址池同时开启 IPIP 和 VXLAN，也不要将它们未经评估应用到现有业务集群。manifest 与 Operator 的字段不同，例如环境变量关闭封装常用 `Never`，IPPool 则通过 `ipipMode` 和 `vxlanMode` 表达；不要照搬未经当前版本支持的 `Off` 值。
+
+### IPIP：所有跨节点流量或只跨子网
+
+在 manifest 的 `calico-node` 环境变量中设置：
 
 ~~~yaml
-在calico.yaml文件中找到以下内容：
-# Enable VXLAN encapsulation mode. (required to enable host-gw and vxlan)
-# - name: CALICO_IPV4POOL_IPIP
-# value: "CrossSubnet"
-# - name: CALICO_NETWORKING_BACKEND
-# value: "vxlan“
-将注释去掉，并将CALICO_IPV4POOL_IPIP修改为"CrossSubnet"，CALICO_NETWORKING_BACKEND修改为
-"vxlan"，表示启用VXLAN模式。
+- name: CALICO_IPV4POOL_IPIP
+  value: "CrossSubnet"
+- name: CALICO_IPV4POOL_VXLAN
+  value: "Never"
 ~~~
 
-### 配置host-gw模式
+要让所有跨节点流量使用 IPIP，将 `CrossSubnet` 改为 `Always`。传统使用 BIRD 的安装还需保持 BGP 组件和相应探针有效。Azure 等不支持 IPIP 的环境应选择平台支持的封装方式。
+
+现有地址池应检查 IPPool 的实际字段。以下是 IPIP 跨子网地址池的完整示例，CIDR 只是实验值，已有池不要重复创建或与之重叠：
 
 ~~~yaml
-在calico.yaml文件中找到以下内容：
-# Enable host gateway mode. (required to enable host-gw and vxlan)
-# - name: CALICO_IPV4POOL_IPIP
-# value: "CrossSubnet"
-# - name: CALICO_NETWORKING_BACKEND
-# value: "hostgw“
-将注释去掉，并将CALICO_IPV4POOL_IPIP修改为"CrossSubnet"，CALICO_NETWORKING_BACKEND修改为
-"hostgw"，表示启用host-gw模式。
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+  name: ippool-ipip-cross-subnet
+spec:
+  cidr: 10.244.0.0/16
+  ipipMode: CrossSubnet
+  vxlanMode: Never
+  natOutgoing: true
 ~~~
 
-### 安装calico-deployment部署
+`natOutgoing` 控制离开 Calico 地址池的流量是否做出站 NAT，与跨节点是否封装是不同的配置。
 
-1. 从官网找到最新版calico的yaml链接：[Calico安装文档](https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico)
-2. 下载yaml文件部署
+### BGP 路由与无封装
 
-## 其他常用网络插件
+如果计划使用传统 BGP 分发路由且不做封装，manifest 初始配置可写为：
 
-1、Flannel：是一个轻量级的 CNI 插件，使用 VXLAN 技术来实现网络的通信和隔离，适用于小规模集群。它使用iptables来实现NAT，支持多种后端存储，包括 etcd、consul、zookeeper等。
+~~~yaml
+- name: CALICO_IPV4POOL_CIDR
+  value: "10.244.0.0/16"
+- name: CALICO_IPV4POOL_IPIP
+  value: "Never"
+- name: CALICO_IPV4POOL_VXLAN
+  value: "Never"
+- name: CALICO_NETWORKING_BACKEND
+  value: "bird"
+~~~
 
-2、Calico：是一个完全基于BGP协议的CNI插件，可以实现高性能和高扩展性的网络功能。Calico使用了IPIP、BGP和VXLAN技术，可以轻松扩展网络规模。它还支持网络安全策略、网络流量策略和网络监控等功能。
+这只是选择后端与默认池行为，不能替代上游路由配置。还需要确认节点 BGP mesh 或显式 BGPPeer，以及底层对 Pod 网段的可达性。如果 IPIP 使用 `CrossSubnet`，它依然可以同时使用 BGP，只是数据面跨子网时会封装。
 
-3、Weave Net：是一个简单易用的CNI插件，使用虚拟路由和Overlay网络实现容器之间的通信和隔离。它提供了一种快速、可靠和可扩展的解决方案，并支持多云环境。
+### VXLAN
 
-4、Cilium：是一个支持L3、L4和L7网络安全的CNI插件，具有网络和安全功能集成，使用eBPF技术，可以实现更好的性能和可观测性。
+VXLAN 必须配置 `CALICO_IPV4POOL_VXLAN`，不能只把 IPIP 参数改成 `CrossSubnet` 就宣称已启用 VXLAN：
 
-> [!tip] 提示
-> 对于小规模的Kubernetes集群，Flannel和Weave Net比较适合，而对于大规模的集群，Calico、Cilium则是一个更好的选择。
+~~~yaml
+- name: CALICO_IPV4POOL_IPIP
+  value: "Never"
+- name: CALICO_IPV4POOL_VXLAN
+  value: "CrossSubnet"
+- name: CALICO_NETWORKING_BACKEND
+  value: "vxlan"
+~~~
 
+`vxlan` 后端用于只需 VXLAN 的方案，会禁用 BIRD/BGP。如果原 manifest 的存活或就绪探针还检查 `-bird-live`、`-bird-ready`，需要按当前版本官方清单同步调整；否则关闭 BIRD 后探针仍会报错。只用 VXLAN 地址池时可以不运行 BGP，需要向外部通告路由时则另行设计。
+
+Operator 安装可通过下面的 `Installation` 片段表达跨子网 VXLAN；它需要合并到与目标版本匹配的安装配置，不能当作现有集群的无影响切换命令：
+
+~~~yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+    bgp: Disabled
+    ipPools:
+    - cidr: 10.244.0.0/16
+      encapsulation: VXLANCrossSubnet
+~~~
+
+### 关于 host-gw
+
+`host-gw` 是 Flannel 中常见的后端名称。Calico 的 `CALICO_NETWORKING_BACKEND` 支持的值包括 `bird`、`vxlan`、`none`，不存在可按 `hostgw` 启用的对应模式。若想让 Calico 使用节点作为下一跳直接路由，应评估前面的无封装方案，不要填写虚构的后端值。`none` 常用于只做策略等特定部署，也不是 host-gw 的替代写法。
+
+## 安装与验证顺序
+
+从[自管理集群安装文档](https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises#install-calico)选择与 Kubernetes、操作系统、内核匹配的版本，确定使用 Operator 还是 manifest。原先常见的 `calico/node:v3.18.0` 属于历史学习配置，不应作为新集群安装版本。
+
+安装前，先确认 Pod CIDR、封装协议、防火墙、MTU 和多网卡地址选择；再下载固定版本的完整清单，核对镜像与权限后在实验环境部署。Calico 的节点组件通常由 DaemonSet 运行，不是单独创建一个普通 Deployment 就能完成网络安装。
+
+验证应从本机到跨节点逐步扩大：
+
+1. 检查 Calico Pod 是否就绪，节点地址和 IPPool 是否符合预期。
+2. 检查同一节点的 Pod 通信，再验证不同节点、不同子网的 Pod 通信。
+3. 验证 Service、DNS 和必要的出站访问，区分 CNI 问题与 Service 转发问题。
+4. 对受策略保护的流量验证“应放行”和“应拒绝”两类结果。
+
+若看到 `tunl0` 仍存在，不要立即卸载 `ipip` 模块。原本用于清理残留设备的 `rmmod ipip` 会影响仍依赖该模块的网络，只能在确认 Calico 已卸载、没有其他使用者且已安排网络维护时处理。
+
+## 与其他网络插件对照
+
+CNI 定义容器网络插件接口，不同插件的数据平面、策略能力和运维要求差异很大。不要只按“小集群用某插件、大集群用另一插件”选择。
+
+| 插件 | 理解其定位时可关注的方面 |
+| --- | --- |
+| Flannel | 聚焦 Pod 网络连通，提供 VXLAN、host-gw 等后端；网络策略通常需要额外实现 |
+| Calico | Pod 网络、地址管理与网络策略，可选择不同封装方式和数据平面 |
+| Weave Net | 使用虚拟网络连接节点；评估前需另行确认项目维护状态和目标 Kubernetes 版本兼容性 |
+| Cilium | 以 eBPF 为基础，提供网络、策略与可观测性能力，需核对内核和部署要求 |
+
+排查 Calico 时，先明确自己选了什么数据平面、如何分发路由、是否封装，再沿着节点地址、路由、封装协议和策略逐项检查。相同的“Pod 不通”，在这几层对应的处理方法并不相同。

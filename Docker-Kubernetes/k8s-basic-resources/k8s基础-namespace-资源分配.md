@@ -7,16 +7,19 @@ aliases:
   - k8sNamespace资源分配
 ---
 
-# K8s基础-namespace-资源分配
+# Kubernetes Namespace 与资源分配：给团队划边界，也给资源设预算
 
+同一个集群里，开发环境突然创建大量 Pod，可能影响生产服务；某个应用把内存 requests 写得很小，又可能让节点承受超出预期的负载。Namespace、ResourceQuota 和 LimitRange 分别解决归属、总量和单个对象约束的问题，需要配合使用。
 
-## namespace介绍
+本文从命名空间开始，逐步配置配额、默认资源值与 QoS，最后解释 Namespace 删除为何可能停在 Terminating。阅读示例前，需要了解 Pod、Deployment，以及 CPU 和内存的 requests/limits。配置示例用于测试命名空间，数值应按容量和业务需求调整。
 
-Namespace提供了一种将集群资源逻辑上隔离的方式,允许在同一个集群中划分多个虚拟的、逻辑上独立的集群环境,相当于集群的"虚拟化"。
+## Namespace 能隔离什么
 
-命名空间namespace是k8s集群级别的资源,可以给不同的用户、租户、环境或项目创建对应的命名空间,例如,可以为test、devlopment、production环境分别创建各自的命名空间。
+Namespace 为资源提供名称和管理范围。同一命名空间内同类资源名称需要唯一，不同命名空间可以使用相同名称。它便于分别配置权限、配额与网络策略，但本身不提供独立的节点、网络或安全边界。
 
-命名空间适用于存在很多跨多个团队或项目的用户的场景。对于只有几到几十个用户的集群,根本不需要创建或考虑命名空间。
+Namespace 对象本身是集群级资源；Pod、Deployment、Service、ResourceQuota 等对象则属于某个命名空间。可以按团队、租户、项目或 dev、test、production 环境划分。Node、PersistentVolume 等集群级对象不能靠 Namespace 分组隔离。
+
+是否划分 Namespace 取决于管理边界。即使用户很少，只要需要区分生产与测试权限或资源预算，也可以使用。多租户还应配合 RBAC、NetworkPolicy 和工作负载安全策略。
 
 创建ns:
 
@@ -28,15 +31,15 @@ kubectl create ns test
 
 资源限制的重要性:如果没有,可能会产生节点资源被异常耗尽的问题。
 
-pod数量限制的重要性:应对异常pod激增的问题。举个例子,对某个deployment下的pod,进行了内核修改配置(securityContext里面添加sysctl命令),但是如果集群没有允许更改内核参数,可能会报错sysctl forbidden,但是pod资源已经有了,这样的后果是RS会不断的创建pod,可能会直接创建上万个垃圾pod,严重的时候会直接把集群拖垮。
+对象数量配额用于限制异常控制器或自动化任务造成的对象增长。例如，不被节点允许的 sysctl 可能导致 Pod 被 kubelet 拒绝，控制器继续尝试维持副本，失败对象也会增加排障成本。是否反复生成对象取决于控制器和失败状态，不能仅凭 `SysctlForbidden` 推断一定会生成上万个 Pod。
 
-**生产环境一定针对每个ns,对pod数量和RS数量做限制,因为这两个资源是不受管控的资源,防止异常激增。比如限制ns级别的pod数量为512,RS数量为1024。**
+可以为 Namespace 设置 Pod、ReplicaSet、PVC 等对象数量上限。例如 512 个 Pod、1024 个 ReplicaSet 只是容量预算的一个起点，不能直接作为所有集群的生产标准。ReplicaSet 会受 Deployment 的副本和历史版本设置影响，配额需要为发布与回滚保留余量。
 
 #### 以租户为单位
 
 是针对ns去限制的。
 
-1. 基于节点去划分:比如一个团队申请了5台8C16G机器加入集群,那么就限制这个团队的ns资源limit为40C80G。
+1. 基于节点去划分:比如一个团队申请了5台8C16G机器加入集群,可以把 40 CPU、80Gi 作为预算上界的计算起点；还要扣除系统、DaemonSet 和故障冗余，并区分 requests 总量与 limits 总量。配额不会把这些节点自动专用于该团队。
 2. 基于现有资源:利用现有资源,直接划分给这个团队固定的cpu和memory
 
 #### 以环境为单位
@@ -45,7 +48,7 @@ pod数量限制的重要性:应对异常pod激增的问题。举个例子,对某
 
 ## ResourceQuota资源
 
-ResourceQuota是k8s中用于资源管理的对象,限制ns中的资源使用量。可以:
+Namespace 建好以后，还需要为它设置资源预算。[ResourceQuota](https://kubernetes.io/docs/concepts/policy/resource-quotas/) 在 API 准入时检查声明的资源总量与对象数量，不根据监控中的实时 CPU 使用率扣减配额。它可以：
 
 - 限制资源使用量
 - 限制对象数量
@@ -53,17 +56,18 @@ ResourceQuota是k8s中用于资源管理的对象,限制ns中的资源使用量�
 ```yaml
 apiVersion: v1
 kind: ResourceQuota
-metadata: name: customer1-quota
-namespace: customer1
+metadata:
+  name: customer1-quota
+  namespace: customer1
 spec:
   hard:
-    # 下面的限制建议都打开
+    # 示例预算；应用前先创建 customer1 命名空间
     count/pods: "100"
     requests.cpu: "2"
     requests.memory: 4Gi
     limits.cpu: "8"
     limits.memory: 16Gi
-    count/replicasets.apps: 1k
+    count/replicasets.apps: "1000"
     count/persistentvolumeclaims: "10"
     requests.storage: 400Gi
     count/services: "40"
@@ -78,12 +82,12 @@ spec:
 
 > [!warning] 注意
 >
-> - ns指定了ResourceQuota之后,如果创建的deployment没有显式指定requests和limits,那么pod会创建不出来。此时的状态就是deployment正常,但是pod实际数量为0,可以describe rs来看,也可以get events来看。
-> - 新创建的resourceQuota,不会影响已经在运行的服务,但是一旦出发更新或者删除,那么就会产生影响,超过的就创建不出来了
+> - 如果配额限制了 CPU/内存 requests 或 limits，对应容器必须具有这些声明；可由 LimitRange 补默认值。否则 Deployment 对象可能创建成功，但 ReplicaSet 创建 Pod 时被拒绝。通过 `kubectl describe rs` 和 `kubectl get events` 查看准入错误。仅限制对象数量的配额不会自动要求所有 CPU/内存字段。
+> - 新配额不会为了满足上限而自动驱逐已运行 Pod；后续创建、扩容或更新资源会受到检查。删除对象通常用于释放预算，不是“超额后禁止删除”。
 
 ## LimitRange资源
 
-只配置了resourceQuota是不够的,想象这样一种例子:有一个pod设置request是1m/1Mi,有一个节点已经资源马上满了,但是还是可以接受这个pod,但是这个pod随着运行吃了更多资源,这个节点就满了。
+ResourceQuota 控制命名空间总量，无法单独保证每个容器的声明合理。一个只申请 `1m` CPU、`1Mi` 内存的容器可能被调度到剩余可分配 requests 很少的节点，实际运行却消耗更多内存。LimitRange 可以约束单个容器或 Pod 的资源范围，也能给缺失字段补默认值。
 
 这样是不行的,需要:
 
@@ -99,17 +103,17 @@ metadata:
   name: cpu-mem-limit-range
 spec:
   limits:
-  - type: Container # 可以写container、pod
+  - type: Container # 类型名区分大小写；Pod 类型可约束 Pod 总量
     default: # default就是limit的默认值
       cpu: 1
       memory: 512Mi
     defaultRequest: # request的默认值
       cpu: 0.5
       memory: 256Mi
-    min: # requests不能小于这里的值
+    min: # 容器资源声明的下限
       memory: 32Mi
       cpu: 100m
-    max: # limits不能大于这里的值
+    max: # 容器资源声明的上限
       memory: 1Gi
       cpu: 1
   - type: PersistentVolumeClaim # 限制PVC的存储大小范围(创建太多很小的PVC,可能会产生过多的存储碎片)
@@ -125,13 +129,13 @@ spec:
 
 ## QoS
 
-想象这样一个场景:节点上面的pod由于流量高峰,资源使用量上升,超出节点资源量。这时候节点会启动一些OOM Kill的机制,杀掉pod。如果有一些重要的pod不希望被杀掉,或者尽量在最后被杀掉,怎么去保护?
+资源声明还会影响 Pod 的 QoS（Quality of Service，服务质量）分类。节点内存紧张时，需要区分 kubelet 的节点压力驱逐与内核 OOM killer：前者会终止 Pod，后者通常终止容器中的进程，两者的决策机制不同。
 
-QoS:Quality of Service,表示程序的服务质量,K8s集群每一个pod,都会有对应的QoS级别,可以**决定pod在资源紧张时候的处理顺序**。同时可以确保关键服务的稳定性和可靠性。(QoS不是K8s的特性,Linux里面的程序也有服务质量的概念)
+[Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/) 依据 CPU/内存资源配置分类。QoS 会影响 OOM 分数等行为，但节点压力驱逐还会考虑是否超过 requests、Pod Priority 和使用量等因素。QoS 不是 Pod 优先级，也不能保证关键服务永远不被终止。以下按常规的容器级资源声明说明。
 
 ### Guaranteed
 
-Guaranteed级别的Pod具有最高的优先级,Kubernetes会确保这些Pod获得足够的资源,也就是Kubernetes调度器会确保这些Pod调度到能够提供所需资源的节点上。
+Guaranteed 要求容器的 CPU 和内存 requests 与 limits 相等。调度器根据 requests 判断节点是否有足够的可分配资源；该分类不会提高 `priorityClassName`，也无法避免节点故障或应用超过自身内存限制导致的 OOM。
 
 配置Guaranteed级别的Pod,需要满足如下条件:
 
@@ -147,16 +151,16 @@ requests:
   memory: 512Mi
 ~~~
 
-> 一般mysql、redis等基础组件,需要尽量配成Guaranteed,预估好资源,直接给他requests、limits配成一样的(给冗余多一点)
+> MySQL、Redis 等有状态服务可以按压测结果考虑 Guaranteed。资源值需要覆盖数据库缓存、连接和后台任务；配置相等本身不能替代容量评估。
 
 ### Burstable
 
-Burstable级别的Pod具有中等优先级,Kubernetes会尽量满足其资源请求,但在资源紧张时可能会被驱逐,Kubernetes调度器会确保这些Pod调度到能够提供所需资源的节点上,如果节点上有额外的资源,这些Pod可以使用超过其请求的资源。
+Burstable 的资源配置介于 Guaranteed 与 BestEffort 之间。调度按 requests 计算，运行中可以在 limits 和节点实际资源允许的范围内使用超过 requests 的资源。超过 requests 的部分在节点压力下更容易受到影响。
 
 配置Burstable级别的Pod,需要满足如下条件:
 
 1. Pod不符合Guaranteed的配置要求
-2. Pod中至少有一个容器配置了requests.cpu或requests.memory。(即这类服务知道最小用量,但是机器资源充足时会占用更多)
+2. Pod 中至少一个容器具有 CPU 或内存 request/limit；只设置 limit 时，缺失的 request 可能在准入阶段被补成同值。分类应以 API 中最终保存的配置为准。
 
 ~~~yaml
 requests:
@@ -166,11 +170,11 @@ requests:
 
 > - 一般自己开发的无状态微服务,允许漂移的,可以设置成Burstable。
 > - 而且一般微服务CPU使用量低,所以CPU一般设置成小requests,可变得更大,这种模式就是Burstable。
-> - 对于Java,Xms和Xmx如果设置了,建议requests设成**Xmx+128Mi**,保证进程能起来,也给容器一些冗余。
+> - Java 容器不能用固定的 `Xmx+128Mi` 作为通用内存预算。还需计入 Metaspace、线程栈、直接内存、JVM 本身及应用的堆外占用，再结合负载测量配置 requests/limits。
 
 ### BestEffort
 
-BestEffort级别的Pod是最低优先级,Kubernetes不保证这些Pod获得任何资源,在资源紧张时,这些Pod最先被驱逐。同时Kubernetes调度器会尝试将这些Pod调度到任何节点上,但不保证节点上有足够的资源。
+BestEffort Pod 的所有容器均未声明 CPU/内存 requests 和 limits。调度时缺少这部分资源预算，节点压力下通常很脆弱；实际驱逐顺序仍受压力类型、使用量和 Pod Priority 等因素影响。
 
 配置BestEffort级别的Pod,不配置resources字段即可。
 
@@ -185,7 +189,9 @@ BestEffort级别的Pod是最低优先级,Kubernetes不保证这些Pod获得任�
 
 ### 原理
 
-Namespace 卡在 Terminating 通常是因为 `spec.finalizers` 未被清空。解决思路：通过 API 将 namespace 的 `spec.finalizers` 置空，绕过等待。
+Namespace 控制器需要先发现并删除命名空间中的对象。APIService 不可用、资源发现失败、残留对象的 finalizer 无法完成，都会阻塞这个过程。先查看 `kubectl describe namespace "$NAMESPACE"` 的 Conditions，再枚举残留对象并修复对应控制器。Namespace 使用的 `spec.finalizers` 与普通对象的 `metadata.finalizers` 需要区分。
+
+下面保留 `/finalize` 接口的人工恢复示例。只有确认遗留资源及外部依赖已处理，并明确接受残留对象风险后才使用；强行置空可能留下不可见或孤立资源，不等于完成清理。
 
 ### 手动方式
 
@@ -195,63 +201,67 @@ kubectl proxy
 # Starting to serve on 127.0.0.1:8001
 
 # 2. 新开终端，导出 namespace JSON 并清空 finalizers
-kubectl get namespace $NAMESPACE -o json | jq '.spec = {"finalizers":[]}' > temp.json
+kubectl get namespace $NAMESPACE -o json | jq '.spec.finalizers = []' > temp.json
 
 # 3. 发送 PUT 请求完成删除
-curl -k -H "Content-Type: application/json" -X PUT --data-binary @temp.json \
+curl --fail --show-error -H "Content-Type: application/json" -X PUT --data-binary @temp.json \
   127.0.0.1:8001/api/v1/namespaces/$NAMESPACE/finalize
 ```
 
-### 自动化脚本
+### 将人工恢复步骤写成脚本
 
 > 来源：[实用脚本：强制删除K8s命名空间（Terminating状态）](https://mp.weixin.qq.com/s/ERIZaE08tGUtd5fs9YvR5Q)
 
-**前置条件**：需要先在另一个终端执行 `kubectl proxy` 保持运行，且需安装 `jq`。
+前置条件：需要先在另一个终端执行 `kubectl proxy` 保持运行，且需安装 `jq`。
 
 ```sh
 #!/bin/bash
+set -euo pipefail
 # deleteNameSpace.sh - 强制删除 Terminating 状态的 namespace
-# 用法: sh deleteNameSpace.sh <namespace-name>
+# 用法: bash deleteNameSpace.sh <namespace-name>
 
-NAMESPACE="$1"
+NAMESPACE="${1:-}"
 
 if [ -z "$NAMESPACE" ]; then
     echo "请传入要删除的 namespace 名称："
-    read NAMESPACE
+    read -r NAMESPACE
 fi
 
 echo "您将要删除的 namespace 名称是：$NAMESPACE"
 
 # 导出 JSON 并清空 finalizers
-kubectl get namespace "$NAMESPACE" -o json | jq '.spec = {"finalizers":[]}' > temp.json
+kubectl get namespace "$NAMESPACE" -o json | jq '.spec.finalizers = []' > temp.json
 
 # 通过 API 发送 PUT 请求完成删除
-curl -k -H "Content-Type: application/json" -X PUT \
+curl --fail --show-error -H "Content-Type: application/json" -X PUT \
   --data-binary @temp.json \
   "127.0.0.1:8001/api/v1/namespaces/$NAMESPACE/finalize"
 
-# 验证结果
-if kubectl get namespace "$NAMESPACE" &>/dev/null; then
-    echo "删除 namespace 失败：命名空间 '$NAMESPACE' 仍然存在"
+# 验证结果；连接、权限等查询错误必须单独报告
+if ! REMAINING=$(kubectl get namespace "$NAMESPACE" --ignore-not-found -o name); then
+    echo "查询失败，请检查 API 连接和权限，不能据此判断已删除"
     exit 1
-else
-    echo "删除 namespace 成功：命名空间 '$NAMESPACE' 已不存在"
-    exit 0
 fi
+if [ -n "$REMAINING" ]; then
+    echo "命名空间仍然存在：$NAMESPACE"
+    exit 1
+fi
+echo "命名空间对象已不存在：$NAMESPACE"
+# 仍需按事先记录核对外部资源及孤立对象
 ```
 
-**使用**：
+使用：
 
 ```sh
 # 终端 1：开启代理
 kubectl proxy
 
 # 终端 2：执行脚本
-sh deleteNameSpace.sh knative-eventing
+bash deleteNameSpace.sh knative-eventing
 ```
 
 ## 特殊namespace
 
 ### kube-node-lease
 
-- 节点的心跳信息会存放在其中,api server去里面查看心跳信息,获取node状态。
+- 每个节点在其中维护 Lease 对象作为轻量心跳；kubelet 续约 Lease，控制平面的节点生命周期控制器结合心跳与 Node 状态判断节点健康。API Server 提供存取接口，不自行运行节点健康判定循环。
