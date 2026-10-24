@@ -444,49 +444,49 @@ kubectl exec redis-cluster-0 -- redis-cli cluster info
 
 以下故障和处理方式由作者报告，未提供完整环境、事件和日志；涉及 Recreate、存储删除或流量行为的结论，需要结合前面的核验说明阅读。
 
-#### 1. 未灰度就整体停机。
+#### 1. 未灰度就整体停机
 
- 作者称首次直接设置 `type: Recreate`，3 个 Pod 同时被删除，服务中断，恢复用了 5 分钟；之后要求先用 `partition` 灰度。核验说明：Recreate 本来就是全量重建，`partition` 不能限制它的更新范围。先灰度需要选择 RollingUpdate 或另行设计验证环境，整体重建则要预留停机窗口。
+作者称首次直接设置 `type: Recreate`，3 个 Pod 同时被删除，服务中断，恢复用了 5 分钟；之后要求先用 `partition` 灰度。核验说明：Recreate 本来就是全量重建，`partition` 不能限制它的更新范围。先灰度需要选择 RollingUpdate 或另行设计验证环境，整体重建则要预留停机窗口。
 
-#### 2. PVC 丢失。
+#### 2. PVC 丢失
 
- 作者将一次重建后的 PVC 清理和历史数据丢失归因于 StorageClass 设置了 `Delete`，处理方式是改为 `Retain` 并定期快照。核验说明：这个原因链缺少 PVC 如何被删除的证据；需检查 PVC 保留策略、ownerReferences 和其他删除操作，不能只凭 StorageClass 的回收策略归因。
+作者将一次重建后的 PVC 清理和历史数据丢失归因于 StorageClass 设置了 `Delete`，处理方式是改为 `Retain` 并定期快照。核验说明：这个原因链缺少 PVC 如何被删除的证据；需检查 PVC 保留策略、ownerReferences 和其他删除操作，不能只凭 StorageClass 的回收策略归因。
 
-#### 3. 并行启动破坏依赖顺序。
+#### 3. 并行启动破坏依赖顺序
 
- 作者称使用 `podManagementPolicy: Parallel` 后，从节点先于主节点启动，出现选主异常，改回 `OrderedReady` 后稳定。存在启动依赖时，应保留适合该应用的顺序；Parallel 不保证节点按序就绪。
+作者称使用 `podManagementPolicy: Parallel` 后，从节点先于主节点启动，出现选主异常，改回 `OrderedReady` 后稳定。存在启动依赖时，应保留适合该应用的顺序；Parallel 不保证节点按序就绪。
 
-#### 4. 进程已启动，数据尚未就绪。
+#### 4. 进程已启动，数据尚未就绪
 
- 容器进程启动后，数据仍在加载。原文称 readiness 探针缺失导致流量过早进入，补充探针后才解决。探针需要反映应用可接收请求的状态，而不仅是进程存活。
+容器进程启动后，数据仍在加载。原文称 readiness 探针缺失导致流量过早进入，补充探针后才解决。探针需要反映应用可接收请求的状态，而不仅是进程存活。
 
-#### 5. 初始化依赖失败。
+#### 5. 初始化依赖失败
 
- 原文把这一项称为“有状态 sidecar 顺序依赖”，实际描述的是 init 容器拉取配置失败，并称主容器持续 CrashLoop；作者将配置加载改成异步重试后恢复。核验说明：普通 init 容器需成功完成后，应用容器才会启动。应根据容器状态和日志区分初始化失败与应用启动失败，不能由这段描述确认主容器的失败路径。见[官方 init 容器说明](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)。
+原文把这一项称为“有状态 sidecar 顺序依赖”，实际描述的是 init 容器拉取配置失败，并称主容器持续 CrashLoop；作者将配置加载改成异步重试后恢复。核验说明：普通 init 容器需成功完成后，应用容器才会启动。应根据容器状态和日志区分初始化失败与应用启动失败，不能由这段描述确认主容器的失败路径。见[官方 init 容器说明](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)。
 
-#### 6. 客户端仍使用旧地址。
+#### 6. 客户端仍使用旧地址
 
- 作者称 DNS 缓存使客户端短期内继续连接旧 Endpoint，处理方式是配合 readiness 控制服务端就绪状态，并在客户端增加连接重试。整体重建也不能替代客户端的断线恢复逻辑。
+作者称 DNS 缓存使客户端短期内继续连接旧 Endpoint，处理方式是配合 readiness 控制服务端就绪状态，并在客户端增加连接重试。整体重建也不能替代客户端的断线恢复逻辑。
 
-#### 7. Operator 覆盖手工配置。
+#### 7. Operator 覆盖手工配置
 
- 作者称数据库 Operator 固定使用 RollingUpdate，手工修改的策略被回写。最后采用该 Operator 自身的维护窗口和暂停副本流程。由 Operator 管理的 StatefulSet，应先确认其支持的升级方式。
+作者称数据库 Operator 固定使用 RollingUpdate，手工修改的策略被回写。最后采用该 Operator 自身的维护窗口和暂停副本流程。由 Operator 管理的 StatefulSet，应先确认其支持的升级方式。
 
-#### 8. 回滚再次停机。
+#### 8. 回滚再次停机
 
- 原文称新版本出现问题后，回滚又触发了一次整体重建；后续为关键服务建立独立 StatefulSet 的蓝绿切换方案，减少对重建回滚的依赖。这是作者的处理方案，仍需按应用核对数据同步、切换和恢复条件。
+原文称新版本出现问题后，回滚又触发了一次整体重建；后续为关键服务建立独立 StatefulSet 的蓝绿切换方案，减少对重建回滚的依赖。这是作者的处理方案，仍需按应用核对数据同步、切换和恢复条件。
 
-#### 9. 误删 StatefulSet 后丢失 PVC。
+#### 9. 误删 StatefulSet 后丢失 PVC
 
- 作者称执行 `kubectl delete sts` 时未加 `--cascade=false`，PVC 随之回收，并建议使用 `--cascade=orphan` 或确认卷回收策略。核验说明：删除 StatefulSet 并不必然删除 PVC，默认 PVC 保留策略为 Retain；是否回收需检查实际保留策略和 ownerReferences。`--cascade=orphan` 与 PV 的 Retain 控制不同对象，不能把其中一项当成完整的数据保护保证。
+作者称执行 `kubectl delete sts` 时未加 `--cascade=false`，PVC 随之回收，并建议使用 `--cascade=orphan` 或确认卷回收策略。核验说明：删除 StatefulSet 并不必然删除 PVC，默认 PVC 保留策略为 Retain；是否回收需检查实际保留策略和 ownerReferences。`--cascade=orphan` 与 PV 的 Retain 控制不同对象，不能把其中一项当成完整的数据保护保证。
 
-#### 10. 把重建当成清空节点。
+#### 10. 把重建当成清空节点
 
- 作者称手动删除序号 2 的 Pod 后，新 Pod 复用了序号和旧 PVC，出现其所称的“数据串台”。核验说明：复用同序号的 PVC 是正常行为，删除 Pod 不会自动改变序号或重置数据。若目标是清空节点或重新分配数据，应走应用明确支持的流程。
+作者称手动删除序号 2 的 Pod 后，新 Pod 复用了序号和旧 PVC，出现其所称的“数据串台”。核验说明：复用同序号的 PVC 是正常行为，删除 Pod 不会自动改变序号或重置数据。若目标是清空节点或重新分配数据，应走应用明确支持的流程。
 
-#### 11. 未就绪 Pod 收到请求。
+#### 11. 未就绪 Pod 收到请求
 
- 原文称新 Pod 已 Running、readiness 尚未通过，EndpointSlice 已更新并收到流量，建议加强 readiness、客户端连接重试和控制器同步检查。核验说明：EndpointSlice 中出现地址不等于它已是可接收流量的后端，需检查 `conditions.ready`、实际流量路径以及 Service 的 `publishNotReadyAddresses`；该字段为 true 时，端点的 ready 会被视为 true。见[官方 EndpointSlice 条件说明](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions)。
+原文称新 Pod 已 Running、readiness 尚未通过，EndpointSlice 已更新并收到流量，建议加强 readiness、客户端连接重试和控制器同步检查。核验说明：EndpointSlice 中出现地址不等于它已是可接收流量的后端，需检查 `conditions.ready`、实际流量路径以及 Service 的 `publishNotReadyAddresses`；该字段为 true 时，端点的 ready 会被视为 true。见[官方 EndpointSlice 条件说明](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions)。
 
 ### 原文 Redis Cluster 迁移案例与适用边界
 

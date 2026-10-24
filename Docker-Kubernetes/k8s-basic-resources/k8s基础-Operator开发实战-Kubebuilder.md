@@ -56,7 +56,7 @@ curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go e
 kubebuilder version
 ```
 
-安装前可核对 [Kubebuilder 快速开始](https://book.kubebuilder.io/quick-start.html) 的版本要求。上面的 `latest` 下载方式用于首次体验；团队项目应记录并固定 Kubebuilder 发布版，同时以提交的 `go.mod`、`go.sum` 锁定依赖。下面的控制器使用当前 `Watches(object, handler)` 接口，不能配合旧版 `source.Kind{Type: ...}` 写法。
+安装前可核对 [Kubebuilder 快速开始](https://book.kubebuilder.io/quick-start.html) 的版本要求。上面的 `latest` 下载方式用于首次体验；团队项目应记录并固定 Kubebuilder 发布版，同时以提交的 `go.mod`、`go.sum` 锁定依赖。下面的控制器使用 `Watches(object, handler)` 接口，编译基线为 controller-runtime v0.22.4 与 Kubernetes Go 客户端 v0.34.1。不同脚手架版本可能生成其他依赖，应按生成的 `go.mod` 检查兼容性，不能配合旧版 `source.Kind{Type: ...}` 写法。
 
 ### 初始化项目
 
@@ -233,14 +233,15 @@ func (r *FooReconciler) mapPodsReqToFooReq(ctx context.Context, obj client.Objec
 
 ### 生成清单并运行
 
-API 类型变化后先生成 DeepCopy 代码，再生成 CRD 与 RBAC。`make install` 会修改当前 kubeconfig 指向的集群，只能对测试集群执行；`make run` 则在本机运行控制器，并使用本机凭据，不代表已经验证集群内 ServiceAccount 权限。
+API 类型变化后先生成 DeepCopy 代码，再生成 CRD 与 RBAC。测试使用脚手架提供的 `make test`：它负责准备本地 envtest 的 API Server/etcd 二进制并传入 `KUBEBUILDER_ASSETS`，不能假定干净机器直接 `go test ./...` 就能启动集成测试。目标的具体行为以生成的 Makefile 为准。`make install` 会修改当前 kubeconfig 指向的集群，只能对测试集群执行；`make run` 则在本机运行控制器，并使用本机凭据，不代表已经验证集群内 ServiceAccount 权限。
 
 
 ```bash
 # 1. 更新生成代码与清单
 make generate
 make manifests
-go test ./...
+# 使用脚手架目标准备匹配的envtest二进制并设置KUBEBUILDER_ASSETS
+make test
 
 # 2. 安装 CRD 到集群
 make install

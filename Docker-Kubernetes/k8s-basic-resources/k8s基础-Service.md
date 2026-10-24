@@ -177,14 +177,17 @@ spec:
     targetPort: 80 # pod暴露的端口
 ```
 
-```bash
-#查看node上的ipvs设置的svc的IP和endpoint的对应关系：
-ipvsadm -Ln
+在仍使用 IPVS 的节点上，可以查看 Service 到后端的映射：
 
+```sh
+ipvsadm -Ln
+```
+
+```text
 TCP  10.99.178.109:80 rr
   -> 10.244.184.54:80             Masq    1      0          0         
   -> 10.244.184.55:80             Masq    1      0          0         
-  -> 10.244.190.30:80             Masq    1      0          0    
+  -> 10.244.190.30:80             Masq    1      0          0
 ```
 
 Headless Service 通过 `clusterIP: None` 禁用虚拟 ClusterIP，DNS 通常返回实际后端地址，由客户端选择连接目标；客户端也可以直接使用这些地址。它不是第五种 Service `type`，常用于 StatefulSet 的稳定网络标识。
@@ -256,17 +259,16 @@ kubectl expose deploy redis --port 6379 -n basic-component-uat
 访问测试：
 
 ~~~sh
-#  创建一个专门用于测试的 Redis 客户端
-kubectl create deploy redis-cli --image=registry.cn-beijing.aliyuncs.com/dotbalo/redis:7.2.5
-#  测试每个环境的 Redis 基础组件
-kubectl exec -ti redis-cli-57cc5fd584-hvxzq -- bash
-redis-cli -h redis.basic-component-dev
-set a dev
-get a
-exit
-redis-cli -h redis.basic-component-uat
-set a uat
-get a
+# 创建专门用于测试的 Redis 客户端
+kubectl create deploy redis-cli -n default --image=registry.cn-beijing.aliyuncs.com/dotbalo/redis:7.2.5
+kubectl rollout status deployment/redis-cli -n default
+# 每条命令都从当前终端发起，完成后直接返回，不进入交互式 Redis 会话
+kubectl exec deployment/redis-cli -n default -- redis-cli -h redis.basic-component-dev set a dev
+kubectl exec deployment/redis-cli -n default -- redis-cli -h redis.basic-component-dev get a
+# 预期返回 dev
+kubectl exec deployment/redis-cli -n default -- redis-cli -h redis.basic-component-uat set a uat
+kubectl exec deployment/redis-cli -n default -- redis-cli -h redis.basic-component-uat get a
+# 预期返回 uat
 ~~~
 
 创建项目的两个命名空间：
@@ -308,18 +310,14 @@ kubectl create deploy usercenter --image=registry.cn-beijing.aliyuncs.com/dotbal
 分别测试两个环境的 ExternalName：
 
 ~~~sh
-# DEV环境
-kubectl get po -n projecta-dev
-kubectl exec -ti usercenter-6685654cc4-pc6m9 -n projecta-dev -- bash 
-redis-cli -h redis
-get a
-"dev"
+# DEV 环境
+kubectl rollout status deployment/usercenter -n projecta-dev
+kubectl exec deployment/usercenter -n projecta-dev -- redis-cli -h redis get a
+# 预期返回 dev
 # UAT 环境
-kubectl get po -n projecta-uat
-kubectl exec -ti usercenter-6685654cc4-m9wrb -n projecta-uat -- bash
-redis-cli -h redis
-get a
-"uat"
+kubectl rollout status deployment/usercenter -n projecta-uat
+kubectl exec deployment/usercenter -n projecta-uat -- redis-cli -h redis get a
+# 预期返回 uat
 ~~~
 
 ### LoadBalancer
@@ -508,7 +506,7 @@ ClientIP 亲和性会让相同客户端 IP 的新连接在有效期内倾向于�
 ~~~sh
 # 查看当前的代理模式：
 curl 127.0.0.1:10249/proxyMode
-iptables
+# 示例返回：iptables
 # 更改 proxy 的代理模式为 ipvs：
 kubectl edit cm kube-proxy -n kube-system
 # mode更改成"ipvs"
@@ -518,7 +516,7 @@ kubectl rollout restart daemonset/kube-proxy -n kube-system
 kubectl rollout status daemonset/kube-proxy -n kube-system
 # 再次查看代理模式：
 curl 127.0.0.1:10249/proxyMode
-ipvs
+# 示例返回：ipvs
 ~~~
 
 ### 更改 IPVS 调度算法（旧版本实验）
@@ -527,6 +525,11 @@ ipvs
 # 在机器上查看 ipvs 规则：
 yum install ipvsadm -y
 ipvsadm -ln
+~~~
+
+输出示例：
+
+```text
 IP Virtual Server version 1.2.1 (size=4096)
 Prot LocalAddress:Port Scheduler Flags
 -> RemoteAddress:Port Forward Weight ActiveConn InActConn
@@ -534,7 +537,11 @@ TCP 172.16.32.128:32000 rr
 -> 172.16.85.217:8443 Masq 1 0 0 
 TCP 172.16.32.128:32001 rr
 -> 192.168.181.141:80 Masq 1 0 0
+```
 
+确认实验目标后，修改调度算法并再次查看：
+
+~~~sh
 # 实验中将代理算法改为最少连接：
 kubectl edit cm kube-proxy -n kube-system
 # 把ipvs.scheduler字段改成"lc"
@@ -543,6 +550,9 @@ kubectl rollout restart daemonset/kube-proxy -n kube-system
 kubectl rollout status daemonset/kube-proxy -n kube-system
 # 查看 ipvs 算法：
 ipvsadm -ln
+~~~
+
+```text
 IP Virtual Server version 1.2.1 (size=4096)
 Prot LocalAddress:Port Scheduler Flags
 -> RemoteAddress:Port Forward Weight ActiveConn InActConn
@@ -550,7 +560,7 @@ TCP 172.16.32.128:32000 lc
 -> 172.16.85.217:8443 Masq 1 0 0 
 TCP 172.16.32.128:32001 lc
 -> 192.168.181.141:80 Masq 1 0 0
-~~~
+```
 
 ## 完整实验：旧集群从 iptables 切换到 IPVS
 

@@ -139,13 +139,34 @@ kubectl apply -f deploy/operator/ -n mongodb
 kubectl get pods -n mongodb
 ~~~
 
-Controller 就绪后，再创建仓库提供的 MongoDB CR，并观察它生成的 Pod 和 PVC：
+Controller 就绪后，先检查 CR 的存储模板，再创建实例。0.5.0 的默认 PVC 使用 `ReadWriteOnce`，申请量为 `10G`，可从该版本的[StatefulSet 构建代码](https://github.com/mongodb/mongodb-kubernetes-operator/blob/v0.5.0/pkg/controller/mongodb/replica_set_controller.go)及[默认资源定义](https://github.com/mongodb/mongodb-kubernetes-operator/blob/v0.5.0/pkg/kube/resourcerequirements/resource_requirements.go)核对。后文 1Gi NFS PV 不能满足这个默认申请。
+
+为了使用后文的静态存储实验，首次 apply 之前，在 `deploy/crds/mongodb.com_v1_mongodbcommunity_cr.yaml` 中 MongoDBCommunity 对象现有的 `spec` 下加入以下 `statefulSet` 字段，保留原来的 members、security、users 等配置和同文件中的密码 Secret。该版本会把自定义 StatefulSet 配置合并到生成结果中。
+
+```yaml
+# 加入 MongoDBCommunity.spec 的片段，不是独立资源
+statefulSet:
+  spec:
+    volumeClaimTemplates:
+    - metadata:
+        name: data-volume
+      spec:
+        storageClassName: ""
+        accessModes: [ReadWriteMany]
+        resources:
+          requests:
+            storage: 500Mi
+```
+
+这一步必须发生在首次创建该 MongoDB CR 之前。如果已经有生成的 PVC，不要把它们改成下面的示例规格，更不要删除已有数据库卷；先读取实际的 StorageClass、容量和 accessModes，再提供匹配的 PV，或在新的空白实验环境从头运行。PVC 的这些字段通常不能事后改写，也不能用 apply 缩小存储申请。
+
+然后创建 CR，观察控制器生成的 Pod 和 PVC：
 
 ~~~sh
 cat deploy/crds/mongodb.com_v1_mongodbcommunity_cr.yaml
 kubectl apply -f deploy/crds/mongodb.com_v1_mongodbcommunity_cr.yaml -n mongodb
 kubectl get pods -n mongodb
-#pod由于没有合适的PVC而创建失败，需要创建PV和PVC
+# 若Pod Pending，查看PVC是否已由StatefulSet生成、是否在等待匹配PV
 kubectl get pvc -n mongodb
 # 只有在可丢弃的初次安装实验中才考虑重建PVC，不能用于已有数据库
 # kubectl delete pvc --all -n mongodb
@@ -153,15 +174,14 @@ kubectl get pvc -n mongodb
 
 ### 为隔离实验提供静态 PV
 
-如果 PVC 一直 Pending，先 `describe pvc` 检查 StorageClass、容量和访问模式，不要先删除卷。本节使用 NFS 演示静态 PV 绑定：NFS 服务地址、目录和权限都应替换为实验环境配置。生产数据库需要评估文件系统语义、延迟、持久性与故障域；`no_root_squash` 会扩大客户端 root 的访问权限，不应直接使用到共享生产存储。
+如果 PVC 一直 Pending，先 `describe pvc` 检查 StorageClass、容量和访问模式，不要先删除卷。本节使用 NFS 演示静态 PV 绑定。前提是服务端已安装并启动 NFS 服务，所有工作节点都安装了 NFS 客户端挂载工具，且节点到服务端的 NFS 网络已放通。RHEL/Rocky 一类系统使用 `nfs-utils` 包，Debian/Ubuntu 的客户端通常使用 `nfs-common`；下面服务命令按 RHEL 系示例，其他发行版需使用对应包和服务名。NFS 服务地址、目录和权限都应替换为实验环境配置。生产数据库需要评估文件系统语义、延迟、持久性与故障域；`no_root_squash` 会扩大客户端 root 的访问权限，不应直接使用到共享生产存储。
 
 ~~~sh
-#master节点创建nfs共享
-mkdir /data/p1
-mkdir /data/p2
-mkdir /data/p3
-tee /etc/exports <<'EOF'
-/data/v1  *(rw,no_root_squash)
+# 在专用实验NFS服务端以管理员身份准备；工作节点也需安装NFS客户端工具
+dnf install -y nfs-utils
+systemctl enable --now nfs-server
+mkdir -p /data/p1 /data/p2 /data/p3
+tee /etc/exports.d/mongodb-demo.exports <<'EOF'
 /data/p1  *(rw,no_root_squash)
 /data/p2  *(rw,no_root_squash)
 /data/p3  *(rw,no_root_squash)
@@ -236,7 +256,9 @@ EOF
 
 ### 让 PVC 与静态 PV 的条件一致
 
-PVC 的名称需要与该版本 Operator 为 StatefulSet 生成的名称一致。下面使用空 StorageClass，避免默认动态供给抢先参与；申请容量必须不超过匹配 PV 的容量。`500M` 是十进制，`500Mi` 是二进制，此处统一使用后者。
+PVC 的名称需要与 StatefulSet 的卷模板名、实例名和序号对应。首次创建 CR 前已配置空 StorageClass、ReadWriteMany 与 500Mi，因此后文 1Gi PV 能满足容量条件。`500M` 是十进制，`500Mi` 是二进制，此处统一使用后者。
+
+下面展示三个 PVC 的完整清单，便于核对，也可用于在控制器创建前预绑定的独立实验。如果当前 StatefulSet 已生成同名 PVC，先读取它们并比较 spec，跳过手工 apply PVC 的命令，只创建匹配 PV；不要尝试覆盖不可变字段。
 
 ~~~sh
 tee pvc-demo.yaml <<'EOF' 
@@ -283,7 +305,8 @@ spec:
       storage: 500Mi
 EOF
 kubectl apply -f pv-demo.yaml
-kubectl apply -f pvc-demo.yaml
+# 仅在这些PVC尚不存在且规格已与卷模板完全一致时使用
+# kubectl apply -f pvc-demo.yaml
 kubectl get pv
 kubectl get pvc,pods -n mongodb
 ~~~

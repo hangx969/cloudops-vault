@@ -72,7 +72,6 @@ spec:
 
 下面的 Nginx 与 Redis 分别把同一个卷挂到 `/opt` 和 `/mnt`。在一边写入文件后，另一边能从自己的挂载路径读取；这只是文件共享，不代表应用数据有一致性或复制协议。示例中的固定旧镜像用于学习挂载结构，实际环境应使用已验证的维护版本。
 
-
 ~~~yaml
 apiVersion: apps/v1 
 kind: Deployment 
@@ -464,45 +463,45 @@ PersistentVolumeClaim（PVC）请求容量、访问模式、存储类别等条�
 
 下面保留旧 Ceph RBD in-tree 配置，用于阅读历史集群与理解 PV/PVC 的对应关系。它不能直接作为现代 Kubernetes 的 Ceph 部署方法：旧的 `rbd` 卷插件已在 Kubernetes 1.31 移除，见[官方移除说明](https://kubernetes.io/blog/2024/07/19/kubernetes-1-31-upcoming-changes/#removal-of-ceph-rbd-volume-plugin)，现代集群应部署 Ceph CSI，再按其文档配置。示例中的 `accessModes` 与 `resources` 必须采用 API 规定的复数拼写。
 
-    ~~~yaml
-    ---
-    # PV
-    apiVersion: v1
-    kind: PersistentVolume
-    metadata:
-      name: ceph-rbd-pv
-    spec:
-      storageClassName: ceph-fast # 在手动绑定PV和PVC的场景下，这个字段是可以随便写的。
-      accessModes:
-      - ReadWriteOnce
-      capacity:
-        storage: 3Gi
-      rbd:
-        monitors:
-        - 192.168.40.180:6789
-        - 192.168.40.181:6789
-        - 192.168.40.182:6789
-        pool: rbd
-        image: ceph-rnd-pv-test
-        user: admin
-        secretRef:
-          name: ceph-secret
-        fsType: ext4
-        readOnly: false
-    ---
-    # PVC
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: ceph-rbd-pvc
-    spec:
-      storageClassName: ceph-fast # 需要保证PVC的这个字段和PV一致才能被匹配
-      accessModes:
-      - ReadWriteOnce # 挂载模式也需要也要匹配，PVC的是PV的子集即可，
-      resources:
-        requests:
-          storage: 3Gi # PVC的申请存储需要<=PV配置的存储大小
-    ~~~
+~~~yaml
+---
+# PV
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ceph-rbd-pv
+spec:
+  storageClassName: ceph-fast # 静态匹配时PV/PVC必须使用相同类别，仍需满足其他匹配条件
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 3Gi
+  rbd:
+    monitors:
+    - 192.168.40.180:6789
+    - 192.168.40.181:6789
+    - 192.168.40.182:6789
+    pool: rbd
+    image: ceph-rnd-pv-test
+    user: admin
+    secretRef:
+      name: ceph-secret
+    fsType: ext4
+    readOnly: false
+---
+# PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ceph-rbd-pvc
+spec:
+  storageClassName: ceph-fast # 需要保证PVC的这个字段和PV一致才能被匹配
+  accessModes:
+  - ReadWriteOnce # 挂载模式也需要也要匹配，PVC的是PV的子集即可，
+  resources:
+    requests:
+      storage: 3Gi # PVC的申请存储需要<=PV配置的存储大小
+~~~
 
 Pod 模板只需要引用 PVC 名称，下面是 `.spec` 中的片段，不是第三份完整对象：
 
@@ -530,7 +529,7 @@ spec:
   storageClassName: hostpath 
   volumeMode: Filesystem # Filesystem挂载文件系统；Block向容器暴露原始块设备
   capacity: 
-    storage: 10Gi # HostPath和NFS目前都不支持限制存储大小
+    storage: 10Gi # 这里声明匹配容量，hostPath/NFS目录不会自动得到硬配额
   accessModes: 
   - ReadWriteOnce 
   hostPath: 
@@ -662,7 +661,6 @@ spec:
 ```
 
 最后用 Deployment 挂载只读示例 PVC。只读语义还需要在挂载处明确声明，不应仅凭 PV 的访问模式判断写保护：
-
 
 ```yaml
 apiVersion: apps/v1
@@ -923,6 +921,8 @@ spec:
           claimName: pvc-sc-nfs
 ```
 
+供应器的 `PROVISIONER_NAME` 必须与 StorageClass 的 `provisioner` 完全一致。上面的清单使用 default 命名空间，如果改用其他命名空间，需要同步修改 ServiceAccount、RoleBinding 和 ClusterRoleBinding 中的 subject。RBAC 采用项目发布的[供应器权限清单](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/blob/master/deploy/rbac.yaml)对应权限，避免把 cluster-admin 直接授予供应器。
+
 ### NFS CSI：用标准接口提供 NFS 卷
 
 [NFS CSI 驱动](https://github.com/kubernetes-csi/csi-driver-nfs)同样需要已有 NFS 服务器。下面保留 v4.11.0 的本地安装方式作为版本化实验，执行前要先取得该版本仓库，检查与 Kubernetes 的兼容性及镜像来源。第三方镜像代理会改变供应链与可用性，只有确有需要并信任其内容时才替换：
@@ -936,7 +936,6 @@ sed -i "s#registry.k8s.io#k8s.m.daocloud.io#g" deploy/v4.11.0/*.yaml
 #### 创建存储类
 
 `server` 与 `share` 指向已存在的 NFS 共享。默认删除行为会删除动态卷目录，需要保留时可配置驱动支持的参数与 PV 回收策略；具体以[NFS CSI 参数文档](https://github.com/kubernetes-csi/csi-driver-nfs/blob/master/docs/driver-parameters.md)为准。NFS 子目录通常不会因为 PVC 请求 `10Gi` 就具备独立硬配额。
-
 
 ~~~yaml
 apiVersion: storage.k8s.io/v1 
@@ -1058,8 +1057,10 @@ spec:
       containers:
       - args:
         - -c
-        - cp -v /etc/rabbitmq/rabbitmq.conf ${RABBITMQ_CONFIG_FILE}; exec docker-entrypoint.sh
-          rabbitmq-server
+        - |
+          set -eu
+          cp -v /etc/rabbitmq/rabbitmq.conf "$RABBITMQ_CONFIG_FILE"
+          exec docker-entrypoint.sh rabbitmq-server
         command:
         - sh
         env:
@@ -1125,7 +1126,7 @@ spec:
         volumeMounts:
         - mountPath: /etc/rabbitmq
           name: config-volume
-          readOnly: false
+          readOnly: true
         - mountPath: /var/lib/rabbitmq
           name: rabbitmq-storage
           readOnly: false
@@ -1199,7 +1200,11 @@ spec:
   type: NodePort
 ~~~
 
+这个实验用 `rabbitmq-diagnostics ping` 做基本健康检查，便于观察成员发现与启动。ping 成功不等于所有队列和应用读写已经就绪；生产客户端入口需要结合拓扑选择更合适的检查，避免把仍在同步的节点过早接入业务。
+
 ### ConfigMap：启用发现插件
+
+账号与密码由 Secret 引用的环境变量传入，不在配置文件中再写一套固定值。下面保留 3.13 时代的发现与分区配置；`autoheal`、队列位置策略等均有应用级取舍，升级 RabbitMQ 时需要按目标版本检查，不能直接把配置迁入新版本。
 
 ~~~yaml
 kind: ConfigMap
@@ -1215,8 +1220,6 @@ data:
     rabbitmq.conf: |
       loopback_users.guest = false
 
-      default_user = RABBITMQ_USER
-      default_pass = RABBITMQ_PASS
       ## Clustering
       cluster_formation.peer_discovery_backend = rabbit_peer_discovery_k8s
       cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
@@ -1235,7 +1238,6 @@ data:
 ### Secret：启动账号与 Erlang cookie
 
 这些是占位值，应用前必须替换为受控凭据，并确保各成员使用同一个安全生成的 cookie。Secret 的 Base64/明文输入方式不等于存储加密；读取权限与集群静态加密需要另外配置。
-
 
 ~~~yaml
 kind: Secret
