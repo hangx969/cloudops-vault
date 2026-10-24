@@ -2411,3 +2411,9 @@ date: 2026-04-17
 
 - 用户反馈参考文档链接在电脑端与手机端均未正常显示；当前无法连接原生 Obsidian 阅读视图确认原因，按用户授权的备选方案，删除 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 主文]] 与 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]] 文末“参考文档”栏目及其中的补充阅读链接。
 - 两篇文章经 Obsidian MCP 全文回读一致，参考栏目之前的正文、34 个代码块、5 张图片和 frontmatter 保持完整；未声称修复或验证跨平台链接渲染。
+
+## [2026-10-24] update | 健康探针文章公众号整理
+
+- 使用 humanizer 与 Obsidian 技能完善 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod-健康探针|健康探针文章]]，补充 Running 与业务可用的背景，按职责、探测与参数、配置、端点设计、案例、诊断、发布与恢复组织正文；将端点实现提前，用有序列表承载排查顺序、无序列表承载并列检查项，合并重复结论。
+- 核对 Kubernetes、Spring Boot 和 Prometheus 官方文档，明确探针时序、Service 就绪边界、共享依赖、管理端口及 PDB/HPA 的适用范围；保留原有 19 个代码块、frontmatter、案例配置数值和时间线。两处站内链接保留在 HTML 注释中，避免公众号正文出现 wikilink 源码；未增加参考文档章节，同步更新既有来源摘要。
+- Obsidian MCP 全文回读与成稿一致，16 份 YAML 解析、2 个 Shell 代码块语法检查通过（命令占位符仅在检查副本中替换），阅读视图和公众号预览已抽查。未执行示例部署或故障演练；案例数字沿用原来源，未独立核实。
