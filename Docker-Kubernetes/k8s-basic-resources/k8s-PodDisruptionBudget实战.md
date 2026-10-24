@@ -9,7 +9,7 @@ tags:
   - deployment
 ---
 
-# K8s PodDisruptionBudget 实战
+# Kubernetes PDB 实战：让节点维护留出可用副本
 
 节点维护时，`kubectl drain` 会把节点上的应用迁走。如果同一服务的多个副本同时被驱逐，服务可能在新副本就绪前失去处理请求的能力。PodDisruptionBudget（PDB，中断预算）让应用声明：通过 Eviction API 驱逐 Pod 时，需要保留多少健康副本。
 
@@ -37,7 +37,7 @@ metadata:
   name: payment-service-pdb
   namespace: production
 spec:
-  minAvailable: 2        # 始终保持至少2个Pod可用
+  minAvailable: 2        # Eviction 后至少仍有2个健康Pod
   selector:
     matchLabels:
       app: payment-service
@@ -52,7 +52,7 @@ metadata:
   name: order-service-pdb
   namespace: production
 spec:
-  maxUnavailable: 1      # 最多允许1个Pod同时不可用
+  maxUnavailable: 1      # Eviction 检查最多允许1个不可用副本
   selector:
     matchLabels:
       app: order-service
@@ -62,9 +62,9 @@ spec:
 
 ```yaml
 spec:
-  minAvailable: "80%"    # 始终保持80%的副本可用
-  # 或
-  maxUnavailable: "20%"  # 最多允许20%不可用
+  minAvailable: "80%"    # Eviction 检查所需的健康副本比例
+  # 或删除上面一行，改用：
+  # maxUnavailable: "20%"
 ```
 
 > 百分比向上取整。3 副本配置 `minAvailable: "80%"` 时，2.4 向上取为 3，健康副本齐全时也不允许驱逐。`maxUnavailable: "20%"` 在 3 副本时向上取为 1，实际允许比例达到约 33%。应按最小副本数检查结果，详见官方[预算计算说明](https://kubernetes.io/docs/tasks/run-application/configure-pdb/)。
@@ -130,17 +130,17 @@ spec:
       app: batch-worker
 ```
 
-## 五、四大配置陷阱
+## 五、容易阻塞维护或放宽预算的配置
 
 ### 陷阱一：单副本服务配 minAvailable: 1
 
 ```yaml
-# ❌ 会导致节点永远无法被 drain！
+# 预算不恢复时，Eviction 会持续被拒绝
 spec:
   replicas: 1
 ---
 spec:
-  minAvailable: 1  # 只有1个副本，drain时永远无法满足
+  minAvailable: 1  # 仅1个健康副本时，不允许再驱逐该副本
 ```
 
 预算不变时，drain 会持续被拒绝或等待到超时。`--force` 只允许处理没有控制器的 Pod，不绕过 PDB。`--disable-eviction` 会改用直接删除并绕过预算，只能在明确接受中断的恢复流程中使用。单副本应用需要接受停机，或先扩容并验证应用支持多副本。
@@ -148,15 +148,15 @@ spec:
 ### 陷阱二：minAvailable 等于副本总数
 
 ```yaml
-# ❌ 等同于"不允许任何中断"
+# 对这组健康副本不留自愿驱逐余量
 spec:
   replicas: 3
 ---
 spec:
-  minAvailable: 3  # 节点维护永远无法进行
+  minAvailable: 3  # 3个副本全部健康时，仍没有驱逐余量
 ```
 
-正确做法：`minAvailable: replicas - 1` 或用百分比留出余量。
+如果业务容忍一个副本不可用，可以配置 `minAvailable: replicas - 1`，或使用经过最小副本场景计算的百分比。需要保持全部副本时，应先临时扩容并确认就绪，再安排维护。
 
 ### 陷阱三：混淆空 selector 与未设置 selector
 
@@ -206,12 +206,29 @@ kubectl describe pdb payment-service-pdb -n production
 kubectl get events -n production --sort-by=.lastTimestamp
 # 同时检查 drain 的错误输出；并非所有驱逐拒绝都会留下相同 reason 的 Event
 
-# 调用 eviction API 测试（被 PDB 阻止会返回 429 Too Many Requests）
 ```
 
 `ALLOWED DISRUPTIONS` 是当前允许通过预算检查的驱逐数，取决于健康副本、期望副本和在途驱逐等状态。值为 0 时，继续检查 selector 是否匹配、Pod 是否 Ready、`status.observedGeneration` 是否追上配置，以及新 Pod 是否因容量或挂载问题无法就绪。
 
-## 七、完整生产示例（支付服务）
+### 在测试 Pod 上调用 Eviction API
+
+下面命令会真正驱逐指定 Pod，并非 dry-run。仅在测试命名空间、确认副本可恢复后，将 `payment-service-test-pod` 替换为实际 Pod 名并执行。预算不足通常返回 HTTP 429；请求接受后，控制器才负责补建副本。
+
+```sh
+cat > eviction.json <<'EOF'
+{
+  "apiVersion": "policy/v1",
+  "kind": "Eviction",
+  "metadata": {
+    "name": "payment-service-test-pod",
+    "namespace": "test"
+  }
+}
+EOF
+kubectl create --raw /api/v1/namespaces/test/pods/payment-service-test-pod/eviction -f eviction.json
+```
+
+## 七、把发布策略与中断预算放到同一个示例中
 
 ```yaml
 # Deployment

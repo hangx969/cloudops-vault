@@ -40,11 +40,13 @@ Job 控制器创建一个或多个 Pod，记录成功完成的数量，达到目
 | 配置 | 含义与使用边界 |
 | --- | --- |
 | `.spec.completions` | 需要成功完成的 Pod 数；与并行上限是两个概念 |
-| `.spec.parallelism` | 请求的并行 Pod 数，默认 1；设为 0 可停止启动执行中的工作，通常应使用 `suspend` 表达暂停语义 |
+| `.spec.parallelism` | 请求的并行 Pod 数，默认 1；改为 0 相当于暂停，控制器会将活跃 Pod 数量向 0 缩减，恢复为正数后继续执行 |
 | `.spec.template.spec.restartPolicy` | Job 只允许 `Never` 或 `OnFailure`。前者让失败容器结束，由控制器按需新建 Pod；后者允许 kubelet 在原 Pod 中重启失败容器 |
 | `.spec.backoffLimit` | Job 的失败重试限制，普通 Job 默认 6；不是每个 Pod 独立的重启次数。`OnFailure` 下容器重试次数也参与计算 |
 | `.spec.activeDeadlineSeconds` | 整个 Job 的执行时限，包含重试时间；到期后终止运行中的 Pod，Job 失败，优先于重试限制 |
 | `.spec.ttlSecondsAfterFinished` | Job 成功或失败后经过多少秒可被自动清理，同时级联清理 Pod；0 表示立即具备清理条件，不设置则不由 TTL 控制器清理 |
+
+若需要通过状态明确暂停 Job，可以设置 `.spec.suspend: true`；控制器会终止尚未完成的活跃 Pod，恢复时再创建 Pod。它不会冻结容器进程，应用仍需保存进度并处理中断。
 
 失败重试采用退避机制。达到重试限制或超时限制后，Job 会进入终止流程，运行中的 Pod 被终止，Job 不会因为 Pod 的重启策略而自动重新开始。清理前要把诊断日志和任务结果保存在外部系统中，避免短 TTL 让故障现场过早消失。
 
@@ -111,32 +113,29 @@ spec:
 
 该计划期望每分钟创建一个 Job，再由 Job 创建 Pod。`suspend: true` 暂停后续调度，已经启动的 Job 不会因此停止；恢复调度时还需结合错过的计划与 `startingDeadlineSeconds` 判断是否补跑。
 
-### 并发策略
+### 用并发策略处理上一次仍未完成的任务
 
-cronjob支持三种并发策略,在`cronjob.spec.concurrencyPolicy`中配置:
+例如备份耗时 10 分钟，计划却每 5 分钟触发一次，就需要明确如何处理重叠。`.spec.concurrencyPolicy` 有三种选择：
 
-1. Allow:允许同时运行多个任务,新job可以和旧job同时执行。(默认值)
-2. Forbid:不允许并发运行,如果之前的任务尚未完成,新的任务不会被创建。(适用于不能同时运行的情况)
-3. Replace:如果之前的任务尚未完成,控制器取消正在运行的 Job，再用新 Job 替换。任务需要能处理中断与重复执行。
+| 策略 | 到达下一次计划时间时的行为 |
+| --- | --- |
+| `Allow` | 默认值，允许新旧 Job 同时执行 |
+| `Forbid` | 上一次尚未完成时跳过新一次执行，后续是否补跑还受 `startingDeadlineSeconds` 影响 |
+| `Replace` | 取消正在运行的 Job，用新 Job 替换；任务需要能处理中断 |
 
-### 执行记录
+对于会写入同一份数据、不能并发执行的任务，可以考虑 `Forbid`。但它只约束同一个 CronJob 的调度，手动创建的任务仍需自行协调。
 
-CronJob默认的执行记录保留方式如下:
+### 保存多少次执行记录
 
-1. 成功记录:默认为3次,可以通过.spec.successfulJobsHistoryLimit字段更改
-2. 失败记录:默认为1次,可以通过.spec.failedJobsHistoryLimit字段更改
+CronJob 默认保留 3 个成功 Job 和 1 个失败 Job，分别由 `.spec.successfulJobsHistoryLimit` 与 `.spec.failedJobsHistoryLimit` 控制。上面的清单把失败记录也设为 3，便于比较最近几次错误。记录保留不代替业务数据保留；如果同时配置 Job TTL，历史 Job 也可能被 TTL 控制器提前清理。
 
-### 调度时区
+### 把业务时间写进调度时区
 
-如果采用具体的时间调度任务,需要注意调度的时区问题。
+不设置 `.spec.timeZone` 时，计划按 kube-controller-manager 进程所在时区解释。假设该组件使用 UTC，`schedule: '00 01 * * *'` 对应北京时间每天 09:00，容易与操作者理解的“凌晨一点”产生偏差。
 
-如果CronJob未标注调度时区,Kubernetes会以kube-controller-manager组件的时区进行调度,如果该组件运行的时区和本地时区不一样,会导致无法按照规定时间进行调度。
+`.spec.timeZone` 在 Kubernetes 1.27 达到稳定，可使用 `Asia/Shanghai` 等 IANA 时区名称。旧版本需核对 `CronJobTimeZone` 的特性状态和开关默认值。不要在 `schedule` 里写 `TZ` 或 `CRON_TZ`，应使用专门字段。
 
-比如创建一个每天凌晨一点开始执行的任务,此时配置的调度表达式可能如下:`schedule: '00 01 * * *'`。但是如果未指定时区,当kube-controller-manager组件的时区和本地时区有差别时,可能会在北京时间每天的九点进行调度(本地时区为Shanghai时区,kube-controller-manager采用UTC时间)
-
-`.spec.timeZone` 在 Kubernetes 1.27 达到稳定，可写入 `Asia/Shanghai` 等 IANA 时区名称。旧版本需核对对应版本的 `CronJobTimeZone` 特性状态与开关默认值，不应一概认为都需要手动开启。不要把 `TZ` 或 `CRON_TZ` 写进 `schedule`，应使用专门的时区字段。
-
-下面只展示时区相关字段，应合入包含 `jobTemplate` 的完整清单。它表示每天北京时间 02 点这一小时内，每 5 分钟调度一次：
+下面只展示时区相关字段，需要合入包含 `jobTemplate` 的完整清单。它表示每天北京时间 02 点这一小时内，每 5 分钟调度一次：
 
 ~~~yaml
 spec:
@@ -144,15 +143,17 @@ spec:
   timeZone: "Asia/Shanghai"
 ~~~
 
-### 手动运行cronjob
+### 手动触发一次测试
 
-已经创建了cronjob的情况下,时间还没到,但是希望手动执行先测试一下:
+如果已创建前面的 `cj-hello`，无需等到下一个计划时间，可以从其模板创建一个独立 Job：
 
 ~~~sh
-kubectl create job mysql-backup-test --from=cronjob/mysql-backup -n cronjob
+kubectl create job hello-manual-test --from=cronjob/cj-hello -n default
 ~~~
 
-## 实战
+测试 Job 有独立名称，不受该 CronJob 的并发策略保护。重复运行命令时要使用新的 Job 名称，或先按实验清理流程处理旧对象。
+
+## 两个运维任务案例
 
 ### 定期备份 MySQL
 
@@ -227,7 +228,7 @@ spec:
               mountPath: /mnt
 ~~~
 
-### 定时重启k8s服务
+### 定时重启 Kubernetes 服务
 
 有些应用需要在维护窗口重启。CronJob 可以调用 `kubectl rollout restart`，但它解决不了内存泄漏、连接泄漏等根因，实施前仍需确认副本、探针和滚动发布配置能够承受重启。
 

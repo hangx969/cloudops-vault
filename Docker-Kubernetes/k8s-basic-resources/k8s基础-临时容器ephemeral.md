@@ -7,41 +7,53 @@ aliases:
   - k8s临时容器
 ---
 
-# K8s基础-临时容器Ephemeral
+# Kubernetes 临时容器：不用重建 Pod，也能进入现场排障
 
+应用使用精简镜像后，容器里可能没有 shell、curl 或 ps；故障又只在当前 Pod 中出现，重新构建镜像会丢失现场。Ephemeral Container（临时容器）允许向现有 Pod 加入一个带诊断工具的容器，用它检查网络或进程。
 
-## 临时容器
+本文先说明它与普通容器的区别，再用 `kubectl debug` 调试 Tomcat，并解释直接调用 API 时容易出现的请求格式问题。操作前需要测试 Pod、允许创建临时容器的 RBAC 权限，以及节点可拉取的诊断镜像。本文的命令会修改 Pod，应在获得相应环境授权后使用。
 
-在Kubernetes中，Ephemeral容器（临时容器）是一种特殊类型的容器，它是为了在正在运行的Pod中临时执行诊断和调试操作而设计的。临时容器可以在Pod的生命周期中的任何时刻被添加，而无需重新启动Pod或改变现有容器的定义。
+## 临时容器适合解决什么问题
+
+在Kubernetes中，Ephemeral容器（临时容器）是一种特殊类型的容器，它为现有 Pod 中的诊断任务而设计，通常不需要重启业务容器。前提是 Pod 仍存在且其运行环境支持启动调试容器；它不适用于静态 Pod，也不能代替已经消失的现场。
 
 ### 特点
 
-1. **动态添加**：Ephemeral容器可以动态添加到已经运行的Pod中，这可以让运维人员或开发人员在不干扰Pod正常运行的情况下，进行故障排查或性能分析。
-2. **不包含在Pod规范中**：临时容器不像Pod中的其他常规容器，不会在Pod的初始规范中定义。它们是临时添加的，通常在需要时通过kubectl工具注入。临时容器没有端口配置，因此像 ports，livenessProbe，readinessProbe 这样的字段是不允许的。Pod 资源分配是不可变的，因此 resources 配置是不允许的。临时容器是使用 API 中的一种特殊的 ephemeralcontainers 处理器进行创建的， 而不是直接添加到 pod.spec 段，因此无法使用 kubectl edit 来添加一个临时容器，也无法通过yaml文件创建临时容器。
-3. **隔离与安全**：尽管临时容器可以访问Pod的所有资源和网络，但它们的运行和存在不会对Pod的安全性配置或其它运行容器产生影响。
+1. 动态添加：通过 `pods/ephemeralcontainers` 子资源更新现有 Pod，适合缺少排障工具或业务容器无法 exec 的情况。调试进程仍会占用资源，不能承诺对业务完全无影响。
+2. 字段受限：临时容器最终保存在 `spec.ephemeralContainers`，但不能用普通 Pod 创建、更新或 `kubectl edit` 的方式添加，必须走专用子资源。`ports`、`resources`、存活和就绪探针等字段不允许设置；临时容器不会自动重启。
+3. 安全边界仍然有效：网络通常与 Pod 共享，进程可见性取决于目标容器、运行时和权限。它不会自动挂载目标容器的所有卷、继承所有凭据或获得特权。反过来，高权限调试容器可能读取敏感信息并影响业务，因此需要限制镜像和 RBAC，并记录审计。
+
+这些限制来自官方[临时容器说明](https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/)。临时容器在 Kubernetes 1.25 已稳定；当前版本无需修改控制平面 feature gate。
 
 ### 使用场景
 
-- **调试**：如果一个Pod出现问题，可以kubectl动态添加一个临时容器来执行调试工具，而不必修改原有容器的设置。当由于容器崩溃，或主容器镜像中不包含调试程序（比如shell）而导致 kubectl exec进不去主容器时，临时容器对于交互式故障排查很有用。
-- **监控和诊断**：加入一个临时容器来收集运行信息，进行性能监控或日志收集。
-- **安全审查**：动态注入临时容器来执行安全扫描或审计任务。
+- 调试：如果一个Pod出现问题，可以kubectl动态添加一个临时容器来执行调试工具，而不必修改原有容器的设置。当由于容器崩溃，或主容器镜像中不包含调试程序（比如shell）而导致 kubectl exec进不去主容器时，临时容器对于交互式故障排查很有用。
+- 监控和诊断：加入一个临时容器来收集运行信息，进行性能监控或日志收集。
+- 安全审查：动态注入临时容器来执行安全扫描或审计任务。
 
 ### 示例
 
 假设你想为一个正在运行的Pod添加一个临时容器进行网络诊断。可以使用以下kubectl命令来实现：
 
 ```bash
-kubectl debug [POD_NAME] -it --image=busybox --target=[POD_NAME]
+kubectl debug <pod-name> -it --image=busybox:1.36 --target=<container-name>
 ```
 
-这条命令会向指定的Pod添加一个以busybox镜像运行的临时容器，并提供交互式终端。
+`--target` 指定 Pod 中的容器名，不是 Pod 名。它请求加入目标容器的进程命名空间；如果运行时不支持，调试容器仍可能启动，但 `ps` 看不到业务进程。即使能看到进程，文件和进程访问仍受权限限制。完整操作可对照官方[调试运行中的 Pod](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container)。
 
-> [!info] 参考
-> - 官方文档：[Ephemeral Containers | Kubernetes](https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/)
-> - 教程示例：[调试运行中的Pod](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container)
-> - 临时容器在1.25版本开始变成stable
+### 先检查环境和权限
 
-## 开启临时容器功能
+```sh
+kubectl version
+kubectl auth can-i update pods/ephemeralcontainers -n default
+kubectl auth can-i patch pods/ephemeralcontainers -n default
+```
+
+`kubectl debug` 的具体更新请求需有对应权限，交互连接还需要 `pods/attach` 等权限。授权应限定到所需命名空间和调试人员，不要为了排障授予 `cluster-admin`。
+
+## 历史版本的启用配置：用于识别旧集群设置
+
+下面保留旧实验的静态 Pod 与 kubelet 配置，便于识别遗留环境，不作为当前集群的执行步骤。稳定版本不需要 `EphemeralContainers=true`；已移除的 feature gate 可能使组件启动失败。`RemoveSelfLink` 与临时容器无关，也不应照抄。老集群应优先升级到受支持版本，再按对应版本文档检查可用性。
 
 - 修改kube-apiserver配置
 
@@ -64,8 +76,8 @@ spec:
     - kube-apiserver
     - --advertise-address=192.168.40.180
     #......
-    - --feature-gates=RemoveSelfLink=false
-    - --feature-gates=EphemeralContainers=true
+    # 历史参数示意；当前版本不要添加下面的 gate
+    # - --feature-gates=EphemeralContainers=true
 #新增加--feature-gates=EphemeralContainers=true字段
 ~~~
 
@@ -91,7 +103,7 @@ spec:
     - --bind-address=192.168.40.180
     - --kubeconfig=/etc/kubernetes/scheduler.conf
     - --leader-elect=true
-    - --feature-gates=EphemeralContainers=true
+    # - --feature-gates=EphemeralContainers=true
 #新增加--feature-gates=EphemeralContainers=true字段
 ~~~
 
@@ -111,13 +123,15 @@ kubectl get pods -n kube-system #检查pod正常工作
 ~~~
 
 > [!warning] 注意
-> 重启apiserver会影响业务，最好集群创建完就配置上；或者配置高可用master节点
+> 修改静态 Pod manifest 会触发控制平面组件重建，可能中断 API 访问。当前版本不要为了临时容器执行本节的修改或重启；历史环境变更也需要独立的升级与回滚计划。
 
 ## 使用临时容器
 
-- 创建主pod
+以下实验在测试命名空间演示。原案例使用自建 Tomcat 镜像 `tomcat-8.5-jre8:v1`，需提前提供该镜像或替换为可拉取且包含 Tomcat 的版本。业务容器名为 `tomcat-java`，后面的 `--target` 使用这个名字。
 
-~~~yaml
+### 1. 创建主 Pod
+
+~~~sh
 tee pod-tomcat.yaml <<'EOF' 
 apiVersion: v1
 kind: Pod
@@ -137,7 +151,7 @@ EOF
 kubectl apply -f pod-tomcat.yaml
 ~~~
 
-- kubectl debug注入临时容器
+### 2. 用 kubectl debug 注入临时容器
 
 ~~~sh
 kubectl debug -it tomcat-test --image=busybox --target=tomcat-java
@@ -160,7 +174,9 @@ Ephemeral Containers:
     Mounts:         <none>
 ~~~
 
-- 通过kubectl raw注入临时容器
+### 3. 直接调用 ephemeralcontainers 子资源
+
+日常排障优先使用 `kubectl debug`。若要理解底层请求，可以使用下面的 Pod 格式 JSON。该接口接收 `kind: Pod` 与 `spec.ephemeralContainers`，不是一个独立的 `kind: EphemeralContainers` 对象。删除并重建测试 Pod 的两条命令仅用于隔离本次实验；不要用于保留生产现场。
 
 ~~~sh
 kubectl delete -f pod-tomcat.yaml
@@ -168,11 +184,11 @@ kubectl apply -f pod-tomcat.yaml
 tee a.json <<'EOF' 
 {
     "apiVersion": "v1",
-    "kind": "EphemeralContainers",
+    "kind": "Pod",
     "metadata": {
             "name": "tomcat-test"
     },
-    "ephemeralContainers": [{
+    "spec": {"ephemeralContainers": [{
         "command": [
             "sh"
         ],
@@ -183,7 +199,7 @@ tee a.json <<'EOF'
         "tty": true,
         "targetContainerName": "tomcat-java",
         "terminationMessagePolicy": "File"
-    }]
+    }]}
 }
 
 EOF
@@ -191,83 +207,84 @@ EOF
 kubectl replace --raw /api/v1/namespaces/default/pods/tomcat-test/ephemeralcontainers -f a.json
 #通过attach连接到临时容器
 kubectl attach -it -c debugger tomcat-test
-#调试完成退出临时容器之后，这个容器会被销毁，无法再次attach
+# 调试进程退出后容器不会自动重启，无法再次 attach；条目仍保留在 Pod 中
 ~~~
 
-> - kubectl replace --raw /api/v1/namespaces/default/pods/tomcat-test/ephemeralcontainers -f a.json
-> - 报错：Error from server (BadRequest): EphemeralContainers in version "v1" cannot be handled as a Pod: no kind "EphemeralContainers" is registered for version "v1" in scheme "k8s.io/kubernetes/pkg/api/legacyscheme/scheme.go:30" 
->
-> ~~~sh
-> kubectl get api-versions #查看支持的所有api
-> #里面有v1版本
-> #查看v1版本里面具体有哪些资源
-> kubectl api-resources --api-group=""
-> #查看apps/v1版本里面具体有哪些资源
-> kubectl api-resources --api-group=apps
-> #都没有看到ephemeralcontainers资源
-> ~~~
->
-> - k8s官网上都没有给出这种上传json的方法，暂时不搞这种方法了。
+如果收到以下错误，先检查请求体，不要把它判断成集群缺少 v1 API：
+
+```text
+EphemeralContainers in version "v1" cannot be handled as a Pod:
+no kind "EphemeralContainers" is registered for version "v1"
+```
+
+下面的发现命令可以帮助区分 API 组与资源，但子资源并不一定作为顶层资源出现在 `kubectl api-resources` 的输出中。
+
+```sh
+kubectl get api-versions
+kubectl api-resources --api-group=""
+kubectl api-resources --api-group=apps
+kubectl get --raw /api/v1 | jq '.resources[] | select(.name == "pods/ephemeralcontainers")'
+```
+
+对已有临时容器的 Pod，提交更新时需要保留现有条目，只追加新条目；不允许修改或删除旧条目。直接操作前还应读取最新对象，避免与其他调试请求并发冲突。
 
 ### 示例-AKS pod添加azcli debug容器
 
-- 有时AKS中的pod与azure交互出现问题需要排查，我们可以在pod上attach一个azcli的debug容器
+AKS 中应用与 Azure 服务交互异常时，可以使用包含 Azure CLI 的临时容器检查身份、DNS 和网络。调试容器不会自动继承业务容器的 Azure 登录态或所有挂载；使用工作负载身份时，还需明确配置对应环境变量和投射的 token 卷，避免误用个人高权限身份得出结论。
 
 - 获取azure官方azcli容器：[Azure CLI Docker容器](https://learn.microsoft.com/zh-cn/cli/azure/run-azure-cli-docker#run-the-docker-container-with-a-specific-version-of-the-azure-cli)
 
 ~~~sh
 #镜像上传到ACR
-z acr import --name "<acr name>.azurecr.cn" --source mcr.microsoft.com/azure-cli:2.65.0-cbl-mariner2.0 --image azure-cli:2.65.0-cbl-mariner2.0
+az acr import --name "<acr-name>" --source mcr.microsoft.com/azure-cli:2.65.0-cbl-mariner2.0 --image azure-cli:2.65.0-cbl-mariner2.0
 
 #attach debug容器
-kubectl debug -it <pod name> -n <ns name> --image=<acr name>/azure-cli:2.66.0-cbl-mariner2.0 --target=<container name>
+kubectl debug -it <pod name> -n <ns name> --image=<acr-login-server>/azure-cli:2.65.0-cbl-mariner2.0 --target=<container name>
 ~~~
 
-## 问题
+## 调试结束后为什么不能删除或重启它
 
-- 目前临时容器存在一个bug：
+临时容器不能修改、删除或自动重启，是 API 的设计限制，不应笼统称为 bug。退出后仍能在 Pod 的定义和状态中看到记录，但原进程已经结束，不能再次 attach。历史讨论见 [kubernetes#84764](https://github.com/kubernetes/kubernetes/issues/84764)。
 
-  在pod中添加临时容器之后，目前还无法删除，同时如果这时候临时容器已经退出，会导致无法再次attach，也不会被重启（临时容器不支持probe什么的），相关的issue：[kubernetes#84764](https://github.com/kubernetes/kubernetes/issues/84764)
+要再次调试，可给 `kubectl debug` 指定新容器名，或像下面一样保留 `debugger` 并追加 `debugger1`。Pod 中容器名称必须唯一；反复注入会累积记录，最终通过业务控制器的正常替换流程更新 Pod。
 
-- 此时，如果要重复上述步骤再次进行调试，需要用新name创建一个新的临时容器，保留原有的配置，否则k8s会拒绝新的配置。
+~~~sh
+tee a.json <<'EOF'
+{
+    "apiVersion": "v1",
+    "kind": "Pod",
+    "metadata": {
+            "name": "tomcat-test"
+    },
+    "spec": {"ephemeralContainers": [
+   {
+        "command": [
+            "sh"
+        ],
+        "image": "busybox",
+        "imagePullPolicy": "IfNotPresent",
+        "name": "debugger",
+        "stdin": true,
+        "tty": true,
+        "targetContainerName": "tomcat-java",
+        "terminationMessagePolicy": "File"
+    },
+      {"command": [
+            "sh"
+        ],
+        "image": "busybox",
+        "imagePullPolicy": "IfNotPresent",
+        "name": "debugger1",
+        "stdin": true,
+        "tty": true,
+        "targetContainerName": "tomcat-java",
+        "terminationMessagePolicy": "File"
+    }
+]}
+}
+EOF
 
-  ~~~sh
-  tee a.json <<'EOF'
-  {
-      "apiVersion": "v1",
-      "kind": "EphemeralContainers",
-      "metadata": {
-              "name": "tomcat-test"
-      },
-      "ephemeralContainers": [
-     {
-          "command": [
-              "sh"
-          ],
-          "image": "busybox",
-          "imagePullPolicy": "IfNotPresent",
-          "name": "debugger",
-          "stdin": true,
-          "tty": true,
-          "targetContainerName": "tomcat-java",
-          "terminationMessagePolicy": "File"
-      },
-        {"command": [
-              "sh"
-          ],
-          "image": "busybox",
-          "imagePullPolicy": "IfNotPresent",
-          "name": "debugger1",
-          "stdin": true,
-          "tty": true,
-          "targetContainerName": "tomcat-java",
-          "terminationMessagePolicy": "File"
-      }
-  ]
-  }
-  EOF
-  
-  kubectl replace --raw /api/v1/namespaces/default/pods/tomcat-test/ephemeralcontainers -f a.json
-  ~~~
+kubectl replace --raw /api/v1/namespaces/default/pods/tomcat-test/ephemeralcontainers -f a.json
+~~~
 
-  
+

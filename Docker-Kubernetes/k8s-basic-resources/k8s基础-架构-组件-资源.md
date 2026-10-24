@@ -7,223 +7,158 @@ aliases:
   - k8s架构组件资源
 ---
 
-# K8s基础-架构-组件-资源
+# Kubernetes 架构入门：从一次应用部署认识组件与资源
 
+在一台机器上运行容器时，我们可以直接启动进程、映射端口、挂载目录。机器增加后，还要决定应用放在哪里、故障后怎样恢复、扩容后流量如何到达新实例。Kubernetes 把这些工作拆成可协作的组件，并用 API 对象记录我们希望应用达到的状态。
 
-## K8s基本概念
+本文从容器编排要解决的问题开始，再沿着一次部署请求认识控制平面、工作节点和常用资源。阅读时只需了解镜像与容器的基本概念；文中的 `kubectl` 查询命令需要已经配置好的集群访问凭据。
 
-Kubernetes(简称K8s,希腊语,意为舵手)是一个开源的容器编排系统,用于容器的自动化部署、扩展,以及提供高可用和负载均衡的运行环境。
+## Kubernetes 负责什么
 
-Kubernetes 提供了一个便携、高效的PaaS 平台,降低了在物理机或虚拟机上调度和运行服务的难度,同时Kubernetes 还整合了网络、存储、安全、监控等能力,是一个非常完善的"云原生操作系统"。
+Kubernetes 简称 K8s，名称来自希腊语“舵手”。它是开源的容器编排平台，提供应用部署、调度、扩缩容和故障恢复等机制。它可以作为 PaaS 的基础，但日志平台、持续交付、完整监控和数据库备份等能力，通常还需要其他系统配合。官方对其定位和边界的说明见[Kubernetes 概述](https://kubernetes.io/docs/concepts/overview/)。
 
-### 里程碑
+Kubernetes 借鉴了 Google 在 Borg 等集群系统上的生产经验，2014 年开源，2015 年 7 月发布 1.0，随后加入 CNCF，2018 年成为 CNCF 毕业项目。学习架构时，比记住发展时间更有用的是理解它的声明式管理方式：提交期望状态，由组件不断比较现实与期望，再采取动作缩小差距。
 
-Kubernetes 的前身是谷歌内部的Borg系统,是基于谷歌15年生产环境经验的基础上开源的一个项目。
+### 从单机容器走向集群
 
-1. 由谷歌设计并在2014年开源。
-2. 2015年7月第一个稳定版V1.0正式发布。
-3. 之后捐献给了CNCF,成为CNCF第一个开源的顶级项目。
-4. 2018年从CNCF毕业。目前已成为云原生领域的标准。
+单机 Docker 本身已有网络、卷、健康检查等能力。困难主要出现在多节点协作：一台宿主机不可用后，谁在其他机器重新创建实例；多个副本同时上线时，谁组织更新、服务发现和流量转发。
 
-### K8s的优势
+| 日常问题 | Kubernetes 提供的机制 | 还需配置的条件 |
+| --- | --- | --- |
+| 容器退出或节点故障 | kubelet 重启容器，控制器按需创建替代 Pod | 控制器、资源容量与存储必须允许恢复 |
+| 扩容后发现新实例 | Service 与 EndpointSlice 记录后端 | 标签、就绪状态和网络正确 |
+| 发布新版本或回退 | Deployment 等控制器组织更新与回滚 | 探针、更新策略、镜像和应用兼容性合理 |
+| 按负载增减容量 | HPA 调整副本，节点自动扩缩容器管理节点 | 指标系统和节点供应能力需另行接入 |
+| 管理配置与数据 | ConfigMap、Secret、PVC 等 API | 存储、凭据保护与备份方案需单独设计 |
+| 区分团队和环境 | Namespace、RBAC、配额与 NetworkPolicy | Namespace 本身不提供完整安全或网络隔离 |
 
-**有了docker为什么还要用K8s?因为只使用docker:**
+Kubernetes 还能通过生命周期钩子、探针和资源限制管理应用运行过程。它提供健康检查的 liveness、readiness、startup 三类语义，具体可用的检查方式应按探针类型选择。滚动更新也不是无条件“新服务全部启动后才删旧服务”，而是遵循控制器的更新策略、可用副本限制与就绪条件。
 
-1. 缺乏完整的声明周期管理(前置、后置处理)
-2. 缺乏服务发现、负载均衡、配置管理、存储管理
-3. 程序的扩容、部署、回滚、更新不够灵活
-4. 宿主机宕机,容器无法自动恢复、漂移。
-5. 程序级健康检查不到位
-6. 端口管理比较复杂
-7. 流量管理比较复杂
+### 开发和运维的工作发生了什么变化
 
-**K8s的优势:**
+对开发人员，统一日志入口能减少逐机登录；镜像与 CI/CD 流水线能让多环境发布更一致；Namespace 和声明式清单有助于复制环境。Service 等机制承担了一部分服务发现与负载均衡工作，Helm 等工具可以复用应用的安装参数。
 
-- 开源开放
-- 弹性伸缩(副本数伸缩,节点伸缩)
-- 服务发现(svc通过endpoint连接后端pod服务)
-- 负载均衡(svc可以提供负载均衡)
-- 自愈能力(节点挂了,pod自动漂移)
-- 健康检查(三种probe,四种检测方式)
-- 滚动更新(新服务完全启动后,旧服务才会被删掉)
-- 一键回滚
-- 高可用
-- 声明式(yaml文件描述期望的状态,k8s帮忙实现)
-- 多环境(支持多种容器平台)
-- 隔离性(namespace隔离,资源控制)
+对运维人员，镜像与清单减少了重复配置，控制器能处理部分实例故障，扩容也有统一 API。中间件可以借助 Helm 或 Operator 部署和管理。不过，“一键安装”并不等于已经完成高可用设计；备份还原、数据库容灾、端口与网络冲突仍需要工程判断。容器使用独立网络空间能减少部分端口冲突，`hostNetwork`、`hostPort` 等配置仍会受宿主机端口约束。
 
-### K8s带来的效益和挑战
+集群本身也增加了网络、证书、存储和版本维护的工作。日志采集、监控告警、链路追踪、DevOps 与服务网格等生态组件，是在明确需求后逐步补充的能力。
 
-对于开发人员,有了K8s之后:
+## 控制平面：保存状态并作出调度与协调决定
 
-1. 多环境日志查询困难 --> 无需登录机器就可以查看日志
-2. 多环境代码发布困难 --> 不可变基础设置+CICD一键发布
-3. 多环境搭建过程复杂 --> namespace隔离、一键备份还原
-4. 无关代码占用大量精力(负载均衡、服务发现、高可用) --> 只需要关心业务代码
-5. 环境迁移繁琐 --> 通过包管理工具一键迁移
+一个集群由控制平面和工作节点组成。控制平面负责 API、状态存储、调度与控制循环；工作节点提供 Pod 的运行环境。小型实验中，两种角色可以放在同一台机器上，生产环境则通常采用多实例控制平面。
 
-对于运维人员:
+### kube-apiserver：API 入口
 
-1. 基础环境管理难度大 --> 一次构建多次部署
-2. 宕机人工处理耗费精力 --> 全自动容灾无需干预
-3. 应用扩容繁琐且复杂 --> 一键扩容无需更改配置
-4. 中间件搭建维护困难 --> 包管理工具一键安装管理
-5. 程序端口维护很麻烦 --> 无需关心端口冲突
+用户、控制器和节点通过 API server 读取或修改 Kubernetes 对象。API server 处理认证、授权、准入和对象校验，再把可持久化的集群状态保存到 etcd。它还提供 watch 接口，让组件观察资源变化。
 
-仅仅掌握K8s还不够,还需要借助其他的周边生态去扩展K8s的能力:日志收集、监控告警、链路追踪等。Operator、Helm、Devops、Service Mesh等。
+对 Kubernetes API 对象的协作主要经由 API server，但不能理解成集群内所有网络通信都要由它转发。例如业务 Pod 之间直接通信，API server 也会主动访问 kubelet，控制平面组件还可能访问外部云 API。
 
-## K8s架构
+### etcd：集群状态存储
 
-### 集群组件
+etcd 是分布式键值存储，也是控制平面的核心依赖。对于 Kubernetes 内置的 API 存储路径，通常由 API server 访问 etcd，其他组件通过 API server 访问对象，不能绕过 API 直接修改数据库。
 
-#### 控制节点
+etcd 使用多数派机制。生产集群常用 3 或 5 个成员，3 个成员能容忍 1 个成员故障，5 个能容忍 2 个；成员越多也会增加写入协调开销，因此无需为了高可用盲目增加数量。低延迟、可靠的磁盘和定期快照恢复演练都很重要。
 
-##### API server
+### kube-scheduler：为 Pod 选择节点
 
-原生组件
+调度器观察尚未绑定节点的 Pod，按资源请求、亲和性、污点与容忍等条件筛选节点，再为候选节点评分。选择完成后，通过 API 绑定目标节点。容器的实际启动由该节点的 kubelet 与运行时执行。
 
-- 其他组件之间相互通信,都不是直接通信的,是通过API server中转的。
-- 集群操作的入口。为资源提供增删改查、watch的接口。
-- 将集群资源信息存到etcd中。只有api server会和etcd交互
+“选择最合适节点”不表示总能放下 Pod。如果所有节点都不满足约束，Pod 会保持 Pending，事件中通常能看到资源不足或约束不匹配的原因。
 
-##### scheduler
+### kube-controller-manager：持续比较期望与实际状态
 
-原生组件
+controller manager 运行多种控制器。例如 Deployment 控制器维护 ReplicaSet，ReplicaSet 控制器维护 Pod 数量。实际状态偏离目标时，相应控制器通过 API 创建、更新或删除对象。
 
-- 监听API server获取pod状态,发现pod.spec.nodeName为空就开始调度pod。
-- 通过调度算法,将pod分配到最佳的节点。节点上的kubelet负责启动pod。
+在常见高可用部署中，scheduler 与 controller manager 的多个实例通过选主协作，通常由一个领导实例执行相应控制循环。领导信息可通过 Lease 对象观察：
 
-##### controller manager
+```sh
+kubectl get leases -n kube-system
+```
 
-原生组件
+备用实例主要用于故障接替，简单增加实例数通常不会让同一控制循环按实例数成倍加速。组件职责见[官方组件说明](https://kubernetes.io/docs/concepts/overview/components/)。云环境还可能运行 cloud-controller-manager，用于连接云负载均衡、节点和路由等接口。
 
-- 状态管理器,保证pod等资源达到期望状态。
-- 如果资源未达到目标状态,会尝试自动修复并达到期望状态。
+### kubeadm 如何运行这些组件
 
-> [!info] 说明
-> - scheduler和controller manager是有状态组件,只有一个主节点在工作。
-> - 主节点信息保存在了leases资源中,可以通过`kubectl get leases -n kube-system`获取,也可以进行横向扩容,选主过程无需人工干预
+kubeadm 默认把 API server、scheduler、controller manager，以及本地 etcd 配置为静态 Pod。kubelet 配置中的 `staticPodPath: /etc/kubernetes/manifests` 指定了清单目录；kubelet 直接监视其中的清单并启动组件，不依赖 API server 先创建这些 Pod。
 
-##### Etcd
+这个字段在 kubelet 的配置文件中，而不是每份静态 Pod 的 YAML 中。不要把备份清单也放进该监视目录，否则 kubelet 可能尝试加载它们。外部 etcd 或托管控制平面会采用不同部署方式。
 
-- 不算核心组件,是coreOS开发的键值数据库,通常被部署在控制节点上
-- 生产环境中建议部署为大于3的奇数个的Etcd节点,以保证数据的安全性和可恢复性,并且Etcd的数据盘需要使用SSD硬盘。
+## 工作节点：让 Pod 真正运行起来
 
-(kube-proxy、kubelet、runtime也都会在master上部署一份)
+### kubelet 与容器运行时
 
-> [!info] 说明
-> 以上四个系统组件,对于kubeadm安装的集群来说,他们是静态pod形式启动的,查看他们的yaml的时候,会看到一个字段:`staticPodPath: /etc/kubernetes/manifests`,在这个目录下存放着这些pod的yaml,kubelet启动的时候会把他们直接拉起来。这个目录里面的文件都会自动被kubelet启动。
+kubelet 是节点代理，负责观察分配给本节点的 Pod，协调容器运行、卷挂载、探针以及状态上报。它通过 CRI 与 containerd、CRI-O 等运行时交互；运行时通常在创建 Pod sandbox 时协调 CNI 配置网络。CSI 驱动及其节点组件参与卷的挂载，控制器侧组件则可能负责供应和附加卷。
 
-#### 工作节点
+这种分工使 Kubernetes 不必直接实现每一种容器运行时、网络和存储系统。containerd 的具体调用链可结合 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd]] 理解。
 
-##### Kube-proxy
+### kube-proxy 与 Service 转发
 
-原生组件,可选
+kube-proxy 观察 Service 和 EndpointSlice 等资源，在节点上维护转发规则，让访问 Service 的流量到达后端 Pod。具体实现可能采用 iptables、IPVS 或 nftables，取决于集群版本与配置。它不是所有外部流量的唯一入口，也不负责创建或维护 EndpointSlice 对象。
 
-- 维护节点上面的网络规则,让集群内外的网络与pod进行通信。(通过ipvs等)
-- 负责维护svc和pod之间的请求路由和流量转发。
-- 容器对外提供服务的网络入口
+有些网络方案可以替代其数据转发功能。例如启用并正确配置 Cilium 的 kube-proxy replacement 后，可以不再运行 kube-proxy；仅安装某个 CNI，并不自动意味着已经完成替代。
 
-> [!tip] 提示
-> 如果使用Cilium作为CNI组件,可以不安装Proxy。
+### CoreDNS 与 Calico 等插件
 
-##### Kubelet
+CoreDNS 为集群提供 DNS 解析。普通 Service 名称通常解析到 Service IP，Headless Service 则可返回后端 Pod 地址；外部域名可转发给上游 DNS。
 
-原生组件
+Calico 是一种网络方案，可为 Pod 分配 IP，并通过路由或封装等方式实现跨节点通信。实际数据路径受所选模式影响，不能把所有 Calico 集群都等同于同一种 Linux 转发配置。控制平面节点通常也有 kubelet 和运行时，是否运行 kube-proxy、网络插件和普通业务 Pod，取决于集群架构与污点配置。
 
-- 管理pod,对容器进行健康检查
-- 给Api server上报节点和pod状态
-- 调用CNI和CSI给容器配置网络和存储
+## 一次 Deployment 请求经过哪些组件
 
-##### Runtime
+理解职责后，可以把一次应用部署连接起来：
 
-- 符合CRI标准的都可以,管理容器的生命周期
-
-##### Addons(CoreDNS,Calico)
-
-- CoreDNS:用于集群内部的svc的域名解析,和上游域名的解析转发。让pod把svc的域名解析成svc的IP;对于外部域名可以转发到外部DNS进行域名解析。
-- Calico:符合CNI标准的网络插件,负责给每个pod分配一个不会重复的IP。并且把每个节点当做路由器,一个节点的pod可以通过pod的IP访问到其他节点的pod。(跨节点通信,linux内核转发机制)
-
-#### 客户端工具
-
-`kubectl + /etc/kubernetes/admin.conf (~/.kube/config)`
-
-### 交互链路
-
-1. 用户发起请求,API server接受请求完成认证鉴权。
-2. API server把请求存到etcd
-3. scheduler、controller manager、kubelet通过watch的机制监听api server的变化
-4. controller manager watch到变化,将请求翻译成模板,比如需要多少资源,多少副本等。返回给API server,存到etcd。
-5. scheduler watch到变化,通过api server获取节点信息,通过调度算法打分,选择最优节点去调度pod,更新pod.spec.nodeName字段。返回给api server,存到etcd中
-6. 对应节点上的kubelet watch到这个调度请求,通过CRI接口调用容器运行时去创建pod。
-7. kube-proxy监听到新pod,维护endpoint,通知api server,写到etcd中。
+1. 用户通过 `kubectl` 提交 Deployment，API server 完成认证、授权、准入与校验，将对象保存到 etcd。
+2. Deployment 控制器观察对象，创建或调整 ReplicaSet；ReplicaSet 控制器创建缺少的 Pod。这些对象也通过 API server 持久化。
+3. scheduler 观察未调度的 Pod，为其选择节点，并提交绑定结果。
+4. 目标节点的 kubelet 观察到 Pod，协调存储，通过 CRI 调用运行时创建 sandbox 与容器，并上报状态。
+5. 配置了 Service 时，EndpointSlice 控制器根据选择器及 Pod 状态维护后端记录；kube-proxy 或替代实现据此更新转发规则。
 
 ![image-20240725223852759](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252238859.png)
 
-## 核心资源
+这些步骤由不同控制循环异步完成。`kubectl apply` 返回成功，只代表 API 已接受对象，还需要观察调度、镜像拉取、就绪探针与应用本身是否正常。
 
-### 最小单元pod
+## 用 API 资源表达应用
 
-- 最小部署单元,里面有若干容器。(一般只有一个)其余功能都是为POD所服务的。
-- 内部容器的网络互通,是共享的
-- 生命周期短暂,重启之后又变成新的POD
-- k8s通过controller来管理POD
+### Pod 与控制器
 
-### 调度资源
+Pod 是 Kubernetes 创建和调度的最小单元，可以包含一个或多个紧密协作的容器。它们共享网络空间，并能通过声明的卷共享文件。容器在原 Pod 中重启时，Pod 的身份可以保持不变；Pod 被删除后再创建，才是具有新 UID 的另一个对象。
 
-- pod有两种:
-  - 1、自主式pod是直接创建出来的,删了就没了
-  - 2、由控制器创建出来的,删了还能自动重建。
+直接创建的 Pod 没有上层工作负载控制器负责补副本。Deployment 等控制器创建的 Pod 被删除后，在控制器仍需要该副本的前提下会补建。标签与选择器负责匹配，`ownerReferences` 记录对象的所有权，不能只凭标签断定一个 Pod 归谁管理。
 
-- 作用:在集群上管理运行容器。k8s不是直接管理pod,是通过controller来管理pod。
-- controller有很多种类型:
-  - ReplicaSet:保证副本数量一直维持在期望值,并支持pod数量扩缩容,镜像版本升级
-  - Deployment:通过控制ReplicaSet来控制Pod,并支持滚动升级、回退版本
-  - Horizontal Pod Autoscaler (HPA):可以根据集群负载自动水平调整Pod的数量,实现削峰填谷
-  - DaemonSet:在集群中的指定Node上运行且仅运行一个副本,一般用于守护进程类的任务
-  - Job:它创建出来的pod只要完成任务就立即退出,不需要重启或重建,用于执行一次性任务
-  - Cronjob:它创建的Pod负责周期性任务控制,不需要持续后台运行
-  - StatefulSet:管理有状态应用。给每一个pod分配固定标识,直接访问。
-
-- controller和pod的关系
-  - pod通过controller实现应用的运维,比如伸缩,回滚升级等
-  - pod和controller通过label来建立关系
-  - 由控制器创建出来的pod,删除之后还能自动重建
+| 资源 | 管理重点 | 常见用途 |
+| --- | --- | --- |
+| ReplicaSet | 维持所需副本数 | 通常由 Deployment 管理，不直接承担滚动升级编排 |
+| Deployment | 管理 ReplicaSet 与版本发布 | 无状态服务的扩缩容、滚动升级和回滚 |
+| StatefulSet | 稳定身份、顺序和存储关联 | 需要固定序号与独立持久卷的有状态应用 |
+| DaemonSet | 每个符合条件节点一份 Pod | 节点日志、网络和监控代理 |
+| Job | 跟踪有限任务的成功完成 | 一次性脚本、数据处理、备份 |
+| CronJob | 按计划创建 Job | 定期备份、清理和报表 |
+| HPA | 依据指标调整可扩缩目标的副本数 | 自动调整 Deployment 等资源的容量 |
 
 ![image-20240725225330810](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252253954.png)
 
-### 任务管理
+### 服务、配置、存储和命名空间
 
-crobjob、job
+Service 为一组后端提供稳定访问入口，EndpointSlice 记录后端地址；Endpoints 是历史接口，新设计应关注 EndpointSlice。Ingress 表达 HTTP/HTTPS 入口路由，需要 Ingress 控制器实现，Gateway API 则提供另一套网关资源模型。集群内部服务调用常被称为东西向流量，从外部进入应用的访问常被称为南北向流量。
 
-### 服务发布
+ConfigMap 保存普通配置，Secret 保存需要受控访问的数据；Secret 的 Base64 编码不等于加密。PV 描述可用持久存储，PVC 表达应用的存储申请。
 
-Endpoint、service(东西流量:服务间访问)、ingress(南北流量:集群 外部访问pod)
+Namespace 提供资源名称与管理边界，大部分应用资源都属于命名空间。Pod 不能直接挂载另一命名空间的 ConfigMap，但跨命名空间网络访问通常默认可行；API 是否允许读取其他命名空间对象，取决于调用者身份与 RBAC。需要网络隔离时，还应配置受网络插件支持的 NetworkPolicy。
 
-### 配置管理
+## 用 kubectl 查找资源类型
 
-configMap,secret
+kubectl 通过 kubeconfig 找到 API server，并获取访问所需身份。kubeadm 管理员常在控制平面上使用 `/etc/kubernetes/admin.conf`，也可以把授权的 kubeconfig 放在 `$HOME/.kube/config`。`admin.conf` 具有很高权限，不应作为所有用户通用的配置分发；普通用户应领取与职责匹配的凭据。
 
-### 存储管理
+```sh
+kubectl config current-context
+kubectl api-resources
+```
 
-PV、PVC
+`kubectl api-resources` 可以查询资源名称、缩写、API 组以及是否属于命名空间。集群安装 CRD 后还会出现新的资源类型，因此本机输出比记忆固定清单更可靠。
 
-### namespace
-
-提供软隔离,大部分资源是被namespace隔离的,比如A ns里面的pod无法读取到B ns里面的configMap。
-
-## kubectl命令
-
-- kubectl的运行是需要配置文件的,配置文件一开始存在master节点上的`/etc/kubernetes/admin.conf`下,拷贝到`$HOME/.kube/config` 。如果要在其他地方运行此命令,需要将master节点上的config文件复制过去。
-
-## Api-resource类型
-
-k8s中所有的内容都抽象为资源,可以通过kubectl api-resources 来查看
-
-| **资源分类**  | **资源名称**             | **缩写** | **资源作用**    |
+| 资源分类  | 资源名称             | 缩写 | 资源作用    |
 | ------------- | ------------------------ | -------- | --------------- |
 | 集群级别资源  | nodes                    | no       | 集群组成部分    |
-|               | namespaces               | ns       | 隔离Pod         |
+|               | namespaces               | ns       | 管理命名空间边界         |
 | pod资源       | pods                     | po       | 装载容器        |
 | pod资源控制器 | replicationcontrollers   | rc       | 控制pod资源     |
 |               | replicasets              | rs       | 控制pod资源     |
@@ -233,8 +168,8 @@ k8s中所有的内容都抽象为资源,可以通过kubectl api-resources 来查
 |               | cronjobs                 | cj       | 控制pod资源     |
 |               | horizontalpodautoscalers | hpa      | 控制pod资源     |
 |               | statefulsets             | sts      | 控制pod资源     |
-| 服务发现资源  | services                 | svc      | 统一pod对外接口 |
-|               | ingress                  | ing      | 统一pod对外接口 |
+| 服务发现资源  | services                 | svc      | 服务访问或入口规则 |
+|               | ingress                  | ing      | 服务访问或入口规则 |
 | 存储资源      | volumeattachments        |          | 存储            |
 |               | persistentvolumes        | pv       | 存储            |
 |               | persistentvolumeclaims   | pvc      | 存储            |

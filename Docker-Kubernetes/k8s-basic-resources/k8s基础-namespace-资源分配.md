@@ -21,37 +21,27 @@ Namespace 对象本身是集群级资源；Pod、Deployment、Service、Resource
 
 是否划分 Namespace 取决于管理边界。即使用户很少，只要需要区分生产与测试权限或资源预算，也可以使用。多租户还应配合 RBAC、NetworkPolicy 和工作负载安全策略。
 
-创建ns:
+例如，创建一个测试命名空间：
 
 ```bash
 kubectl create ns test
 ```
 
-### 合理的资源划分
+### 先确定团队与环境的资源预算
 
-资源限制的重要性:如果没有,可能会产生节点资源被异常耗尽的问题。
+只有名称分组还不够。若不限制总量，一个团队的异常扩容仍可能耗尽共享节点资源。对象数量、CPU/内存声明与存储申请都应纳入预算。
 
 对象数量配额用于限制异常控制器或自动化任务造成的对象增长。例如，不被节点允许的 sysctl 可能导致 Pod 被 kubelet 拒绝，控制器继续尝试维持副本，失败对象也会增加排障成本。是否反复生成对象取决于控制器和失败状态，不能仅凭 `SysctlForbidden` 推断一定会生成上万个 Pod。
 
 可以为 Namespace 设置 Pod、ReplicaSet、PVC 等对象数量上限。例如 512 个 Pod、1024 个 ReplicaSet 只是容量预算的一个起点，不能直接作为所有集群的生产标准。ReplicaSet 会受 Deployment 的副本和历史版本设置影响，配额需要为发布与回滚保留余量。
 
-#### 以租户为单位
+预算可以按租户或环境计算。按租户分配时，既可以从团队投入的节点容量推算，也可以从共享集群中分出固定份额。例如，5 台 8 CPU、16Gi 的节点提供 40 CPU、80Gi 名义容量，但应先扣除系统、DaemonSet 和故障冗余，再分别决定 requests 与 limits 总量。设置配额不会把这些节点自动专用于该团队。
 
-是针对ns去限制的。
+按 dev、uat、prod 环境分配时，需要汇总各微服务的常态副本、峰值副本与发布期间的额外副本。预算过低会阻止扩容，预算过高则难以阻隔相邻环境的异常请求。
 
-1. 基于节点去划分:比如一个团队申请了5台8C16G机器加入集群,可以把 40 CPU、80Gi 作为预算上界的计算起点；还要扣除系统、DaemonSet 和故障冗余，并区分 requests 总量与 limits 总量。配额不会把这些节点自动专用于该团队。
-2. 基于现有资源:利用现有资源,直接划分给这个团队固定的cpu和memory
+## 用 ResourceQuota 限制命名空间总量
 
-#### 以环境为单位
-
-比如有dev、uat、prod等环境,需要预估每个环境的所有微服务情况,留一些冗余。
-
-## ResourceQuota资源
-
-Namespace 建好以后，还需要为它设置资源预算。[ResourceQuota](https://kubernetes.io/docs/concepts/policy/resource-quotas/) 在 API 准入时检查声明的资源总量与对象数量，不根据监控中的实时 CPU 使用率扣减配额。它可以：
-
-- 限制资源使用量
-- 限制对象数量
+Namespace 建好以后，还需要为它设置资源预算。[ResourceQuota](https://kubernetes.io/docs/concepts/policy/resource-quotas/) 在 API 准入时检查声明的资源总量与对象数量，不根据监控中的实时 CPU 使用率扣减配额。下面的配额同时限制这些维度。
 
 ```yaml
 apiVersion: v1
@@ -73,28 +63,20 @@ spec:
     count/services: "40"
 ```
 
-> CPU的单位解释:[为 Pod 和容器管理资源 | Kubernetes](https://kubernetes.io/zh-cn/docs/concepts/configuration/manage-resources-containers/)
->
-> CPU 资源的限制和请求以 "cpu" 为单位。 在 Kubernetes 中,一个 CPU 等于 **1 个物理 CPU 核** 或者 **1 个虚拟核**, 取决于节点是一台物理主机还是运行在某物理主机上的虚拟机。
->
-> - 如果是request.cpu: 0.5 --> 那就是请求0.5个核
-> - 如果是request.cpu: 500m --> 那是500毫核 --> 也就是0.5核
+CPU 以核为单位，`0.5` 与 `500m` 都表示半核，`m` 是毫核。物理机与虚拟机的一个 CPU 对应关系可见官方[资源单位说明](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes)。注意配额使用 `requests.cpu`，容器字段则写为 `resources.requests.cpu`。
 
 > [!warning] 注意
 >
 > - 如果配额限制了 CPU/内存 requests 或 limits，对应容器必须具有这些声明；可由 LimitRange 补默认值。否则 Deployment 对象可能创建成功，但 ReplicaSet 创建 Pod 时被拒绝。通过 `kubectl describe rs` 和 `kubectl get events` 查看准入错误。仅限制对象数量的配额不会自动要求所有 CPU/内存字段。
 > - 新配额不会为了满足上限而自动驱逐已运行 Pod；后续创建、扩容或更新资源会受到检查。删除对象通常用于释放预算，不是“超额后禁止删除”。
 
-## LimitRange资源
+## 用 LimitRange 约束单个对象并补默认值
 
 ResourceQuota 控制命名空间总量，无法单独保证每个容器的声明合理。一个只申请 `1m` CPU、`1Mi` 内存的容器可能被调度到剩余可分配 requests 很少的节点，实际运行却消耗更多内存。LimitRange 可以约束单个容器或 Pod 的资源范围，也能给缺失字段补默认值。
 
-这样是不行的,需要:
+这里有两项约束：一项是检查 requests 和 limits 是否落在允许范围内，另一项是为缺失的声明填充默认值。LimitRange 的默认值不会覆盖容器已经设置的值，但补齐后的完整配置仍须同时通过范围检查与 ResourceQuota 检查。
 
-1. 对requests和limits的值也进行合理性的约束,不符合约束的就禁止创建;
-2. 对于没有显式声明requests和limits的资源,添加上一个默认值。
-
-在Kubernetes集群中部署任何的服务,都建议添加resources参数,也就是配置内存和CPU资源的请求和限制。如果不想给每个容器都手动添加资源配置,此时可以使用limitRange实现给每个容器自动添加资源配置(不会覆盖已经配置的值)。
+下面同时约束容器资源和 PVC 存储大小。将它应用到哪个命名空间，就作用于哪个命名空间；要与上例组合，应显式使用 `-n customer1` 或添加相应的 `metadata.namespace`。
 
 ~~~yaml
 apiVersion: v1
@@ -123,11 +105,9 @@ spec:
       storage: 1Gi
 ~~~
 
-> [!warning] 注意
->
-> 1. limitRange是针对pod去修改的,deployment的yaml不会被修改。
+默认值在 Pod 准入时写入实际 Pod，不会回写到 Deployment 的 Pod 模板。因此检查 Deployment YAML 看不到默认值时，还应查看它创建的 Pod。现有 Pod 也不会因为新建 LimitRange 而自动更新。
 
-## QoS
+## 资源声明如何影响 QoS
 
 资源声明还会影响 Pod 的 QoS（Quality of Service，服务质量）分类。节点内存紧张时，需要区分 kubelet 的节点压力驱逐与内核 OOM killer：前者会终止 Pod，后者通常终止容器中的进程，两者的决策机制不同。
 
@@ -137,10 +117,7 @@ spec:
 
 Guaranteed 要求容器的 CPU 和内存 requests 与 limits 相等。调度器根据 requests 判断节点是否有足够的可分配资源；该分类不会提高 `priorityClassName`，也无法避免节点故障或应用超过自身内存限制导致的 OOM。
 
-配置Guaranteed级别的Pod,需要满足如下条件:
-
-1. Pod中的每个容器必须指定limits.memory和requests.memory,并且两者需要相等
-2. Pod中的每个容器必须指定limits.cpu和requests.cpu,并且两者需要相等
+要得到 Guaranteed，Pod 中每个容器都必须声明 CPU 和内存的 requests 与 limits，并且每种资源的 request 等于对应 limit。例如，下面是单个容器的 resources 片段：
 
 ~~~yaml
 limits:
@@ -157,10 +134,7 @@ requests:
 
 Burstable 的资源配置介于 Guaranteed 与 BestEffort 之间。调度按 requests 计算，运行中可以在 limits 和节点实际资源允许的范围内使用超过 requests 的资源。超过 requests 的部分在节点压力下更容易受到影响。
 
-配置Burstable级别的Pod,需要满足如下条件:
-
-1. Pod不符合Guaranteed的配置要求
-2. Pod 中至少一个容器具有 CPU 或内存 request/limit；只设置 limit 时，缺失的 request 可能在准入阶段被补成同值。分类应以 API 中最终保存的配置为准。
+只要不满足 Guaranteed，又至少有一个容器声明了 CPU 或内存 request/limit，通常属于 Burstable。只设置 limit 时，缺失的 request 可能在准入阶段补成同值，分类应以 API 中最终保存的配置为准。下面仅声明 requests：
 
 ~~~yaml
 requests:
@@ -168,32 +142,30 @@ requests:
   cpu: 100m
 ~~~
 
-> - 一般自己开发的无状态微服务,允许漂移的,可以设置成Burstable。
-> - 而且一般微服务CPU使用量低,所以CPU一般设置成小requests,可变得更大,这种模式就是Burstable。
-> - Java 容器不能用固定的 `Xmx+128Mi` 作为通用内存预算。还需计入 Metaspace、线程栈、直接内存、JVM 本身及应用的堆外占用，再结合负载测量配置 requests/limits。
+允许迁移的无状态服务可以采用这种方式，但 requests 应参考正常负载和峰值测量，不能只因“微服务通常 CPU 低”就设成很小的值。节点有空闲资源时，容器可以使用更多；节点紧张时，这部分余量不能视为保证。
+
+Java 容器也不能用固定的 `Xmx+128Mi` 作为通用内存预算。还需计入 Metaspace、线程栈、直接内存、JVM 本身及应用的堆外占用，再结合负载测量配置 requests/limits。
 
 ### BestEffort
 
 BestEffort Pod 的所有容器均未声明 CPU/内存 requests 和 limits。调度时缺少这部分资源预算，节点压力下通常很脆弱；实际驱逐顺序仍受压力类型、使用量和 Pod Priority 等因素影响。
 
-配置BestEffort级别的Pod,不配置resources字段即可。
+不设置 CPU/内存资源字段通常会形成 BestEffort，但 LimitRange 等准入配置可能补默认值并改变最终分类。需要稳定容量的生产服务应明确声明资源，以便调度、配额和排障使用同一份预算。
 
-> 生产环境不推荐使用,因为没有配置任何资源声明,可能会被调度到资源紧张的节点上,造成一些问题。
-
-## ns删除后卡在Terminating状态
+## Namespace 删除为什么会停在 Terminating
 
 删除命名空间时，可能因为残留资源或 finalizer 未完成，导致 namespace 一直卡在 Terminating 状态，重启 K8s 或节点都无效。
 
 > [!warning] 注意
 > 强制删除前建议先排查并清理 namespace 中的残留资源，确认无法自然释放后再使用强制手段。
 
-### 原理
+### 先定位阻塞条件
 
 Namespace 控制器需要先发现并删除命名空间中的对象。APIService 不可用、资源发现失败、残留对象的 finalizer 无法完成，都会阻塞这个过程。先查看 `kubectl describe namespace "$NAMESPACE"` 的 Conditions，再枚举残留对象并修复对应控制器。Namespace 使用的 `spec.finalizers` 与普通对象的 `metadata.finalizers` 需要区分。
 
 下面保留 `/finalize` 接口的人工恢复示例。只有确认遗留资源及外部依赖已处理，并明确接受残留对象风险后才使用；强行置空可能留下不可见或孤立资源，不等于完成清理。
 
-### 手动方式
+### 核实依赖后的手动恢复步骤
 
 ```sh
 # 1. 开启 API 代理（新窗口保持运行）
@@ -260,8 +232,15 @@ kubectl proxy
 bash deleteNameSpace.sh knative-eventing
 ```
 
-## 特殊namespace
+## 业务命名空间与系统命名空间要分开管理
 
-### kube-node-lease
+上面的配额和恢复流程面向业务命名空间。系统默认使用的几个命名空间有自己的用途：
 
-- 每个节点在其中维护 Lease 对象作为轻量心跳；kubelet 续约 Lease，控制平面的节点生命周期控制器结合心跳与 Node 状态判断节点健康。API Server 提供存取接口，不自行运行节点健康判定循环。
+| 命名空间 | 用途 |
+| --- | --- |
+| `default` | 没有显式指定命名空间时使用的默认范围 |
+| `kube-system` | 承载控制平面辅助组件和集群插件等系统对象 |
+| `kube-public` | 约定用于部分公开信息；具体能否访问仍取决于 RBAC |
+| `kube-node-lease` | 存放节点的 Lease 心跳对象 |
+
+kubelet 会续约自己的 Lease，节点生命周期控制器结合心跳与 Node 状态判断节点健康。API Server 提供存取接口，不自行执行节点健康判定。不要将业务配额或强制清理脚本直接套到这些系统范围；业务团队应使用独立命名空间，并通过资源声明、配额和权限共同维护边界。

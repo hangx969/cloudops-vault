@@ -13,7 +13,7 @@ aliases:
 
 DaemonSet 按符合条件的节点维护 Pod，适合这类与节点绑定的后台工作。本文先部署一个日志采集示例，再说明节点选择、滚动更新和回滚。实验需要一个可用的 Kubernetes 集群、能够创建 DaemonSet 的权限，以及可拉取示例镜像的节点。涉及宿主机目录挂载时，还需要集群安全策略允许使用 `hostPath`。
 
-## DaemonSet控制器：概念、原理
+## DaemonSet 控制器怎样维护节点副本
 
 ### 它如何确定副本数量
 
@@ -88,7 +88,6 @@ spec:
 
 如果采集器只应运行在某类节点上，可以在 `.spec.template.spec` 中加入 `nodeSelector`。下面是两个可替换使用的片段，不应在同一 YAML 层级重复定义两个 `nodeSelector`：
 
-
 ~~~yaml
 # 如果指定了.spec.template.spec.nodeSelector，DaemonSet Controller 将在与 Node Selector 匹配的节点上创建 Pod
 # 比如部署在磁盘类型为 ssd 的节点上（需要提前给节点定义标签 Label）：
@@ -104,10 +103,9 @@ nodeSelector:
   gpu: "true" # 注意布尔值需要设成字符串
 ~~~
 
-> [!info] 说明
-> 如果添加了新节点或修改了节点标签（Label），DaemonSet 将立刻向新匹配上的节点添加Pod，同时删除不能匹配的节点上的 Pod。
+节点新增或标签变化后，控制器会重新计算目标集合：给新匹配的节点补建 Pod，并删除不再匹配节点上的 Pod。这个过程异步完成，实际运行还要满足资源与调度条件。
 
-## ds滚动更新
+## 滚动更新时如何控制节点可用性
 
 ```bash
 kubectl explain ds.spec.updateStrategy.rollingUpdate
@@ -178,7 +176,6 @@ spec:
 ## 查看更新状态与回滚
 
 修改镜像或 Pod 模板后，先查看发布状态和历史版本。下面的回滚命令会修改 DaemonSet，只应在确认目标历史版本存在且需要回退时执行：
-
 
 ```bash
 # 查看更新状态

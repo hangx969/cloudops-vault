@@ -7,7 +7,7 @@ aliases:
   - Pythonk8sAPI
 ---
 
-# Python调用K8s-API实现资源管理
+# 用 Python 管理 Kubernetes 资源：从连接集群到增删改查
 
 平时创建 Pod、查询 Service，通常先想到 `kubectl`。当这些操作要进入发布平台、巡检程序或定时任务时，Python 程序也可以直接调用 Kubernetes API。官方 Python 客户端负责请求序列化、身份认证和 API 对象转换，程序仍然受到集群 RBAC 权限约束。
 
@@ -28,7 +28,7 @@ python -m pip install --upgrade pip
 python -m pip install kubernetes pyyaml
 ~~~
 
-项目确认可用后，应将实际使用的版本锁定到依赖文件。这里不使用 `--ignore-installed`，以免绕过虚拟环境正常的依赖管理。
+项目确认可用后，应将实际使用的版本锁定到依赖文件。虚拟环境可以隔离项目依赖，减少与系统 Python 包相互影响。
 
 ### 加载 kubeconfig
 
@@ -178,7 +178,7 @@ kubectl --kubeconfig ./config --context your-lab-context rollout status deployme
 
 ## 修改 Pod：只提交需要变化的字段
 
-Pod 的大部分规格字段不能直接修改，容器镜像是允许更新的字段之一。本例先读取原镜像，再按容器名称提交局部补丁。原实验把镜像换成 BusyBox，但默认命令可能很快退出，出现反复重启，因此这里改为另一条 Nginx 标签，保留“更新镜像”的实验目的。
+Pod 的大部分规格字段不能直接修改，容器镜像是允许更新的字段之一。本例先读取原镜像，再按容器名称提交局部补丁。将镜像切换为另一条 Nginx 标签，可以在保持 Web 服务用途的同时观察镜像更新。若换为 BusyBox，其默认命令可能很快退出并触发反复重启；这类变更还需要同时设计容器启动命令。
 
 ~~~python
 from kubernetes import client, config
@@ -190,13 +190,18 @@ def main():
     old = core.read_namespaced_pod(namespace="default", name="po-nginx")
     print("Old image:", old.spec.containers[0].image)
     patch = {"spec": {"containers": [{"name": "nginx", "image": "nginx:alpine"}]}}
-    updated = core.patch_namespaced_pod(namespace="default", name="po-nginx", body=patch)
+    updated = core.patch_namespaced_pod(
+        namespace="default", name="po-nginx", body=patch,
+        _content_type="application/strategic-merge-patch+json",
+    )
     print("New image:", updated.spec.containers[0].image)
 
 
 if __name__ == "__main__":
     main()
 ~~~
+
+这里显式指定 Strategic Merge Patch，使 `containers` 列表按容器 `name` 合并，保留未提交的其他容器和字段。当前客户端支持 `_content_type` 参数，可核对[生成方法源码](https://github.com/kubernetes-client/python/blob/master/kubernetes/client/api/core_v1_api.py)；旧版客户端的参数支持可能不同，应先核对所锁定版本，不能直接套用 JSON Merge Patch 的数组整体替换语义。
 
 补丁返回新镜像字段，不代表新容器已经就绪，还要观察 Pod 状态和事件。如果 Pod 由 Deployment 管理，通常应修改 Deployment 的 Pod 模板，让控制器完成滚动更新；单独修改其下属 Pod 不会改变期望模板，后续重建时还会回到模板指定的镜像。
 
