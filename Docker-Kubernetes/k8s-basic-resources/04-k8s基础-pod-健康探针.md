@@ -22,7 +22,7 @@ Kubernetes 用 Startup、Readiness 和 Liveness 三类探针表达这些差异�
 
 Pod 的 `Running` 是生命周期中的一个阶段。它说明容器已经被创建，且至少有一个容器正在运行、启动或重启，并不保证应用已经能处理业务请求。`Ready` 表达的是另一层状态：Pod 当前是否具备接收流量的条件。排查“Pod 看起来正常，服务却不可用”时，需要把这两层状态分开看。
 
-<!-- 站内延伸阅读：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门文章]]。 -->
+<!-- 站内延伸阅读：[[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础|Pod 入门文章]]。 -->
 
 如果容器内的主进程退出，kubelet 可以根据 `restartPolicy` 处理；对于进程仍在运行、内部却已卡死的情况，还需要应用提供额外的判断依据。健康探针就是 kubelet 获取这些依据的方式。它可以执行容器内的命令，也可以发起网络请求，但检查能覆盖什么故障，取决于命令或接口实际检查了什么。
 
@@ -641,7 +641,7 @@ histogram_quantile(
 
 旧实例退出时，应用还需要处理停止信号，在终止宽限期内完成存量工作。`preStop`、终止宽限期和应用自身的优雅关闭逻辑仍然需要配置与验证。Pod 删除后，控制平面也会更新相应端点的终止与就绪状态，不能把删除时的摘流完全归因于 Readiness。
 
-<!-- 站内延伸阅读：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod#Pod 如何退出：钩子与宽限期|Pod 的终止过程]]。 -->
+<!-- 站内延伸阅读：[[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础#Pod 如何退出：钩子与宽限期|Pod 的终止过程]]。 -->
 
 探针通过，只能说明检查条件满足。是否能平稳发布，还要验证多副本、滚动更新策略、实际负载均衡路径和应用退出过程。
 

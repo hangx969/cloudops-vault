@@ -9,7 +9,7 @@ date: 2026-10-20
 sources:
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查]]"
   - "[[AI/Obsidian/github-pages-quartz]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源]]"
   - "[[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤]]"
   - "[[Docker-Kubernetes/k8s-monitoring-logging/helm部署prometheus-stack全家桶]]"
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD基础]]"
@@ -20,7 +20,7 @@ sources:
   - "[[GPU-DeepLearning/GPU-basics]]"
   - "[[Python/python-运维开发/python-Linux-operation]]"
   - "[[Python/python-网络编程-前端/python-Web框架Django]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理]]"
   - "[[Database/MySQL入门]]"
   - "[[Linux-Shell/shell-scripts]]"
   - "[[Linux-Shell/Linux-learning-notes]]"
@@ -93,7 +93,7 @@ sources:
 - `k8s-networking-service-mesh/`（7 篇）— Istio、Ingress-Nginx、NetworkPolicy
 
 **代表性文章：**
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] — K8s 架构总览
+- [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] — K8s 架构总览
 - [[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤|安装k8s-1.35-基于rockylinux10-最新步骤]] — 最新版安装
 - [[Docker-Kubernetes/k8s-monitoring-logging/helm部署prometheus-stack全家桶|Prometheus-Stack：生产部署与运维]] — 可观测性全家桶
 - [[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD基础|ArgoCD基础]] — GitOps 核心
@@ -119,7 +119,7 @@ sources:
 - [[Python/python-运维开发/python-kubernetes-module|python-kubernetes-module]] — K8s API 自动化
 - [[Python/python-网络编程-前端/python-Web框架Django|python-Web框架Django]] — Django 全栈
 
-**关联领域：** [[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]]、[[Database/MySQL入门|MySQL入门]]、[[Linux-Shell/shell-scripts|shell-scripts]]
+**关联领域：** [[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]]、[[Database/MySQL入门|MySQL入门]]、[[Linux-Shell/shell-scripts|shell-scripts]]
 
 ---
 
@@ -147,7 +147,7 @@ sources:
 - [[Azure/8_Azure-devops-basics|8_Azure-devops-basics]] — Azure DevOps
 - [[14_Kusto Query|14_Kusto Query]] — KQL 查询语言（2208 行）
 
-**关联领域：** [[Aliyun/计算/ECS|ECS]]（对标 VM）、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]]
+**关联领域：** [[Aliyun/计算/ECS|ECS]]（对标 VM）、[[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]]
 
 ---
 

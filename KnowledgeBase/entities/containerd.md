@@ -6,7 +6,7 @@ tags:
 date: 2026-04-17
 sources:
   - "[[Docker-Kubernetes/k8s-installation-management/k8s-cgroup-v2深度解析-迁移实战与避坑指南]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd]]"
   - "[[Docker-Kubernetes/k8s-installation-management/升级/k8s迁移容器运行时-版本升级]]"
   - "[[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤]]"
   - "[[Docker-Kubernetes/k8s-installation-management/升级/k8s-1.37-升级须知-breaking-changes]]"
@@ -49,7 +49,7 @@ containerd 是从 Docker 中剥离出的工业级容器运行时，自 Kubernete
 - `Docker-Kubernetes/k8s-basic-resources/` 中涉及容器运行时选型
 - [[Docker-Kubernetes/k8s-installation-management/k8s-cgroup-v2深度解析-迁移实战与避坑指南|K8s cgroup v2：资源隔离原理、迁移与生产避坑]]：containerd cgroup v2 配置与迁移踩坑
 - Azure AKS 集群默认使用 containerd 运行时
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd|k8s基础-容器运行时-containerd]]：CRI 接口与调用链（Docker → containerd → runc），ctr、nerdctl、crictl 对比，以及 ctr 命名空间的注意事项
+- [[Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd|k8s基础-容器运行时-containerd]]：CRI 接口与调用链（Docker → containerd → runc），ctr、nerdctl、crictl 对比，以及 ctr 命名空间的注意事项
 - [[Docker-Kubernetes/k8s-installation-management/升级/k8s迁移容器运行时-版本升级|k8s迁移容器运行时-版本升级]]：把节点运行时从 Docker 迁移到 containerd（生成配置、调整 kubelet 参数与节点注解）
 - [[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤|安装k8s-1.35-基于rockylinux10-最新步骤]]：安装 containerd，启用 SystemdCgroup、替换 pause 镜像，并用 config_path + hosts.toml 配置镜像加速
 - [[Docker-Kubernetes/k8s-installation-management/升级/k8s-1.37-升级须知-breaking-changes|k8s-1.37-升级须知-breaking-changes]]：K8s 移除对 containerd 1.x 的支持，containerd 升级 SOP，以及 CRI API 与镜像格式的兼容陷阱

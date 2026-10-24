@@ -67,12 +67,12 @@
 ### Kubernetes 基础与应用管理
 
 1. [Docker 基础](./Docker-Kubernetes/docker/docker基础.md) → 掌握镜像、容器与基本操作。
-2. [K8s 架构、组件与资源](./Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源.md) → 建立集群架构与资源模型的整体认识。
-3. [Pod](01-k8s基础-pod基础.md) + [Deployment](./Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment.md) → 学习容器生命周期、应用发布与滚动更新。
-4. [Service](./Docker-Kubernetes/k8s-basic-resources/k8s基础-Service.md) → 理解服务发现与应用访问。
+2. [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|K8s 架构、组件与资源]] → 建立集群架构与资源模型的整体认识。
+3. [[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础|Pod]] + [[Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment|Deployment]] → 学习容器生命周期、应用发布与滚动更新。
+4. [[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service|Service]] → 理解服务发现与应用访问。
 5. [Helm v3 安装与使用](./Docker-Kubernetes/helm/helmv3-安装与使用.md) → 用 Chart 安装、升级和管理应用。
 
-专题阅读：[[02-k8s基础-pod-健康探针|Kubernetes 健康探针]] → 在理解 Pod 与 Service 后，学习启动、就绪、存活检查与重启风暴排查。
+专题阅读：[[Docker-Kubernetes/k8s-basic-resources/04-k8s基础-pod-健康探针|Kubernetes 健康探针]] → 在理解 Pod 与 Service 后，学习启动、就绪、存活检查与重启风暴排查。
 
 ### GitOps 交付与可观测性
 

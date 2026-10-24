@@ -56,7 +56,7 @@ labels:
 
 ### 对象列表：以 containers 为例
 
-`kubectl explain pod.spec.containers` 中的 `<[]Object>` 表示“对象组成的数组”。每个容器是一项，每项又含有名称、镜像等字段，`ports` 则是其中嵌套的另一个对象列表。下面是 Pod `spec` 下的片段，保留原实验使用的第三方镜像；使用前应确认镜像可访问且符合环境要求：
+`kubectl explain pod.spec.containers` 中的 `<[]Object>` 表示“对象组成的数组”。每个容器是一项，每项又含有名称、镜像等字段，`ports` 则是其中嵌套的另一个对象列表。下面是 Pod `spec` 下的片段，使用第三方教学镜像；实验前应确认镜像可访问且符合环境要求：
 
 ```yaml
 containers:

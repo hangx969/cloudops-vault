@@ -5,7 +5,7 @@ tags:
   - kubernetes/security
 date: 2026-10-11
 sources:
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-认证-授权-准入]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入]]"
   - "[[kuebctl-插件krew]]"
 aliases:
   - Role-Based Access Control
@@ -34,7 +34,7 @@ RBAC（Role-Based Access Control，基于角色的访问控制）是 Kubernetes 
 - [[KnowledgeBase/concepts/CRD]]：自定义资源（CRD）同样需要通过 RBAC 授权才能被访问和操作
 
 ## 在本仓库中的覆盖
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-认证-授权-准入]]：完整覆盖了 RBAC 的概念、Role/ClusterRole 定义、RoleBinding/ClusterRoleBinding 用法、ServiceAccount 与 RBAC 配合、生产环境权限管理实践（ns查询、日志查看、命令执行、资源编辑等场景）以及准入控制器
+- [[Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入]]：完整覆盖了 RBAC 的概念、Role/ClusterRole 定义、RoleBinding/ClusterRoleBinding 用法、ServiceAccount 与 RBAC 配合、生产环境权限管理实践（ns查询、日志查看、命令执行、资源编辑等场景）以及准入控制器
 
 - [[kuebctl-插件krew|kubectl 插件指南]]：whoami、rolesum、who-can 与 auth can-i 的分工、CI ServiceAccount 的 Forbidden 排查，以及静态 RBAC 分析和实际授权查询的边界
 

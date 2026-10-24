@@ -566,8 +566,8 @@ Layer2 部署简单，但需要接受单 VIP 的入口带宽和故障接管限�
 
 ## 相关笔记与参考资料
 
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|Kubernetes Service]]：Service 类型、端口和后端选择。
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico|Calico 网络]]：Pod 网络、BGP 与网络模式。
+- [[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service|Kubernetes Service]]：Service 类型、端口和后端选择。
+- [[Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico|Calico 网络]]：Pod 网络、BGP 与网络模式。
 - [[Docker-Kubernetes/k8s-networking-service-mesh/helm部署ingress-nginx|Ingress-Nginx]]：七层入口部署。
 - [[KnowledgeBase/concepts/高可用架构|高可用架构]]：冗余、故障检测与接管。
 - [[KnowledgeBase/sources/metallb-loadbalancer-summary|本文来源摘要]]。

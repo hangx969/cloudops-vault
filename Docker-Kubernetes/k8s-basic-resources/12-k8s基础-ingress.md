@@ -57,21 +57,17 @@ Ingress 的 `spec.ingressClassName` 引用集群级的 IngressClass，由它的 
 
 ### 从部署顺序看资源依赖
 
-#### 流程
+#### 先准备后端，再提交入口规则
 
-1. 部署Ingress controller，我们ingress controller使用的是nginx
-
-2. 创建Pod应用，可以通过控制器创建pod
-
-3. 创建Service，用来分组pod
-
-4. 创建Ingress http，测试通过http访问应用
-
-5. 创建Ingress https，测试通过https访问应用
+1. 确认实验环境中已有控制器，以及与它对应的 IngressClass。
+2. 用 Deployment 等工作负载运行应用，确认 Pod 能正常处理请求。
+3. 创建 Service，核对 selector、端口和 EndpointSlice。
+4. 创建 HTTP Ingress，验证域名、路径与后端的对应关系。
+5. 准备证书与 TLS Secret，再加入 HTTPS 规则并验证握手。
 
 #### 实际数据流向
 
-使用七层负载均衡调度器ingress controller时，当客户端访问kubernetes集群内部的应用时，数据包走向如下图流程所示：
+客户端先连接入口控制器，再由它把请求交给匹配的后端。下图以 ingress-nginx 的常见路径为例：
 
 ![image-20231209111616791](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091116867.png)
 
@@ -82,7 +78,7 @@ Ingress 的 `spec.ingressClassName` 引用集群级的 IngressClass，由它的 
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172346336.png" alt="image-20250717234628958" style="zoom:50%;" />
 
-入口通常至少需要多个副本和跨节点部署，避免单个 Pod 或节点故障使所有应用不可达。上图是一种“前置负载均衡器 → 专用入口节点 → 应用后端”的架构。具体副本数应由容量和故障域决定，2–3 个节点只是常见起点。
+入口通常至少需要多个副本和跨节点部署，避免单个 Pod 或节点故障使所有应用不可达。上图是一种“前置负载均衡器 → 专用入口节点 → 应用后端”的架构。具体副本数应由容量和故障域决定，两到三个节点只是常见起点。
 
 如果使用专用节点，可以打上 `ingress=true` 标签，再为入口 DaemonSet 配置 nodeSelector；也可以用 Deployment 配合反亲和性或拓扑分布约束。DaemonSet 并不是部署入口的唯一方式。
 
@@ -120,14 +116,11 @@ kubectl expose deployment nginx --port=80 --target-port=80 -n study-ingress
 kubectl get pods,svc -n study-ingress
 ~~~
 
-`nginx:stable` 便于说明操作，复现实验应固定已验证的具体版本或摘要。取得入口地址后，可用如下方式同时指定 DNS 和 Host，无须先配置公共 DNS：
+`nginx:stable` 便于说明操作，复现实验应固定已验证的具体版本或摘要。先等待后端就绪，再提交入口规则。
 
-~~~sh
-# 示例入口IP，请替换成自己的入口地址
-curl --resolve nginx.test.com:80:192.168.40.6 http://nginx.test.com/
-~~~
+### 定义并创建 Ingress
 
-### YAML 定义
+将下面的清单保存为 `nginx-ingress.yaml`：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1 # k8s >= 1.22  必须  v1
@@ -155,12 +148,24 @@ spec:
   #   secretName: ca-secret
 ~~~
 
-pathType：路径的匹配方式，目前有 ImplementationSpecific、Exact 和 Prefix 方式。
+创建资源后，再发送带正确 Host 的请求。下面的入口 IP 只是示例，需按控制器的暴露方式替换；如果入口使用 NodePort，还要同步调整访问端口。
 
-- Exact：精确匹配，比如配置的 path 为/bar，那么/bar/将不能被路由；
-- Prefix：前缀匹配，基于以 / 分隔的URL路径。比如 path 为/abc，可以匹配到/abc/bbb等，比较常用的配置；
-- ImplementationSpecific：这种类型的路由匹配根据 Ingress Controller 来实现。
-  - 具体行为由控制器确定，不能假定一定等同于 Prefix。常规路径优先明确使用 Prefix 或 Exact，正则表达式等实现特性再按控制器要求配置。
+~~~sh
+kubectl rollout status deployment/nginx -n study-ingress
+kubectl apply -f nginx-ingress.yaml
+kubectl describe ingress nginx-ingress -n study-ingress
+curl --resolve nginx.test.com:80:192.168.40.6 http://nginx.test.com/
+~~~
+
+`pathType` 决定路径怎样匹配：
+
+| 取值 | 匹配含义 | 例子 |
+| --- | --- | --- |
+| `Exact` | 精确匹配路径 | `/bar` 不匹配 `/bar/` |
+| `Prefix` | 按 `/` 分隔的路径段匹配前缀 | `/abc` 可匹配 `/abc/bbb`，不匹配 `/abcd` |
+| `ImplementationSpecific` | 由具体控制器定义 | 需按实现检查，不能默认等同于 Prefix |
+
+常规路径优先明确使用 Prefix 或 Exact；正则表达式等实现特性，再按控制器的要求配置。
 
 ### 全局配置与单条路由配置
 
@@ -168,7 +173,7 @@ pathType：路径的匹配方式，目前有 ImplementationSpecific、Exact 和 
 
 ### 不配置域名，仅按路径发布
 
-有些时候可能因为公司确实不支持域名或者内部dns解析，但是还是需要一个统一的入口，可以不配域名，只配path，通过controller IP+path来访问：
+实验环境暂时没有可用域名时，也可以省略 host，仅按路径匹配，通过入口 IP 加路径访问：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1 # k8s >= 1.22  必须  v1
@@ -209,7 +214,7 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt
 kubectl create secret tls ca-secret --cert=tls.crt --key=tls.key  -n study-ingress
 ~~~
 
-ingress添加tls配置：
+在 Ingress 中引用同一命名空间的证书 Secret：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -236,7 +241,7 @@ spec:
       secretName: ca-secret
 ~~~
 
-### 域名添加用户名密码认证
+### 为缺少登录功能的应用增加 Basic Auth
 
 有些开源工具本身不提供密码认证，如果暴露出去会有很大风险，可以在入口增加 Basic Auth。它通过用户名和密码校验限制访问，应配合 HTTPS 使用。RPM 系实验环境可安装提供 htpasswd 的工具包：
 
@@ -404,9 +409,9 @@ spec:
 
 ### 访问地址重写 Rewrite
 
-对于一个大的项目，前后端分离，后端微服务有很多，共用同一个域名比如nginx.test.com。用户访问是通过path路径去区分访问，比如/api-a到用户中心/api-b到支付中心等。但是后端去开发的时候，并不是按照/api-a、/api-b等接口去开发的，可能留的接口都是/api。这样访问怎么找到每一个微服务？
+多个微服务共用一个域名时，入口可能用 `/api-a`、`/api-b` 区分服务，而后端仍按自身的 `/api` 或根路径处理请求。如果入口路径与后端接口不同，就需要在转发时重写。
 
-我们直接去访问/api-a肯定是不行的，因为后端服务根本没有这个名字的接口。我们可以自定义/api-a这个路径，重写为 /api (或者比如开发留的接口就是/，那就重写为/) 就能访问到后端的服务了。如下图：
+例如，调用方请求 `/api-a/users`，入口可将它改写为后端的 `/users`；若后端要求 `/api/users`，则保留所需的 `/api` 前缀。目标路径应与应用真实接口一致。
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507181955304.png" alt="image-20250718195507023" style="zoom:50%;" />
 
@@ -422,7 +427,7 @@ kubectl create deploy backend-api --image=registry.cn-beijing.aliyuncs.com/dotba
 kubectl expose deploy backend-api --port 80 -n study-ingress
 ~~~
 
-创建ingress
+创建 Ingress：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -445,7 +450,7 @@ spec:
         pathType: ImplementationSpecific
 ~~~
 
-这个示例服务的后端接口留的是 /，而不是/api-a，现在我们直接访问/api-a，浏览器访问会报404。因为pod里面的容器根本没有/api-a接口。人家留的是/接口。
+本例后端提供根路径 `/`。如果它没有 `/api-a` 接口，直接透传该路径会得到 404，需要配置匹配的重写规则。
 
 此时需要通过 Ingress Nginx 的 Rewrite 功能，将/api-a 重写为“/”，配置示例如下：
 
@@ -786,12 +791,9 @@ spec:
 
 ## 先用权重理解灰度发布
 
-- 灰度发布：上线了新版本v2代替v1，但是不会直接把全部流量切到v2。先切10%流量到v2，验证一下；再切50%流量；再切100%到v2。
+灰度发布逐步扩大新版本的流量，例如先让 v2 接收 10%，观察后再增加到 50% 和 100%。蓝绿发布则同时保留两套版本，验证新版后切换入口，旧版留作回退。
 
-- 蓝绿发布：v2版本部署之后，直接把流量全切到v2上面去，有问题再切回v1。同时存在两个版本。
-
-> [!tip] 提示
-> 灰度发布里面可以通过请求头设置一部分测试用户的流量可以进来，是更加稳妥的做法。
+除了随机权重，还可以用请求头标识测试用户，让指定人群先接触新版本。选择哪种分组方式，取决于验证目标和客户端是否能提供可靠标识。
 
 为了观察权重，先准备返回不同内容的 v1/v2 后端，以及指向 v1 的主 Ingress；它们与后面的完整 OpenResty 实验是两种独立演示。以下清单让两个后端分别返回 `Canary v1` 和 `Canary v2`，避免只有注解却没有可比较服务：
 
@@ -971,12 +973,11 @@ ruby test-canary.rb
 
 ### 404 Not Found
 
-404表示路由不存在，通常问题：
+先区分入口默认后端返回的 404 与应用自己返回的 404，再检查以下位置：
 
-1. ingress路径配置不正确
-2. ingress的配置没有被controller解析
-3. 没使用正确的域名和路径
-4. 代理的服务没有该路径的接口，或者GET POST方法不对。
+- Ingress 的 Host、path、pathType 与请求是否匹配。
+- 控制器是否接受并加载了这份规则，IngressClass 是否正确。
+- 重写后的路径与 HTTP 方法是否符合后端接口。
 
 ### 413 Request Entity Too Large
 
@@ -1177,7 +1178,7 @@ upstream-keepalive-timeout: "100"
 
 HTTP 连接复用减少重建开销，但也可能让四层分流集中到少数后端。每次只改变一组参数，比较错误率、延迟和资源占用，才有办法确认改动是否有效。
 
-## 实战：Ingress灰度发布
+## 完整灰度实验：Header、Cookie 与权重
 
 ### 场景一：按 Header 或 Cookie 识别用户
 
@@ -1449,7 +1450,7 @@ kubectl annotate ingress ing-nginx-canary -n default nginx.ingress.kubernetes.io
 
 Cookie 分流使用指定的 Cookie 名，并要求值为 `always` 或 `never`；仅仅存在 Cookie 不足以保证进入 Canary。其他值会忽略这条规则，继续检查后续规则。
 
-这里以模拟灰度成都地域用户为例，仅将带有名为 user_from_cd 的 cookie 的请求转发给当前 Canary Ingress 。
+这里用 `user_from_cd=always` 模拟成都地域的测试用户，将匹配请求导入 Canary。
 
 在 Canary Ingress 中配置如下：
 
@@ -2433,7 +2434,10 @@ vrrp_instance VI_1 {
 
 Keepalived 根据脚本退出码判断健康：0 表示成功，非 0 表示失败。本例连续两次失败进入故障状态，连续两次成功恢复，配置含义见[官方配置手册](https://keepalived.org/documentation/keepalived-conf/)。脚本检测的是前置 Nginx 进程状态，不代表每个后端应用都健康，还需配合 LB 与入口探针。
 
+在两台前置代理节点上创建同一路径的脚本，与前面 `vrrp_script` 的配置保持一致：
+
 ~~~bash
+cat > /etc/keepalived/check_nginx.sh <<'EOF'
 #!/bin/bash
 # Nginx不活跃时尝试启动，再通过退出码向Keepalived报告状态。
 if ! /usr/bin/systemctl is-active --quiet nginx; then
@@ -2441,6 +2445,7 @@ if ! /usr/bin/systemctl is-active --quiet nginx; then
     sleep 2
 fi
 /usr/bin/systemctl is-active --quiet nginx
+EOF
 ~~~
 
 ~~~sh

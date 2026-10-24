@@ -13,7 +13,7 @@ aliases:
 
 ## 元信息
 
-- **原始文档**：[[k8s基础-yaml-apply]]
+- **原始文档**：[[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply]]
 - **领域**：Kubernetes 声明式配置与字段所有权
 - **摄入日期**：2026-09-12
 

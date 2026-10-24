@@ -44,11 +44,11 @@ Kubernetes Ingress 是描述 HTTP/HTTPS 入口路由的 API 资源，需要具�
 核心文章位于 `Docker-Kubernetes/k8s-basic-resources/`，Ingress Controller 的 Helm 部署位于 `Docker-Kubernetes/k8s-networking-service-mesh/`。
 
 
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress|k8s基础-ingress]]
+- [[Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress|k8s基础-ingress]]
 - [[Docker-Kubernetes/k8s-networking-service-mesh/helm部署ingress-nginx|helm部署ingress-nginx]]
 - [[Docker-Kubernetes/k8s-networking-service-mesh/helm部署external-dns|helm部署external-dns]]
 - [[cert-manager 实战：Helm 部署、TLS 自动签发与续期|cert-manager 实战：Helm 部署、TLS 自动签发与续期]]
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|k8s基础-Service]]
+- [[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service|k8s基础-Service]]
 - [[Docker-Kubernetes/k8s-networking-service-mesh/k8s集群网络安全|k8s集群网络安全]]
 
 ## 相关概念与实体

@@ -11,7 +11,7 @@ sources:
   - "[[Docker-Kubernetes/k8s-db-middleware/helm部署mysql]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署mysql集群]]"
   - "[[Python/python-运维开发/python-mysql]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob]]"
   - "[[Docker-Kubernetes/k8s-monitoring-logging/Prometheus监控非云原生应用-主机]]"
 ---
 
@@ -54,7 +54,7 @@ MySQL 是最流行的开源关系型数据库，支持主从复制、读写分�
 - [[Docker-Kubernetes/k8s-db-middleware/helm部署mysql|helm部署mysql]]：bitnami Chart 的单节点与主从（replication）模式配置，以及客户端连接方式
 - [[Docker-Kubernetes/k8s-db-middleware/Operator部署mysql集群|Operator部署mysql集群]]：NDB Operator 部署 MySQL NDB Cluster（管理、数据、SQL 节点）及集群外访问
 - [[Python/python-运维开发/python-mysql|python-mysql]]：MySQL 安装与增删改查，用 mysql-connector-python 操作数据库
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob|k8s基础-job-cronjob]]：用 CronJob 定时执行 mysqldump 全库备份
+- [[Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob|k8s基础-job-cronjob]]：用 CronJob 定时执行 mysqldump 全库备份
 - [[Docker-Kubernetes/k8s-monitoring-logging/Prometheus监控非云原生应用-主机|Prometheus监控非云原生应用-主机]]：为 MySQL 创建监控账号并部署 MySQL Exporter 接入 Prometheus
 
 ## 知识空白

@@ -5,8 +5,8 @@ tags:
   - kubernetes/lifecycle
 date: 2026-10-24
 sources:
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Finalizer与资源删除]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/20-k8s基础-Finalizer与资源删除]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/10-k8s基础-namespace-资源分配]]"
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD基础]]"
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD Image Updater]]"
   - "[[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑]]"
@@ -41,8 +41,8 @@ Finalizer 是 Kubernetes 资源对象 `metadata.finalizers` 字段中的字符�
 
 ## 在本仓库中的覆盖
 
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Finalizer与资源删除]]：Finalizer 的完整机制、内置/常见 Finalizer 清单、五大"删不掉"场景的诊断与修复、controller-runtime 中编写 Finalizer 的完整代码示例、与 Graceful Shutdown 机制的区分
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配]]：Namespace 因 `spec.finalizers` 未清空卡在 Terminating 的实战修复脚本（导出 JSON 清空 finalizers 后 PUT 到 `/finalize` 端点）
+- [[Docker-Kubernetes/k8s-basic-resources/20-k8s基础-Finalizer与资源删除]]：Finalizer 的完整机制、内置/常见 Finalizer 清单、五大"删不掉"场景的诊断与修复、controller-runtime 中编写 Finalizer 的完整代码示例、与 Graceful Shutdown 机制的区分
+- [[Docker-Kubernetes/k8s-basic-resources/10-k8s基础-namespace-资源分配]]：Namespace 因 `spec.finalizers` 未清空卡在 Terminating 的实战修复脚本（导出 JSON 清空 finalizers 后 PUT 到 `/finalize` 端点）
 - [[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD基础]]、[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD Image Updater]]：ArgoCD Application/AppProject 上配置 `resources-finalizer.argocd.argoproj.io` 的实际 YAML 用法
 - [[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑]]：说明 CSI 驱动和 `kubernetes.io/pvc-protection` 可能使 PVC 停留在 `Terminating`，强制清理前需确认外部资源已安全处理
 

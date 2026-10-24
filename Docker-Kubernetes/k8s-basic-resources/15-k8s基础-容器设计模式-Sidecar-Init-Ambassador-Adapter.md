@@ -20,7 +20,7 @@ tags:
 
 一个 Web 服务除了处理请求，可能还需要准备配置、转发日志、连接数据库、输出监控指标。将这些任务放进同一个镜像，会让依赖和发布节奏互相牵制；拆成多个独立 Pod，又要处理额外的网络与数据共享。
 
-Pod 允许多个容器共享网络命名空间，并按需挂载同一组卷。本文围绕这种协作方式，介绍 Sidecar、Init Container、Ambassador 和 Adapter。先看容器何时启动、通过什么交换数据，再看配置示例。示例中的业务镜像与外部服务需要自行准备，镜像版本保留原案例用于说明结构，上线前应选择仍受支持的版本并固定标签或摘要。
+Pod 允许多个容器共享网络命名空间，并按需挂载同一组卷。本文围绕这种协作方式，介绍 Sidecar、Init Container、Ambassador 和 Adapter。先看容器何时启动、通过什么交换数据，再看配置示例。示例中的业务镜像与外部服务需要自行准备，这些镜像用于说明配置结构，上线前应选择仍受支持的版本并固定标签或摘要。
 
 ## 什么是容器设计模式？
 
@@ -170,8 +170,8 @@ spec:
     args:
     - |
       echo "初始化应用环境..."
-      mkdir -p /shared/config
-      echo "app.env=production" > /shared/config/app.properties
+      mkdir -p /shared
+      echo "app.env=production" > /shared/app.properties
       echo "初始化完成"
     volumeMounts:
     - name: shared-data
@@ -191,7 +191,7 @@ spec:
     emptyDir: {}
 ```
 
-这个例子展示配置写入与挂载关系：初始化容器写入 `/shared/config/app.properties`，主容器会在 `/app/config/config/app.properties` 看到它。`openjdk:11-jre` 本身不包含 `/app/app.jar`，需要替换成打包了该 JAR 的业务镜像；如果希望文件直接出现在 `/app/config/app.properties`，应将主容器的挂载点改为 `/app` 或调整写入路径。
+这个例子展示配置写入与挂载关系：初始化容器写入 `/shared/app.properties`，主容器会在 `/app/config/app.properties` 看到它。`openjdk:11-jre` 本身不包含 `/app/app.jar`，需要替换成打包了该 JAR 的业务镜像。
 
 另一种用法是在 Init Container 中从 Git 拉取静态文件到共享卷，再由 Nginx 提供服务。应固定提交版本，避免同一部署的不同副本因“拉取最新代码”而运行不同内容。
 

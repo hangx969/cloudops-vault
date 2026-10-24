@@ -1026,7 +1026,7 @@ spec:
 
 ## StatefulSet 为每个序号创建独立 PVC
 
-StatefulSet 的 `volumeClaimTemplates` 位于 `.spec` 下，会为每个模板和 Pod 序号创建 PVC。这里用三副本 RabbitMQ 展示完整的存储关联：Pod 0、1、2 各有一份数据卷，同一序号重建后继续使用相应 PVC。更多身份与保留策略见 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset]]。
+StatefulSet 的 `volumeClaimTemplates` 位于 `.spec` 下，会为每个模板和 Pod 序号创建 PVC。这里用三副本 RabbitMQ 展示完整的存储关联：Pod 0、1、2 各有一份数据卷，同一序号重建后继续使用相应 PVC。更多身份与保留策略见 [[Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset]]。
 
 下面是 RabbitMQ 3.13.6 的历史版本化实验，不是当前生产版本推荐。先创建 `public-service` 命名空间，并在启动 StatefulSet 前准备下方 ConfigMap、Secret、RBAC 与 Service，确认 `nfs-csi` 已能供应卷。第三方镜像、共享存储以及占位凭据都需要按环境验证和替换。生产部署可优先评估 RabbitMQ 官方 Operator。
 

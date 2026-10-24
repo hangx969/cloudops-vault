@@ -157,7 +157,7 @@ kubectl create job hello-manual-test --from=cronjob/cj-hello -n default
 
 ### 定期备份 MySQL
 
-先准备 `cronjob` 命名空间、名为 `nfs-csi` 的 StorageClass，以及 `mysql.default` 对应的 MySQL Service。下面的第三方镜像是原实验所用版本，使用前需要检查来源、工具版本和仓库可访问性。备份文件写入 PVC，Pod 结束后仍可保留。
+先准备 `cronjob` 命名空间、名为 `nfs-csi` 的 StorageClass，以及 `mysql.default` 对应的 MySQL Service。示例使用第三方 MySQL 工具镜像，实验前需要检查来源、工具版本和仓库可访问性。备份文件写入 PVC，Pod 结束后仍可保留。
 
 生产环境应使用受限备份账号，并将凭据放在 Secret 中。这个案例通过 `secretKeyRef` 读取 `mysql-backup-credentials` 的 `password` 键；该 Secret 需预先在 `cronjob` 命名空间创建，`user` 键保存备份用户名。MySQL 客户端配置文件通常比环境变量更适合严格的凭据管理，这里用环境变量展示 Secret 的引用方式。Kubernetes 的[Secret 用法](https://kubernetes.io/docs/concepts/configuration/secret/)说明了相应配置方式。
 
@@ -267,7 +267,7 @@ subjects:
   namespace: cronjob
 ~~~
 
-创建 CronJob。原案例中的第三方 `kubectl:latest` 镜像保留为环境示例，实际使用应换成来源可信、固定版本且与 API server 版本偏差符合支持范围的镜像：
+接着创建 CronJob。下面的第三方 `kubectl:latest` 镜像用于说明调用方式；实际使用应选择来源可信、固定版本且符合 API server 版本偏差要求的镜像：
 
 ~~~yaml
 apiVersion: batch/v1

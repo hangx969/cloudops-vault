@@ -5,7 +5,7 @@ tags:
   - kubernetes/extensibility
 date: 2026-05-04
 sources:
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-自定义CRD资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署Redis集群]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署mysql集群]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/helm部署strimzi-kafka]]"
@@ -43,7 +43,7 @@ Operator 模式是 Kubernetes 中将 CRD（自定义资源定义）与自定义 
 
 ## 在本仓库中的覆盖
 
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-自定义CRD资源]]：Operator 的定义、组成（CRD + Controller）、使用步骤、与 Helm 的对比
+- [[Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源]]：Operator 的定义、组成（CRD + Controller）、使用步骤、与 Helm 的对比
 - [[Docker-Kubernetes/k8s-db-middleware/Operator部署Redis集群]]：OT-Redis-Operator 部署 Redis 集群的完整实践
 - [[Docker-Kubernetes/k8s-db-middleware/Operator部署mysql集群]]：MySQL NDB Operator 部署分布式数据库集群
 - [[Docker-Kubernetes/k8s-db-middleware/helm部署strimzi-kafka]]：Strimzi Operator 部署 Kafka 集群，展示 CRD 资源的层次化管理

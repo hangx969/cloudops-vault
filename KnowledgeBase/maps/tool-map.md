@@ -49,7 +49,7 @@ sources:
   - "[[Docker-Kubernetes/docker/docker部署nginx-tomcat-httpd-go-python服务]]"
   - "[[Docker-Kubernetes/docker/docker部署lnmp网站]]"
   - "[[Docker-Kubernetes/docker/docker无需本地环境从DockerHub下载镜像并保存为tar]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源]]"
   - "[[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤]]"
   - "[[Docker-Kubernetes/helm/helmv3-安装与使用]]"
   - "[[Docker-Kubernetes/k8s-image-management/Harbor 部署与使用指南]]"
@@ -241,7 +241,7 @@ sources:
 
 ### Kubernetes
 **相关文档（130+ 篇）：**
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] ⭐ 推荐入口
+- [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] ⭐ 推荐入口
 - [[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤|安装k8s-1.35-基于rockylinux10-最新步骤]] — 最新安装
 - 完整目录参见 [[KnowledgeBase/maps/kubernetes-map|kubernetes-map]]
 

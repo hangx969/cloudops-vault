@@ -103,7 +103,7 @@ ctr -n k8s.io images pull --plain-http registry.example.com/team/app:v1
 
 ### nerdctl：保留 Docker CLI 的操作习惯
 
-下面保留一个历史版本的安装示例，用于说明二进制安装过程；`1.7.6` 不是通用推荐版本，实际下载前应确认 CPU 架构、containerd 兼容性和[nerdctl 发布说明](https://github.com/containerd/nerdctl/releases)。
+下面用一个历史版本演示安装过程，用于说明二进制安装过程；`1.7.6` 不是通用推荐版本，实际下载前应确认 CPU 架构、containerd 兼容性和[nerdctl 发布说明](https://github.com/containerd/nerdctl/releases)。
 
 ~~~sh
 # 历史示例：Linux amd64，nerdctl 1.7.6

@@ -14,7 +14,7 @@ sources:
   - "[[Python/python-运维开发/python-tomcat]]"
   - "[[Python/python-运维开发/python-GUI-tkinter]]"
   - "[[Python/python-运维开发/python-游戏开发]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理]]"
 aliases:
   - Python DevOps
   - Python运维
@@ -47,7 +47,7 @@ Python 运维开发是指使用 Python 语言编写自动化脚本和工具来�
 - [[Python/python-运维开发/python-tomcat|python-tomcat]]
 - [[Python/python-运维开发/python-GUI-tkinter|python-GUI-tkinter]]
 - [[Python/python-运维开发/python-游戏开发|python-游戏开发]]
-- [[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]]
+- [[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]]
 
 ## 与其他概念的关系
 - [[KnowledgeBase/concepts/自动化运维|自动化运维]]

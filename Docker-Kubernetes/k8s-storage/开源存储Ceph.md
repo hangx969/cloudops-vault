@@ -1409,7 +1409,7 @@ EOF
 - [Ceph 架构文档](https://docs.ceph.com/en/tentacle/architecture/)、[PG 修复说明](https://docs.ceph.com/en/pacific/rados/operations/pg-repair/)。
 - [Rook 1.12 Quickstart](https://rook.github.io/docs/rook/v1.12/Getting-Started/quickstart/#cluster-environments)：旧版 Rook 示例的版本参考。
 - [[Docker-Kubernetes/k8s-storage/分布式存储全景-架构与发展路线|分布式存储全景]]
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|Kubernetes 存储基础]]
+- [[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage|Kubernetes 存储基础]]
 - [[Docker-Kubernetes/k8s-storage/k8s删除PVC后PV数据保护与复用避坑|PV/PVC 数据保护与复用]]
 - [[Docker-Kubernetes/k8s-storage/开源存储Longhorn，K8s的轻量块存储|Longhorn]]
 - [[Docker-Kubernetes/k8s-storage/开源存储DeepSeek 3FS，AI原生的并行文件系统|DeepSeek 3FS]]

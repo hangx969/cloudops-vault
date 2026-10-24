@@ -33,7 +33,7 @@ Prometheus 服务端通常作为集中式采集与查询服务部署；按节点
 
 ## 示例：使用 DaemonSet 部署 Fluentd
 
-下面保留日志采集器的完整 Pod 模板，镜像使用 Kubernetes 官方示例中的固定版本。它演示节点部署与目录挂载，真正接入日志平台时还需要匹配日志格式、Fluentd 配置与输出目的地。`/var/log` 常用于读取 CRI 日志；`/var/lib/docker/containers` 是历史 Docker 日志目录，纯 containerd 节点通常不依赖它。不要据此假定所有运行时都把日志写到相同路径。
+下面的日志采集器使用完整 Pod 模板，镜像使用 Kubernetes 官方示例中的固定版本。它演示节点部署与目录挂载，真正接入日志平台时还需要匹配日志格式、Fluentd 配置与输出目的地。`/var/log` 常用于读取 CRI 日志；`/var/lib/docker/containers` 是历史 Docker 日志目录，纯 containerd 节点通常不依赖它。不要据此假定所有运行时都把日志写到相同路径。
 
 ```yaml
 apiVersion: apps/v1

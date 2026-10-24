@@ -317,7 +317,7 @@ kubectl get pvc,pods -n mongodb
 
 Etcd 是分布式键值存储。完整的 Etcd Operator 可以把成员创建、替换、备份与恢复组织成调谐流程，但成员扩容并不等于按 CPU 指标水平扩容普通 Web 服务；仲裁、成员变更顺序和数据恢复都需要领域逻辑。
 
-[CoreOS etcd-operator 仓库](https://github.com/coreos/etcd-operator)已归档。本节拆解 EtcdCluster 的 CRD、镜像和事件回调结构，用于理解各部分接口；它还不是可安装的数据库产品。示意代码中引用的旧依赖 API 未形成可构建项目，也没有真正的成员管理实现；想动手开发完整控制器，可继续阅读 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Operator开发实战-Kubebuilder]]。
+[CoreOS etcd-operator 仓库](https://github.com/coreos/etcd-operator)已归档。本节拆解 EtcdCluster 的 CRD、镜像和事件回调结构，用于理解各部分接口；它还不是可安装的数据库产品。示意代码中引用的旧依赖 API 未形成可构建项目，也没有真正的成员管理实现；想动手开发完整控制器，可继续阅读 [[Docker-Kubernetes/k8s-basic-resources/23-k8s基础-Operator开发实战-Kubebuilder]]。
 
 ### 1. 定义 EtcdCluster 的数据结构
 

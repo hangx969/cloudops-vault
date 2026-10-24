@@ -6,7 +6,7 @@ tags:
   - high-availability
 date: 2026-10-24
 sources:
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战]]"
 aliases:
   - PDB实战摘要
 ---
@@ -14,7 +14,7 @@ aliases:
 # K8s PodDisruptionBudget 实战
 
 ## 元信息
-- **原始文档**：[[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战]]
+- **原始文档**：[[Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战]]
 - **领域**：Kubernetes / 高可用
 - **摄入日期**：2026-06-06
 

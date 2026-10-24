@@ -11,7 +11,7 @@ aliases:
 
 服务需要同时运行三个实例时，手工创建三个 Pod 只解决了第一次启动。之后还会遇到 Pod 故障、扩容和镜像升级：谁补齐副本，怎样逐步替换，失败后又如何退回原版本？Deployment 通过管理 ReplicaSet，把这些动作组织成可观察的发布过程。
 
-本文先说明 ReplicaSet 与 Deployment 的关系，再用完整 YAML 练习扩缩容、更新和回滚，最后把 Service 流量切换接入蓝绿与金丝雀实验。实验需要可用集群、kubectl 和镜像拉取条件；NodePort 示例还需要节点端口可达。文中第三方教学镜像保留原实验用途，实际使用前应检查来源与可用性。
+本文先说明 ReplicaSet 与 Deployment 的关系，再用完整 YAML 练习扩缩容、更新和回滚，最后把 Service 流量切换接入蓝绿与金丝雀实验。实验需要可用集群、kubectl 和镜像拉取条件；NodePort 示例还需要节点端口可达。文中使用第三方教学镜像，实验前应检查来源与可用性。
 
 ## ReplicaSet 先解决副本数量问题
 
@@ -195,7 +195,7 @@ kubectl rollout undo deploy dep-myapp-blue --to-revision=1
 
 ### 修改策略
 
-修改deployment的更新策略:
+可以直接 patch 当前 Deployment 的更新策略：
 
 ```bash
 #通过kubectl patch改
@@ -384,7 +384,7 @@ Service 清单也需要在使用前提交；NodePort `30062` 应未被其他 Ser
 
 ### 暂停 rollout 可以观察，但不能精确锁定一份新副本
 
-原实验尝试在更新镜像后立即暂停 Deployment：
+下面的命令在更新镜像后立即暂停 Deployment，用于观察暂停时机：
 
 ```sh
 kubectl apply -f dep-green.yaml

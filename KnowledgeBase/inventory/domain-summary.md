@@ -112,7 +112,7 @@ date: 2026-04-16
 - AKS 与安全集成（Workload Identity + KeyVault）是高价值实战内容
 - 排障工具矩阵在其他云平台笔记中没有对标
 
-**关联领域：** [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]]（K8s 通用概念）、[[Aliyun/计算/ECS|ECS]]（对标 Azure VM）
+**关联领域：** [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]]（K8s 通用概念）、[[Aliyun/计算/ECS|ECS]]（对标 Azure VM）
 
 ---
 

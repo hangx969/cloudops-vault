@@ -36,6 +36,6 @@ aliases:
 - [[KnowledgeBase/concepts/CICD]]
 
 ## 值得注意
-- 与已有 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment]] 中的蓝绿/金丝雀基础原理互补——已有文章讲原理和简单 YAML，本文提供 **Nginx Ingress 和 Argo Rollouts 两种生产级方案**
+- 与已有 [[Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment]] 中的蓝绿/金丝雀基础原理互补——已有文章讲原理和简单 YAML，本文提供 **Nginx Ingress 和 Argo Rollouts 两种生产级方案**
 - 与已有 [[Docker-Kubernetes/k8s-networking-service-mesh/k8s精细化流量管理-istio#灰度发布|Istio 灰度发布]] 互补——Istio 方案需要服务网格，本文的 Nginx Ingress 方案更轻量
 - 渐进式流量调整脚本（canary-progress.sh）可直接用于生产环境的半自动金丝雀发布

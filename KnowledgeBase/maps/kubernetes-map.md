@@ -18,16 +18,16 @@ sources:
   - "[[Docker-Kubernetes/k8s-CICD/ArgoCD/ArgoCD同步故障排查]]"
   - "[[开源存储DeepSeek 3FS，AI原生的并行文件系统]]"
   - "[[Docker-Kubernetes/docker/docker基础]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply]]"
-  - "[[01-k8s基础-pod基础]]"
-  - "[[02-k8s基础-pod-健康探针]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/04-k8s基础-pod-健康探针]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress]]"
   - "[[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage]]"
   - "[[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤]]"
   - "[[Docker-Kubernetes/k8s-installation-management/2025最新-企业级高可用集群-基于rockylinux]]"
   - "[[Docker-Kubernetes/k8s-installation-management/legacy-versions/二进制安装k8s高可用集群]]"
@@ -42,23 +42,23 @@ sources:
   - "[[Docker-Kubernetes/k8s-scaling/k8s-HPA-VPA]]"
   - "[[Docker-Kubernetes/k8s-security-auth/helm部署kyverno和policy-reporter]]"
   - "[[AI/企业级私有化大模型/一个 Deployment 就能跑 vLLM，为什么还需要 KServe？]]"
-  - "[[04-K8s基础-pod调度-亲和力]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral]]"
-  - "[[03-k8s基础-pod调度-标签与选择器实战]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-daemonset]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-认证-授权-准入]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s-APIServer深度剖析-请求链路-认证授权-生产调优]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-自定义CRD资源]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-kubeadm]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Operator开发实战-Kubebuilder]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Finalizer与资源删除]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/06-K8s基础-pod调度-亲和力]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/16-k8s基础-临时容器ephemeral]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/05-k8s基础-pod调度-标签与选择器实战]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/08-k8s基础-daemonset]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/10-k8s基础-namespace-资源分配]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/19-k8s-APIServer深度剖析-请求链路-认证授权-生产调优]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/25-k8s基础-kubeadm]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/23-k8s基础-Operator开发实战-Kubebuilder]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/20-k8s基础-Finalizer与资源删除]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter]]"
   - "[[Docker-Kubernetes/k8s-installation-management/etcd高可用配置以及模拟集群故障和恢复]]"
   - "[[Docker-Kubernetes/k8s-installation-management/k8s故障排查指南]]"
   - "[[Docker-Kubernetes/k8s-installation-management/k8s生产环境优化与最佳实践]]"
@@ -135,21 +135,21 @@ sources:
 
 ### 第一阶段：容器基础
 1. [[Docker-Kubernetes/docker/docker基础|docker基础]] — Docker 核心概念
-2. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd|k8s基础-容器运行时-containerd]] — containerd
+2. [[Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd|k8s基础-容器运行时-containerd]] — containerd
 
 ### 第二阶段：K8s 核心资源
-3. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] — 架构总览
-4. [[k8s基础-yaml-apply|k8s基础-yaml-apply]] — YAML 编写、CSA/SSA 合并机制与字段所有权
-5. [[01-k8s基础-pod基础|Pod 入门]] — 容器协作、常用字段、生命周期与优雅退出
-6. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|k8s基础-deployment]] — Deployment
-7. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|k8s基础-Service]] — Service
-8. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress|k8s基础-ingress]] — Ingress（2399 行深度文章）
+3. [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] — 架构总览
+4. [[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply|k8s基础-yaml-apply]] — YAML 编写、CSA/SSA 合并机制与字段所有权
+5. [[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础|Pod 入门]] — 容器协作、常用字段、生命周期与优雅退出
+6. [[Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment|k8s基础-deployment]] — Deployment
+7. [[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service|k8s基础-Service]] — Service
+8. [[Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress|k8s基础-ingress]] — Ingress（2399 行深度文章）
 9. [[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret|k8s基础-configMap-Secret]] — 配置管理
-10. [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|k8s基础-storage]] — 存储
+10. [[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage|k8s基础-storage]] — 存储
 
-探针专题：[[02-k8s基础-pod-健康探针|Kubernetes 健康探针]] — 学习 Pod 与 Service 后，继续阅读探针分工、参数与完整示例，再结合重启风暴案例排查误杀。
+探针专题：[[Docker-Kubernetes/k8s-basic-resources/04-k8s基础-pod-健康探针|Kubernetes 健康探针]] — 学习 Pod 与 Service 后，继续阅读探针分工、参数与完整示例，再结合重启风暴案例排查误杀。
 
-补充阅读：[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet Recreate 更新策略（1.37 Alpha）]] — 启用条件、整体重建与分区灰度的区别、PVC/PV 生命周期及原文 11 个案例的核验说明。
+补充阅读：[[Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|StatefulSet Recreate 更新策略（1.37 Alpha）]] — 启用条件、整体重建与分区灰度的区别、PVC/PV 生命周期及原文 11 个案例的核验说明。
 
 ### 第三阶段：安装部署
 11. [[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤|安装k8s-1.35-基于rockylinux10-最新步骤]] — 最新版安装
@@ -180,18 +180,18 @@ sources:
 ### 基础资源（26 篇）
 | 主题 | 文章 |
 |------|------|
-| 架构 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] |
-| Pod | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-pod|Pod 入门]]、[[Docker-Kubernetes/k8s-basic-resources/K8s基础-pod调度-亲和力|K8s基础-pod调度-亲和力]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral|k8s基础-临时容器ephemeral]]、[[03-k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] |
+| 架构 | [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] |
+| Pod | [[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础|Pod 入门]]、[[Docker-Kubernetes/k8s-basic-resources/06-K8s基础-pod调度-亲和力|K8s基础-pod调度-亲和力]]、[[Docker-Kubernetes/k8s-basic-resources/16-k8s基础-临时容器ephemeral|k8s基础-临时容器ephemeral]]、[[Docker-Kubernetes/k8s-basic-resources/05-k8s基础-pod调度-标签与选择器实战\|K8s 标签与选择器避坑：5 条规则与生产案例]] |
 | 健康探针 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-健康探针|健康探针配置与重启风暴排查]] |
-| 工作负载 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|k8s基础-deployment]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-daemonset|k8s基础-daemonset]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset|k8s基础-statefulset]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob|k8s基础-job-cronjob]]、[[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战|PodDisruptionBudget 实战]] |
-| 网络 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|k8s基础-Service]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress|k8s基础-ingress]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico|k8s基础-Calico]] |
-| 存储 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|k8s基础-storage]] |
-| 配置 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-yaml-apply|k8s基础-yaml-apply]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配|k8s基础-namespace-资源分配]] |
-| 安全 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-认证-授权-准入|k8s基础-认证-授权-准入]]、[[Docker-Kubernetes/k8s-basic-resources/k8s-APIServer深度剖析-请求链路-认证授权-生产调优\|K8s API Server：请求链路、认证授权与生产调优]] |
-| 扩展 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-自定义CRD资源|k8s基础-自定义CRD资源]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-kubeadm|k8s基础-kubeadm]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd|k8s基础-容器运行时-containerd]]、[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Operator开发实战-Kubebuilder\|Kubebuilder：从零开发 K8s Operator]] |
-| 生命周期 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Finalizer与资源删除|k8s基础-Finalizer与资源删除]] |
-| 自动化 | [[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]] |
-| 设计模式 | [[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter\|K8s 四种容器设计模式]] |
+| 工作负载 | [[Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment|k8s基础-deployment]]、[[Docker-Kubernetes/k8s-basic-resources/08-k8s基础-daemonset|k8s基础-daemonset]]、[[Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset|k8s基础-statefulset]]、[[Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob|k8s基础-job-cronjob]]、[[Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战|PodDisruptionBudget 实战]] |
+| 网络 | [[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service|k8s基础-Service]]、[[Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress|k8s基础-ingress]]、[[Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico|k8s基础-Calico]] |
+| 存储 | [[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage|k8s基础-storage]] |
+| 配置 | [[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply|k8s基础-yaml-apply]]、[[Docker-Kubernetes/k8s-basic-resources/10-k8s基础-namespace-资源分配|k8s基础-namespace-资源分配]] |
+| 安全 | [[Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入|k8s基础-认证-授权-准入]]、[[Docker-Kubernetes/k8s-basic-resources/19-k8s-APIServer深度剖析-请求链路-认证授权-生产调优\|K8s API Server：请求链路、认证授权与生产调优]] |
+| 扩展 | [[Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源|k8s基础-自定义CRD资源]]、[[Docker-Kubernetes/k8s-basic-resources/25-k8s基础-kubeadm|k8s基础-kubeadm]]、[[Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd|k8s基础-容器运行时-containerd]]、[[Docker-Kubernetes/k8s-basic-resources/23-k8s基础-Operator开发实战-Kubebuilder\|Kubebuilder：从零开发 K8s Operator]] |
+| 生命周期 | [[Docker-Kubernetes/k8s-basic-resources/20-k8s基础-Finalizer与资源删除|k8s基础-Finalizer与资源删除]] |
+| 自动化 | [[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]] |
+| 设计模式 | [[Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter\|K8s 四种容器设计模式]] |
 
 ### 安装与运维管理（21 篇）
 | 主题 | 文章 |

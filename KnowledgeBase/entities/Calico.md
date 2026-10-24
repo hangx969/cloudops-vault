@@ -7,8 +7,8 @@ tags:
 date: 2026-10-24
 sources:
   - "[[Docker-Kubernetes/k8s-networking-service-mesh/MetalLB实战-裸机Kubernetes-LoadBalancer]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源]]"
   - "[[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤]]"
   - "[[Docker-Kubernetes/k8s-installation-management/2025最新-企业级高可用集群-基于rockylinux]]"
   - "[[Docker-Kubernetes/k8s-installation-management/k8s部署防火墙端口配置]]"
@@ -49,8 +49,8 @@ Calico 是 Kubernetes 网络与安全方案，提供 Pod 地址管理、跨节�
 - `Docker-Kubernetes/k8s-installation-management/` 中涉及 Calico CNI 部署
 - `Docker-Kubernetes/k8s-basic-resources/` 中涉及 K8s 三层网络协作（Calico + Service + Ingress）
 - ArgoCD 部署中涉及 Calico 与 CoreDNS 的 DNS 解析问题排查
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico|K8s基础-Calico]]：Calico 功能与组件，BGP 路由与 IPIP/VXLAN 封装关系、无封装前提、IPPool 与 Operator 配置片段，以及与 Flannel、Weave Net、Cilium 的对比
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]]：Calico 作为集群 Addon，负责 Pod IP 分配与跨节点通信
+- [[Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico|K8s基础-Calico]]：Calico 功能与组件，BGP 路由与 IPIP/VXLAN 封装关系、无封装前提、IPPool 与 Operator 配置片段，以及与 Flannel、Weave Net、Cilium 的对比
+- [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]]：Calico 作为集群 Addon，负责 Pod IP 分配与跨节点通信
 - [[Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤|安装k8s-1.35-基于rockylinux10-最新步骤]]：下载 calico.yaml，用脚本插入 `IP_AUTODETECTION_METHOD` 指定网卡，并验证跨节点网络
 - [[Docker-Kubernetes/k8s-installation-management/2025最新-企业级高可用集群-基于rockylinux|2025最新-企业级高可用集群-基于rockylinux]]：禁止 NetworkManager 管理 Calico 网卡，指定网卡后部署 Calico
 - [[Docker-Kubernetes/k8s-installation-management/k8s部署防火墙端口配置|k8s部署防火墙端口配置]]：按 IPIP、VXLAN、BGP、Typha 模式列出需要放行的端口

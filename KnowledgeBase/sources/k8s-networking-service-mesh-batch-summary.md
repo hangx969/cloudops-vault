@@ -95,7 +95,7 @@ aliases:
 - [[Docker-Kubernetes/k8s-networking-service-mesh/k8s精细化流量管理-istio#Envoy|Envoy]]: 数据面代理
 - [[Docker-Kubernetes/k8s-networking-service-mesh/helm部署ingress-nginx|Ingress-Nginx]]: K8s Ingress 控制器
 - [[Docker-Kubernetes/k8s-networking-service-mesh/helm部署external-dns|External-DNS]]: DNS 自动同步工具
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源#Addons(CoreDNS,Calico)|CoreDNS]]: K8s 集群 DNS 服务
+- [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源#CoreDNS 与 Calico 等插件|CoreDNS]]: K8s 集群 DNS 服务
 - [[Docker-Kubernetes/k8s-networking-service-mesh/k8s精细化流量管理-istio#Pilot|Pilot]]: Istio 控制面服务发现组件
 
 ## 交叉主题发现

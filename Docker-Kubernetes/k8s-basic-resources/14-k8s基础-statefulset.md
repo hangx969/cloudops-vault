@@ -32,7 +32,7 @@ MySQL、ZooKeeper、MongoDB、Elasticsearch、Redis、Kafka 等都可能借助 S
 
 StatefulSet 的 `.spec.serviceName` 指向负责网络身份的 Service。按标准使用方式，先创建相应 Headless Service，也就是 `clusterIP: None`，再创建 StatefulSet。Service 提供 DNS 域，并不负责管理 StatefulSet 的生命周期。
 
-下面使用已存在的 `sc-nfs` StorageClass。`volumeClaimTemplates` 创建的是 PVC，PV 能否动态创建取决于该 StorageClass 对应供应器；也可由管理员预先准备匹配的 PV。这个 Nginx 例子只演示独立数据目录，没有自动生成站点内容。
+下面使用已存在的 `sc-nfs` StorageClass。若沿用前一篇的 NFS CSI 实验，应把示例中的 `sc-nfs` 换成实际创建的 `nfs-csi`。`volumeClaimTemplates` 创建的是 PVC，PV 能否动态创建取决于该 StorageClass 对应供应器；也可由管理员预先准备匹配的 PV。这个 Nginx 例子只演示独立数据目录，没有自动生成站点内容。
 
 ```yaml
 apiVersion: v1
@@ -86,7 +86,17 @@ spec:
           mountPath: /usr/share/nginx/html
 ```
 
-`image: nginx` 保留教学示例写法，生产环境应改为经过验证的固定版本或摘要。PVC 挂到站点目录后会覆盖镜像中该路径原有内容的可见性，空卷不会自动复制镜像内的首页；验证 HTTP 内容前，需要准备测试文件。
+将清单保存为 `sts-web.yaml`，创建后分别观察 Pod、PVC 和发布状态：
+
+```sh
+kubectl apply -f sts-web.yaml
+kubectl get service svc-sts-nginx
+kubectl get statefulset sts-web
+kubectl get pods,pvc
+kubectl rollout status statefulset/sts-web
+```
+
+`image: nginx` 用于演示结构，生产环境应改为经过验证的固定版本或摘要。PVC 挂到站点目录后会覆盖镜像中该路径原有内容的可见性，空卷不会自动复制镜像内的首页；验证 HTTP 内容前，需要准备测试文件。
 
 ## 从主机名理解稳定网络身份
 
@@ -141,7 +151,7 @@ dig -t A svc-sts-nginx.default.svc.cluster.local @10.0.0.10
 
 ![image-20240324095254313](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202403240952473.png)
 
-Deployment 也可以挂 PVC，多个 Pod 是否共享一个卷，取决于模板引用和访问模式；它不会自动让数据同步。StatefulSet 同样允许 Pod 共享额外卷，但存储模板的常见用途，是让每个序号各持有一份稳定存储。访问模式和回收策略可结合 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage]] 阅读。
+Deployment 也可以挂 PVC，多个 Pod 是否共享一个卷，取决于模板引用和访问模式；它不会自动让数据同步。StatefulSet 同样允许 Pod 共享额外卷，但存储模板的常见用途，是让每个序号各持有一份稳定存储。访问模式和回收策略可结合 [[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage]] 阅读。
 
 ## 扩缩容与 Pod 管理策略
 

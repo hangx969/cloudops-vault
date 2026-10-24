@@ -52,11 +52,11 @@ Kubernetes（K8s）是容器编排平台，源自 Google Borg 系统，2014 年�
 
 ### 声明式资源模型
 - 所有资源通过 YAML 定义期望状态，由控制器自动实现：apiVersion、kind、metadata、spec、status
-- **Server-side Apply**：API Server 通过 `managedFields` 记录字段所有权；相比依赖 last-applied 三路合并的 Client-side Apply，它会把 kubectl、Helm、Argo CD、Operator 等多管理器之间的字段争用显式报告为冲突，详见 [[k8s基础-yaml-apply#kubectl apply：Client-side Apply 与 Server-side Apply]]
+- **Server-side Apply**：API Server 通过 `managedFields` 记录字段所有权；相比依赖 last-applied 三路合并的 Client-side Apply，它会把 kubectl、Helm、Argo CD、Operator 等多管理器之间的字段争用显式报告为冲突，详见 [[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply#kubectl apply：Client-side Apply 与 Server-side Apply]]
 - **Pause 容器**：常见 Linux 运行时借助 Pod sandbox 维持共享命名空间，容器可通过 localhost 互访；存储共享依赖显式挂载同一个 Volume
 - **Operator = CRD + Controller**：无需修改 K8s 源码即可扩展 API，适合复杂有状态应用管理
-- **PodDisruptionBudget（PDB）**：自愿中断（drain/滚动更新/升级）时的可用性保护，通过 `minAvailable` 或 `maxUnavailable` 约束同时不可用的 Pod 数量，详见 [[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战]]
-- **健康探针分工**：Startup 隔离启动阶段，Readiness 控制摘流，Liveness 仅处理重启能够修复的进程内部故障；外部依赖抖动不应直接触发容器重启，详见 [[02-k8s基础-pod-健康探针]]
+- **PodDisruptionBudget（PDB）**：自愿中断（drain/滚动更新/升级）时的可用性保护，通过 `minAvailable` 或 `maxUnavailable` 约束同时不可用的 Pod 数量，详见 [[Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战]]
+- **健康探针分工**：Startup 隔离启动阶段，Readiness 控制摘流，Liveness 仅处理重启能够修复的进程内部故障；外部依赖抖动不应直接触发容器重启，详见 [[Docker-Kubernetes/k8s-basic-resources/04-k8s基础-pod-健康探针]]
 - **多集群上下文管理**：context 绑定 cluster、user 和 namespace；kubectx/kubens 简化切换，kube-ps1 暴露当前位置，但真正的生产权限边界仍是独立凭证和 RBAC，详见 [[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理#kubectx 与 kubens：多集群快速切换]]
 
 ### 网络体系三层协同

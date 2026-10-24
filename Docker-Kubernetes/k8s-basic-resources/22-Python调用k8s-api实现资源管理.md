@@ -103,7 +103,7 @@ kubectl --kubeconfig ./config --context your-lab-context get pod po-nginx -n def
 
 `CoreV1Api` 对应核心 `v1` API，管理 Namespace、Service、Pod 等对象；`AppsV1Api` 对应 `apps/v1`，管理 Deployment 等工作负载。方法名中的 `namespaced` 表示需要传入 Namespace，`for_all_namespaces` 表示跨 Namespace 查询。
 
-下面保留全局查询和读取指定 Pod 两种用法。Pod 尚未完成调度或网络初始化时，`pod_ip` 可以是 `None`；Deployment 的 `spec.replicas` 是期望副本数，不能直接视为已就绪副本数。
+下面分别演示全局查询和读取指定 Pod。Pod 尚未完成调度或网络初始化时，`pod_ip` 可以是 `None`；Deployment 的 `spec.replicas` 是期望副本数，不能直接视为已就绪副本数。
 
 ~~~python
 from kubernetes import client, config

@@ -5,7 +5,7 @@ tags:
   - kubernetes/extensibility
 date: 2026-05-04
 sources:
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-自定义CRD资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署Redis集群]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/Operator部署mysql集群]]"
   - "[[Docker-Kubernetes/k8s-db-middleware/helm部署strimzi-kafka]]"
@@ -38,7 +38,7 @@ CRD（CustomResourceDefinition）是 Kubernetes 提供的 API 扩展机制，允
 
 ## 在本仓库中的覆盖
 
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-自定义CRD资源]]：CRD 的完整定义、创建步骤和 crontab 自定义资源示例
+- [[Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源]]：CRD 的完整定义、创建步骤和 crontab 自定义资源示例
 - [[Docker-Kubernetes/k8s-db-middleware/Operator部署Redis集群]]：RedisCluster CRD 的实际使用
 - [[Docker-Kubernetes/k8s-db-middleware/Operator部署mysql集群]]：NdbCluster CRD 的实际使用
 - [[Docker-Kubernetes/k8s-db-middleware/helm部署strimzi-kafka]]：Kafka、Topic、User 等 CRD 资源的创建

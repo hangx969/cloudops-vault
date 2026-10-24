@@ -35,7 +35,7 @@ sources:
   - "[[Python/python-运维开发/python-游戏开发]]"
   - "[[Python/python-网络编程-前端/python-Web开发-HTML-CSS-JS]]"
   - "[[Python/script-server-脚本Web化工具]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理]]"
   - "[[Database/MySQL入门]]"
   - "[[Database/源码安装redis-6.2.6-centos7]]"
   - "[[Linux-Shell/shell-scripts]]"
@@ -138,7 +138,7 @@ sources:
 
 ## 🔗 与其他领域的连接
 
-- **K8s 方向：** [[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]] — K8s API 调用
+- **K8s 方向：** [[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理|Python调用k8s-api实现资源管理]] — K8s API 调用
 - **数据库方向：** [[Database/MySQL入门|MySQL入门]]、[[Database/源码安装redis-6.2.6-centos7|源码安装redis-6.2.6-centos7]] — 数据库知识基础
 - **Linux 方向：** [[Linux-Shell/shell-scripts|shell-scripts]] — Shell vs Python 运维对比
 - **CI/CD 方向：** [[Docker-Kubernetes/k8s-CICD/发布go-python-java代码到K8S环境|发布go-python-java代码到K8S环境]] — 代码发布

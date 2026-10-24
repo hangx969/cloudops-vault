@@ -5,28 +5,28 @@ tags:
   - docker-kubernetes/k8s-basic-resources
 date: 2026-10-24
 sources:
-  - "[[04-K8s基础-pod调度-亲和力]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/06-K8s基础-pod调度-亲和力]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service]]"
   - "[[Docker-Kubernetes/k8s-configMap-secret/k8s基础-configMap-Secret]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-daemonset]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-kubeadm]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配]]"
-  - "[[01-k8s基础-pod基础]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage]]"
-  - "[[k8s基础-yaml-apply]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-自定义CRD资源]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-认证-授权-准入]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s-APIServer深度剖析-请求链路-认证授权-生产调优]]"
-  - "[[Docker-Kubernetes/k8s-basic-resources/k8s基础-Finalizer与资源删除]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/08-k8s基础-daemonset]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/25-k8s基础-kubeadm]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/10-k8s基础-namespace-资源分配]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/16-k8s基础-临时容器ephemeral]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/19-k8s-APIServer深度剖析-请求链路-认证授权-生产调优]]"
+  - "[[Docker-Kubernetes/k8s-basic-resources/20-k8s基础-Finalizer与资源删除]]"
 aliases:
   - K8s 基础资源批量摘要
   - k8s-basic-resources 批量摘要
@@ -55,7 +55,7 @@ aliases:
 
 ## 各文档摘要
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源|K8s基础-架构-组件-资源]]
+### [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|K8s基础-架构-组件-资源]]
 - 核心内容：Kubernetes 的基本概念、发展历程、核心优势，以及集群架构中控制平面（API Server、Scheduler、Controller Manager、etcd）和工作节点（kubelet、kube-proxy）的组件职责。
 - 关键知识点：
   - K8s 源自 Google Borg 系统，2014年开源，2018年从 CNCF 毕业
@@ -63,7 +63,7 @@ aliases:
   - Scheduler 监听未绑定节点的 Pod 并执行调度算法
   - K8s 相比纯 Docker 的优势：弹性伸缩、服务发现、自愈、滚动更新、声明式管理
 
-### [[01-k8s基础-pod基础|K8s基础-Pod]]
+### [[Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础|K8s基础-Pod]]
 - 核心内容：Pod 作为最小可部署单元的容器协作边界，常用字段、调度与初始化、phase 与状态展示、钩子与优雅退出，以及日志和主进程排障。
 - 关键知识点：
   - 容器共享 Pod 网络；PID 命名空间默认不共享，文件共享需显式挂载同一 Volume
@@ -71,9 +71,9 @@ aliases:
   - `containerPort` 不改变应用监听；requests 用于调度与资源保障，limits 约束运行时使用
   - 普通 Init Container 依次成功结束后，应用容器才启动
   - `PostStart` 与入口程序没有先后保证；`preStop` 与应用退出共用终止宽限期
-  - 探针配置与故障复盘见 [[02-k8s基础-pod-健康探针|健康探针专文]]，来源摘要见 [[KnowledgeBase/sources/k8s-probe-restart-storm-summary]]
+  - 探针配置与故障复盘见 [[Docker-Kubernetes/k8s-basic-resources/04-k8s基础-pod-健康探针|健康探针专文]]，来源摘要见 [[KnowledgeBase/sources/k8s-probe-restart-storm-summary]]
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-deployment|K8s基础-Deployment]]
+### [[Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment|K8s基础-Deployment]]
 - 核心内容：Deployment 控制器的概念与工作原理，包括 ReplicaSet 管理、滚动更新策略（maxSurge/maxUnavailable）、金丝雀发布与回滚机制。
 - 关键知识点：
   - Deployment 管理新旧 RS，模板变化通常产生新 RS，回到已有模板时也可能复用历史 RS
@@ -81,7 +81,7 @@ aliases:
   - maxSurge 和 maxUnavailable 支持数字或百分比，控制滚动更新节奏
   - Deployment 原生支持 RollingUpdate、Recreate 与模板回滚；蓝绿和比例灰度还需多个 Deployment、Service 或路由层配合
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset|K8s基础-StatefulSet]]
+### [[Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset|K8s基础-StatefulSet]]
 - 核心内容：StatefulSet 用于部署有状态应用，提供稳定的网络标识符、有序部署/扩缩容、持久化存储（volumeClaimTemplates）。
 - 关键知识点：
   - 有状态应用特征：Pod 独立且有序、唯一网络标识、持久存储
@@ -91,9 +91,9 @@ aliases:
   - Recreate 在 Kubernetes 1.37 中为 Alpha、默认关闭，需在 API Server 和 Controller Manager 启用 StatefulSetRecreateStrategy
   - rollingUpdate.partition 仅适用于 RollingUpdate，不能与 Recreate 组合；整体重建与分区灰度需要分开评估
   - 区分 StatefulSet 删除/缩容时的 PVC 保留策略与 PVC 删除后的 PV 回收策略，正常 Pod 替换不因 StorageClass 为 Delete 自动删除 PVC
-  - [[Docker-Kubernetes/k8s-basic-resources/k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|Recreate 更新策略章节]]：包含 4 组代码和 11 个故障案例，并说明版本、配置、存储与案例指标的核验边界
+  - [[Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset#Recreate 更新策略（Kubernetes 1.37 Alpha）|Recreate 更新策略章节]]：包含策略配置、切换与分区检查代码，以及 11 个故障案例，并说明版本、配置、存储与案例指标的核验边界
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-daemonset|K8s基础-DaemonSet]]
+### [[Docker-Kubernetes/k8s-basic-resources/08-k8s基础-daemonset|K8s基础-DaemonSet]]
 - 核心内容：DaemonSet 确保每个符合节点选择、亲和性与容忍等条件的节点运行一份 Pod，常用于日志收集、监控代理、存储守护进程等场景。
 - 关键知识点：
   - 节点加入集群自动创建 Pod，节点移除自动删除 Pod
@@ -101,7 +101,7 @@ aliases:
   - 与 Deployment 的 YAML 区别：kind 为 DaemonSet，无 replicas 字段
   - 默认 maxUnavailable=1、maxSurge=0，通常先删后建；surge 模式才允许先启动替代 Pod，两者不能同时大于 0
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-job-cronjob|K8s基础-Job-CronJob]]
+### [[Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob|K8s基础-Job-CronJob]]
 - 核心内容：Job 控制器管理一次性任务（如数据库备份），CronJob 在 Job 基础上增加定时调度能力，支持并行执行与失败重试。
 - 关键知识点：
   - Job 相比 shell/docker 的优势：环境隔离、状态追踪、失败重试、并行执行
@@ -109,7 +109,7 @@ aliases:
   - CronJob 先创建 Job，再由 Job 创建 Pod 执行任务
   - ttlSecondsAfterFinished 控制 Job 完成后自动清理
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Service|K8s基础-Service]]
+### [[Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service|K8s基础-Service]]
 - 核心内容：Service 为一组 Pod 提供稳定的访问入口和负载均衡，详解 EndpointSlice、Service DNS、四种 Service 类型与 kube-proxy 模式；Userspace/IPVS 作为历史或存量背景。
 - 关键知识点：
   - 带 selector 的 Service 根据同命名空间内的 Pod 标签维护 EndpointSlice，通过 kubernetes.io/service-name 标签关联；手动后端的端口名需匹配 Service
@@ -117,7 +117,7 @@ aliases:
   - iptables 增量同步已改善规则更新；IPVS 不能仅凭 Service 数量宣称更优，且自 1.35 弃用
   - nftables 于 1.29 引入、1.33 稳定；迁移仍需核对内核、CNI、防火墙和 NodePort 行为
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-ingress|K8s基础-Ingress]]
+### [[Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress|K8s基础-Ingress]]
 - 核心内容：Ingress 提供七层负载均衡入口，通过 Ingress Controller（如 Nginx）实现基于域名/URL 的流量路由，解决 NodePort 端口管理和四层代理的局限。
 - 关键知识点：
   - Ingress 是路由规则资源，Ingress Controller 是实际的反向代理实现
@@ -133,7 +133,7 @@ aliases:
   - 两种注入方式：Volume 挂载与 env configMapKeyRef
   - ConfigMap 实现配置与镜像解耦，支持多服务共享配置
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-storage|K8s基础-Storage]]
+### [[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage|K8s基础-Storage]]
 - 核心内容：Kubernetes 存储体系，从简单存储（EmptyDir、HostPath、NFS）到高级存储（PV/PVC）、配置存储（ConfigMap/Secret）的分层介绍。
 - 关键知识点：
   - Volume 生命周期独立于容器，实现数据持久化和容器间数据共享
@@ -141,7 +141,7 @@ aliases:
   - PV/PVC 分离存储管理与使用，PV 由管理员静态创建或供应器动态创建，PVC 表达应用的存储申请
   - 应用场景：用户数据、模型文件、配置文件、共享数据、日志文件
 
-### [[k8s基础-yaml-apply|K8s基础-YAML]]
+### [[Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply|K8s基础-YAML]]
 - 核心内容：YAML 语法基础、Kubernetes 资源字段，以及 Client-side Apply 与 Server-side Apply 的合并机制和字段所有权模型。
 - 关键知识点：
   - YAML 数据类型：纯量、数组、对象、对象列表、map
@@ -152,7 +152,7 @@ aliases:
   - SSA 通过 `managedFields` 追踪字段所有权，并把字段争用转化为显式冲突
   - CRD 列表的 map/atomic 合并语义取决于结构化 schema 和 `x-kubernetes-list-*` 注释
 
-### [[04-K8s基础-pod调度-亲和力|K8s基础-Pod调度-亲和力]]
+### [[Docker-Kubernetes/k8s-basic-resources/06-K8s基础-pod调度-亲和力|K8s基础-Pod调度-亲和力]]
 - 核心内容：K8s 四种 Pod 调度方式（自动调度、定向调度、亲和性调度、污点调度）及拓扑域概念，通过标签和亲和力规则精确控制 Pod 部署位置。
 - 关键知识点：
   - 拓扑域通过节点标签划分（主机、区域、数据中心、子网）
@@ -160,7 +160,7 @@ aliases:
   - 亲和性调度：NodeAffinity、PodAffinity、PodAntiAffinity
   - 污点与容忍：Taints 标记节点限制、Toleration 允许 Pod 调度到污点节点
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-namespace-资源分配|K8s基础-Namespace-资源分配]]
+### [[Docker-Kubernetes/k8s-basic-resources/10-k8s基础-namespace-资源分配|K8s基础-Namespace-资源分配]]
 - 核心内容：Namespace 实现集群资源逻辑隔离，通过 ResourceQuota 和 LimitRange 控制命名空间级别的资源使用与 Pod 资源配置。
 - 关键知识点：
   - 可按租户和容量设置 Pod、RS、PVC 等对象数量预算，并为发布、回滚和故障恢复预留余量；不存在通用配额数值
@@ -168,7 +168,7 @@ aliases:
   - LimitRange 为未声明 resources 的容器自动添加默认值
   - 资源划分可以租户或环境为单位，需预留冗余
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Calico|K8s基础-Calico]]
+### [[Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico|K8s基础-Calico]]
 - 核心内容：Calico 网络方案的组件、数据存储选择、BGP 路由与 IPIP/VXLAN 封装关系，以及 manifest、IPPool 和 Operator 字段对照。
 - 关键知识点：
   - Felix 负责网络接口管理和路由，BIRD 负责 BGP 路由分发
@@ -176,7 +176,7 @@ aliases:
   - BGP 负责路由分发，可与 IPIP 同时使用；无封装需底层和回程路由支持，不能一概宣称性能更优
   - IP_AUTODETECTION_METHOD 选择节点地址，Pod 地址由 CNI/IPAM 分配；Calico 不存在 hostgw 后端
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-kubeadm|K8s基础-kubeadm]]
+### [[Docker-Kubernetes/k8s-basic-resources/25-k8s基础-kubeadm|K8s基础-kubeadm]]
 - 核心内容：kubeadm 默认初始化阶段与按用途归类的预检查、安装后配置步骤，以及 K8s 证书体系（集群根证书、etcd 证书分组）。
 - 关键知识点：
   - 预检查涵盖：用户权限、版本兼容、端口占用、swap 状态、内核模块等
@@ -184,7 +184,7 @@ aliases:
   - 证书存放路径：`/etc/kubernetes/pki` 和 `/etc/kubernetes/pki/etcd`
   - kubelet 不能新于通信的 API server，精确偏差范围按版本政策；升级先控制平面后工作节点，次版本不可跳级
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-临时容器ephemeral|K8s基础-临时容器Ephemeral]]
+### [[Docker-Kubernetes/k8s-basic-resources/16-k8s基础-临时容器ephemeral|K8s基础-临时容器Ephemeral]]
 - 核心内容：Ephemeral 容器是 K8s 中用于在运行中的 Pod 中动态注入调试容器的机制，无需重启 Pod 即可执行诊断和故障排查。
 - 关键知识点：
   - 临时容器不在 Pod 初始规范中定义，通过 `kubectl debug` 动态添加
@@ -192,7 +192,7 @@ aliases:
   - 使用场景：调试崩溃容器、无 shell 镜像的故障排查、安全审查
   - K8s 1.25 起成为 stable 特性，之前需通过 feature-gates 开启
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-容器运行时-containerd|K8s基础-容器运行时-containerd]]
+### [[Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd|K8s基础-容器运行时-containerd]]
 - 核心内容：CRI 接口规范介绍，containerd 作为容器运行时的定位与使用，以及 ctr、nerdctl、crictl 三种命令行工具的对比。
 - 关键知识点：
   - CRI 是 K8s 与容器运行时的标准化接口，支持 containerd、CRI-O、Kata 等
@@ -200,7 +200,7 @@ aliases:
   - 调用链：Docker/K8s -> containerd -> RunC（底层容器运行时）
   - ctr namespace 与 K8s namespace 无关，K8s 镜像在 k8s.io namespace 下
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-自定义CRD资源|K8s基础-自定义CRD资源]]
+### [[Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源|K8s基础-自定义CRD资源]]
 - 核心内容：Operator 模式与 CRD（CustomResourceDefinition）机制，通过自定义资源类型扩展 K8s API，实现复杂应用的声明式管理。
 - 关键知识点：
   - Operator 通常组合 CRD 与领域专用 Controller；仅注册 CRD 不会部署或维护数据库
@@ -208,7 +208,7 @@ aliases:
   - Helm 渲染、安装与升级清单，也可安装 Operator；Operator 实现持续的应用运维逻辑，具体能力需检查项目实现
   - Operator 资源来源：operatorhub.io、GitHub 社区
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-认证-授权-准入|K8s基础-认证-授权-准入]]
+### [[Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入|K8s基础-认证-授权-准入]]
 - 核心内容：K8s 安全体系中的认证（Authentication）和授权（Authorization）机制，包括 UserAccount、ServiceAccount、Token 管理与 kubeconfig 生成。
 - 关键知识点：
   - 外部人员通常使用证书、OIDC 或 exec 凭据，ServiceAccount 面向工作负载；其身份与权限仍需分别配置
@@ -216,7 +216,7 @@ aliases:
   - `kubectl create token` 使用 TokenRequest，时效由服务端控制；手工创建旧式 token Secret 不代表永久有效或不可撤销
   - 基于 SA 生成 kubeconfig 文件供特定用户登录集群
 
-### [[Docker-Kubernetes/k8s-basic-resources/Python调用k8s-api实现资源管理|Python调用K8s-API实现资源管理]]
+### [[Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理|Python调用K8s-API实现资源管理]]
 - 核心内容：使用 Python kubernetes 库编程操作 K8s 集群，实现 Pod、Service、Deployment 等资源的查询、创建和管理。
 - 关键知识点：
   - 使用 `client.CoreV1Api()` 操作 Pod、Service、Namespace 等核心资源
@@ -224,7 +224,7 @@ aliases:
   - 本地加载授权的 kubeconfig 与明确 context，集群内使用专用 ServiceAccount；不应分发控制平面管理员配置
   - 支持列举、查询、创建等 CRUD 操作
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s-APIServer深度剖析-请求链路-认证授权-生产调优|K8s API Server：请求链路、认证授权与生产调优]]
+### [[Docker-Kubernetes/k8s-basic-resources/19-k8s-APIServer深度剖析-请求链路-认证授权-生产调优|K8s API Server：请求链路、认证授权与生产调优]]
 - 核心内容：kube-apiserver 内部工作原理全面剖析——请求完整生命周期（认证→授权→准入→持久化→Watch）、Watch/Informer 机制、API 扩展（CRD/聚合 API）、生产调优、故障排查。
 - 关键知识点：
   - 请求链路 7 步：认证（X.509/SA Token/OIDC/Webhook）→ 授权（RBAC）→ 变更准入（Mutating）→ 校验 → 验证准入（Validating）→ etcd 持久化 → Watch 通知
@@ -238,7 +238,7 @@ aliases:
   - 3 条 Prometheus 告警规则（错误率/P99 延迟/并发请求上限）
   - 故障排查手册：API Server 无响应（etcd 健康检查/证书过期）、Webhook 死锁紧急恢复、Watch 泄漏定位
 
-### [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Finalizer与资源删除|K8s基础-Finalizer与资源删除]]
+### [[Docker-Kubernetes/k8s-basic-resources/20-k8s基础-Finalizer与资源删除|K8s基础-Finalizer与资源删除]]
 - 核心内容：Finalizer 机制的完整解析——`metadata.finalizers` 字段如何阻止资源被真正删除、资源删除的完整流程（deletionTimestamp → Controller 清理 → 移除 Finalizer → etcd 删除）、内置与第三方常见 Finalizer、资源"删不掉"的五大场景及诊断修复方法、Operator 中编写 Finalizer 的完整代码示例。
 - 关键知识点：
   - `metadata.finalizers` 列表非空时，apiserver 只设置 `deletionTimestamp` 进入 Terminating，不会真正删除对象

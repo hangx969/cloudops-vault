@@ -36,7 +36,7 @@ aliases:
 
 - [[KnowledgeBase/entities/Kubernetes]]
 - [[KnowledgeBase/sources/k8s-installation-management-batch-summary|K8s 安装与管理]]
-- [[Docker-Kubernetes/k8s-basic-resources/k8s基础-认证-授权-准入|K8s 认证、授权与准入]]
+- [[Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入|K8s 认证、授权与准入]]
 
 ## 值得注意
 

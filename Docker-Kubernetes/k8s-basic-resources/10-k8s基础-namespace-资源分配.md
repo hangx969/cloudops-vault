@@ -21,10 +21,10 @@ Namespace 对象本身是集群级资源；Pod、Deployment、Service、Resource
 
 是否划分 Namespace 取决于管理边界。即使用户很少，只要需要区分生产与测试权限或资源预算，也可以使用。多租户还应配合 RBAC、NetworkPolicy 和工作负载安全策略。
 
-例如，创建一个测试命名空间：
+下面的配额和 LimitRange 都用于测试命名空间 `customer1`，先创建它：
 
 ```bash
-kubectl create ns test
+kubectl create ns customer1
 ```
 
 ### 先确定团队与环境的资源预算
@@ -76,13 +76,14 @@ ResourceQuota 控制命名空间总量，无法单独保证每个容器的声明
 
 这里有两项约束：一项是检查 requests 和 limits 是否落在允许范围内，另一项是为缺失的声明填充默认值。LimitRange 的默认值不会覆盖容器已经设置的值，但补齐后的完整配置仍须同时通过范围检查与 ResourceQuota 检查。
 
-下面同时约束容器资源和 PVC 存储大小。将它应用到哪个命名空间，就作用于哪个命名空间；要与上例组合，应显式使用 `-n customer1` 或添加相应的 `metadata.namespace`。
+下面同时约束容器资源和 PVC 存储大小，显式指定 `customer1`，与前面的总量配额共同生效。每份清单保存为文件后，可用 `kubectl apply -f 文件名.yaml` 应用。
 
 ~~~yaml
 apiVersion: v1
 kind: LimitRange
 metadata:
   name: cpu-mem-limit-range
+  namespace: customer1
 spec:
   limits:
   - type: Container # 类型名区分大小写；Pod 类型可约束 Pod 总量
@@ -163,7 +164,7 @@ BestEffort Pod 的所有容器均未声明 CPU/内存 requests 和 limits。调�
 
 Namespace 控制器需要先发现并删除命名空间中的对象。APIService 不可用、资源发现失败、残留对象的 finalizer 无法完成，都会阻塞这个过程。先查看 `kubectl describe namespace "$NAMESPACE"` 的 Conditions，再枚举残留对象并修复对应控制器。Namespace 使用的 `spec.finalizers` 与普通对象的 `metadata.finalizers` 需要区分。
 
-下面保留 `/finalize` 接口的人工恢复示例。只有确认遗留资源及外部依赖已处理，并明确接受残留对象风险后才使用；强行置空可能留下不可见或孤立资源，不等于完成清理。
+下面展示 `/finalize` 接口的人工恢复方式。只有确认遗留资源及外部依赖已处理，并明确接受残留对象风险后才使用；强行置空可能留下不可见或孤立资源，不等于完成清理。
 
 ### 核实依赖后的手动恢复步骤
 

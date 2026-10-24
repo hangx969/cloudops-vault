@@ -437,7 +437,7 @@ date: 2026-10-23
 ### 云原生核心路径
 1. [云原生](../CloudComputing/云原生.md) → 理解云原生哲学
 2. [docker基础](../Docker-Kubernetes/docker/docker基础.md) → 容器基础
-3. [k8s基础-架构-组件-资源](../Docker-Kubernetes/k8s-basic-resources/k8s基础-架构-组件-资源.md) → K8s 架构
+3. [[Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源|k8s基础-架构-组件-资源]] → K8s 架构
 4. [安装k8s-1.35-基于rockylinux10-最新步骤](../Docker-Kubernetes/k8s-installation-management/latest-version/安装k8s-1.35-基于rockylinux10-最新步骤.md) → 最新版安装
 5. [[Docker-Kubernetes/k8s-monitoring-logging/helm部署prometheus-stack全家桶|Prometheus-Stack：生产部署与运维]] → 可观测性
 
