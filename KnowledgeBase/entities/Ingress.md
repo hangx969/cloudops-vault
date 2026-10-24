@@ -2,7 +2,7 @@
 title: Ingress
 tags:
   - knowledgebase/entity
-date: 2026-04-17
+date: 2026-10-24
 sources:
   - "[[KnowledgeBase/sources/k8s-networking-service-mesh-batch-summary|k8s-networking-service-mesh 来源批量摘要]]"
 aliases:
@@ -13,18 +13,18 @@ aliases:
 # Ingress
 
 ## 简介
-Kubernetes Ingress 是集群对外暴露 HTTP/HTTPS 服务的 API 资源，通过 Ingress Controller（如 nginx-ingress）实现路由、负载均衡、TLS 终止等功能。本仓库有一篇 2399 行的深度长文详解 Ingress 各方面用法。
+Kubernetes Ingress 是描述 HTTP/HTTPS 入口路由的 API 资源，需要具体控制器实现流量转发与 TLS 终止。社区 ingress-nginx 已于 2026 年 3 月退役；该实现的退役不等于 Ingress API 被移除。基础资源长文保留存量配置与实验，新部署需评估维护中的控制器或 Gateway API 实现。
 
 ## 核心功能
 
-### Ingress-Nginx 部署要点
+### 存量 ingress-nginx 的部署边界
 - **hostNetwork 模式**：Pod 使用宿主机网络栈，直接开启 80/443 端口，适用于裸金属（Bare-metal）环境
 - **ClusterFirstWithHostNet** DNS 策略：解决 hostNetwork 模式下无法解析集群内部服务名的问题
-- 建议 DaemonSet 或至少 3 副本确保每个节点都能接收请求
-- 通过 [[KnowledgeBase/entities/Helm|Helm]] 部署（ingress-nginx Chart）
+- DaemonSet 按匹配节点运行，Deployment 副本数不保证覆盖每个节点；前端 LB、拓扑分布与实际后端共同决定入口可达性
+- 旧 [[KnowledgeBase/entities/Helm|Helm]] Chart 和镜像用于维护或迁移实验，不作为当前新集群的默认安装推荐
 
 ### DNS 解析链路
-- External-DNS（外部域名同步到 DNS 提供商如 Azure DNS） -> CoreDNS（集群内解析） -> Ingress-Nginx/[[KnowledgeBase/entities/Istio|Istio]] Gateway（流量入口），形成完整的 DNS 到流量转发链路
+- External-DNS 向外部 DNS 提供商同步记录，CoreDNS 通常负责集群内服务发现；二者并非请求必须依次经过的串行代理。客户端解析入口地址后，再连接 Ingress 控制器或 [[KnowledgeBase/entities/Istio|Istio]] Gateway。
 
 ### 南北流量 vs 东西流量
 - Ingress 负责集群外到集群内的**南北流量**管理

@@ -153,7 +153,7 @@ kubectl get pvc -n mongodb
 
 ### 为隔离实验提供静态 PV
 
-如果 PVC 一直 Pending，先 `describe pvc` 检查 StorageClass、容量和访问模式，不要先删除卷。下面保留 NFS 静态 PV 绑定实验：NFS 服务地址、目录和权限都应替换为实验环境配置。生产数据库需要评估文件系统语义、延迟、持久性与故障域；`no_root_squash` 会扩大客户端 root 的访问权限，不应直接使用到共享生产存储。
+如果 PVC 一直 Pending，先 `describe pvc` 检查 StorageClass、容量和访问模式，不要先删除卷。本节使用 NFS 演示静态 PV 绑定：NFS 服务地址、目录和权限都应替换为实验环境配置。生产数据库需要评估文件系统语义、延迟、持久性与故障域；`no_root_squash` 会扩大客户端 root 的访问权限，不应直接使用到共享生产存储。
 
 ~~~sh
 #master节点创建nfs共享
@@ -234,9 +234,9 @@ spec:
 EOF
 ~~~
 
-### 为隔离实验提供静态 PV
+### 让 PVC 与静态 PV 的条件一致
 
-如果 PVC 一直 Pending，先 `describe pvc` 检查 StorageClass、容量和访问模式，不要先删除卷。下面保留 NFS 静态 PV 绑定实验：NFS 服务地址、目录和权限都应替换为实验环境配置。生产数据库需要评估文件系统语义、延迟、持久性与故障域；`no_root_squash` 会扩大客户端 root 的访问权限，不应直接使用到共享生产存储。C
+PVC 的名称需要与该版本 Operator 为 StatefulSet 生成的名称一致。下面使用空 StorageClass，避免默认动态供给抢先参与；申请容量必须不超过匹配 PV 的容量。`500M` 是十进制，`500Mi` 是二进制，此处统一使用后者。
 
 ~~~sh
 tee pvc-demo.yaml <<'EOF' 
@@ -294,7 +294,7 @@ kubectl get pvc,pods -n mongodb
 
 Etcd 是分布式键值存储。完整的 Etcd Operator 可以把成员创建、替换、备份与恢复组织成调谐流程，但成员扩容并不等于按 CPU 指标水平扩容普通 Web 服务；仲裁、成员变更顺序和数据恢复都需要领域逻辑。
 
-[CoreOS etcd-operator 仓库](https://github.com/coreos/etcd-operator)已归档。下面保留 EtcdCluster 的 CRD、镜像和事件回调结构，用于理解各部分接口，不作为可安装的现成数据库产品。示意代码中引用的旧依赖 API 未形成可构建项目，也没有真正的成员管理实现；想动手开发完整控制器，可继续阅读 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Operator开发实战-Kubebuilder]]。
+[CoreOS etcd-operator 仓库](https://github.com/coreos/etcd-operator)已归档。本节拆解 EtcdCluster 的 CRD、镜像和事件回调结构，用于理解各部分接口；它还不是可安装的数据库产品。示意代码中引用的旧依赖 API 未形成可构建项目，也没有真正的成员管理实现；想动手开发完整控制器，可继续阅读 [[Docker-Kubernetes/k8s-basic-resources/k8s基础-Operator开发实战-Kubebuilder]]。
 
 ### 1. 定义 EtcdCluster 的数据结构
 
@@ -365,7 +365,7 @@ spec:
 EOF
 ~~~
 
-构建镜像时，需要把实际控制器项目放在构建目录内，锁定兼容的 Go 模块与基础镜像。下面保留多阶段构建的结构；`golang:1.16` 是旧实验版本，不能直接用于当前 controller-runtime 项目。
+构建镜像时，需要把实际控制器项目放在构建目录内，锁定兼容的 Go 模块与基础镜像。下面展示多阶段构建结构；`golang:1.16` 是旧实验版本，不能直接用于当前 controller-runtime 项目。
 
   ~~~dockerfile
   FROM golang:1.16 as builder
@@ -392,7 +392,7 @@ EOF
 
 ### 3. 阅读事件回调与控制器依赖
 
-下面保留原案例的架构代码，展示客户端初始化、控制器配置与 Add/Update/Delete 回调的连接方式。它不是可编译示例：`controller.NewEtcdOperator`、`controller.Operator` 及 `OnAddEtcdCluster` 等接口需要由项目实现，不能假定归档仓库提供同名 API；imports 也包含尚未使用的备份与工具包。缺少 `rest` 的导入、错误类型与实际库版本不一致都需要在真实项目中处理。
+下面的架构代码展示客户端初始化、控制器配置与 Add/Update/Delete 回调的连接方式。它不是可编译示例：`controller.NewEtcdOperator`、`controller.Operator` 及 `OnAddEtcdCluster` 等接口需要由项目实现，不能假定归档仓库提供同名 API；imports 也包含尚未使用的备份与工具包。缺少 `rest` 的导入、错误类型与实际库版本不一致都需要在真实项目中处理。
 
 回调现在只打印事件，并不会创建 etcd Pod、PVC 或执行扩容。完整实现还需要把事件转成工作队列中的对象键，重新读取状态，幂等地执行调谐，并处理删除 tombstone、重试和退出信号。这里不使用这一骨架来验证数据库管理行为。
 

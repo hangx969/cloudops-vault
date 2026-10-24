@@ -1063,7 +1063,7 @@ spec:
   controller: example.com/ngx-ds
 ~~~
 
-创建 Ingress 规则时指定此 class：
+创建 Ingress 规则时指定此 class。这里假设 default Namespace 已有名为 tomcat、服务端口为 8080 的 Service；请按自己的后端替换，不要把 Ingress 指向不存在的资源：
 
 ~~~yaml
 apiVersion: networking.k8s.io/v1
@@ -1160,7 +1160,7 @@ spec:
 
 ### 长连接复用与对照压测
 
-一组历史观察中，同一应用通过 NodePort 暴露时达到十万级 QPS，经 Ingress 后约为五万级。这个数值没有附带完整硬件、TLS、响应大小和压测参数，只能作为“新增代理层后需要定位开销”的案例，不能推导普遍的性能比例。
+一组历史观察中，同一应用通过 NodePort 暴露时达到十万级 QPS，经 Ingress 后约为五万级。这个数值未说明完整的硬件、TLS、响应大小和压测参数，只能作为“新增代理层后需要定位开销”的案例，不能推导普遍的性能比例。
 
 维护这类环境时，可对照客户端到入口、入口到后端两段连接的复用。下面是这类案例的参数实验值，不能直接套用为容量配置：
 

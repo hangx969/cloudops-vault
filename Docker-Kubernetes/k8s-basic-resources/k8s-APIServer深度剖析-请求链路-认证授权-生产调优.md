@@ -38,7 +38,7 @@ kube-apiserver 为 Kubernetes 资源提供统一 API。kubelet、调度器和控
 | 准入控制（Admission） | 对象变更前的最后一道门（这个操作合规吗？） |
 | 序列化/反序列化 | JSON ↔ Protobuf ↔ 内部对象的格式转换 |
 | etcd 存储 | 将对象序列化后持久化，并维护 ResourceVersion |
-| Watch 机制 | 高效的增量变更推送（不是轮询！） |
+| Watch 机制 | 通过长连接推送增量变更 |
 | 聚合层（Aggregation Layer） | 通过 APIService 代理扩展 API Server；CRD 由另一套机制提供 |
 
 
@@ -157,6 +157,7 @@ rules:
   verbs: ["get", "watch", "list"]
   # resourceNames: ["specific-pod"]  # 可精细到具体资源名
 
+---
 # ClusterRole：集群级权限
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -173,7 +174,7 @@ rules:
 `*` 会覆盖相应维度的未来资源或动作，应优先写明确规则。ClusterRole 是规则的集群级定义，用 RoleBinding 引用时仍只作用于绑定所在命名空间内可授权的资源；集群级资源和非资源 URL 则需要 ClusterRoleBinding。
 
 ~~~bash
-# 检查当前用户权限（auth can-i 神器）
+# 检查当前用户是否允许执行某项操作
 kubectl auth can-i create deployments --namespace production
 kubectl auth can-i '*' '*' --all-namespaces  # 仅检查该宽泛请求，不等于完整权限审计
 
@@ -229,7 +230,7 @@ webhooks:
       values: ["kube-system"]
 ~~~
 
-`failurePolicy: Fail` 会拒绝匹配该 Webhook 的请求，影响范围由 rules 和 selectors 决定。原来只检查 `webhook-policy` 标签不会自动排除 `kube-system`，上例因此显式补了命名空间名条件。还需避免拦截 Webhook 自身恢复所需的资源，并评估多副本、超时与故障恢复。`Ignore` 则会在调用失败时放行匹配请求，意味着暂时失去该项策略检查。
+`failurePolicy: Fail` 会拒绝匹配该 Webhook 的请求，影响范围由 rules 和 selectors 决定。只检查 `webhook-policy` 标签不会自动排除 `kube-system`，所以配置还使用命名空间名条件限定范围。还需避免拦截 Webhook 自身恢复所需的资源，并评估多副本、超时与故障恢复。`Ignore` 则会在调用失败时放行匹配请求，意味着暂时失去该项策略检查。
 
 
 ## 四、用 Watch 持续观察资源变化
@@ -369,10 +370,10 @@ spec:
 
 ### 6.1 先观察请求与排队，再决定是否调参
 
-下面保留原案例的参数值，便于理解各项控制面设置；它们不是“3 副本通用参数”。先确认当前二进制支持的参数、APF 配置、请求类型和 etcd 容量，再在压测中评估变化。
+下面用一组示例参数解释各项控制面设置；数值需要由本集群的负载测试确定。先确认当前二进制支持的参数、APF 配置、请求类型和 etcd 容量，再在压测中评估变化。
 
 ~~~bash
-# 原案例参数示意；每个 API Server 实例独立生效，不要整段照抄
+# 参数示意；每个 API Server 实例独立生效，须先做负载测试
 --max-requests-inflight=800          # 关闭APF时限制非变更请求；启用APF时参与总并发预算
 --max-mutating-requests-inflight=400  # 关闭APF时限制变更请求；启用APF时参与总并发预算
 --request-timeout=60s                 # 请求超时（默认60s）
@@ -383,7 +384,7 @@ spec:
 
 [API Priority and Fairness](https://kubernetes.io/docs/concepts/cluster-administration/flow-control/)（APF）启用时，上面两个 inflight 值相加形成并发预算，再按优先级分配 seats，并不是分别限制读写两个池子。watch 的初始处理也受 APF 影响，执行命令等部分长连接则有例外。只增加预算可能让 etcd 和 Webhook 承受更大压力。参数应以对应版本的 [kube-apiserver 参数参考](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/) 为准。
 
-下面是原案例中的内存估算区间，保留用于说明容量规划尺度。它不是 Kubernetes 官方按节点数给出的保证，也不应直接作为 requests/limits。对象数、对象大小、Watch 数量、CRD、审计和 List 峰值都可能让相同节点数产生不同用量。
+下面列出一组粗略的内存估算区间，用于启动容量评估。它不是 Kubernetes 官方按节点数给出的保证，也不应直接作为 requests/limits。对象数、对象大小、Watch 数量、CRD、审计和 List 峰值都可能让相同节点数产生不同用量。
 
 | 集群规模 | 节点数 | API Server 内存建议 |
 | --- | --- | --- |

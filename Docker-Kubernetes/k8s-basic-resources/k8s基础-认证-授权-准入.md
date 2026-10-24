@@ -7,56 +7,56 @@ aliases:
   - k8s认证授权准入
 ---
 
-# K8s基础-认证-授权-准入
+# Kubernetes 认证、授权与准入：一次 API 请求如何获得许可
 
+同样执行 `kubectl get pods`，有人成功，有人收到 Unauthorized，还有人收到 Forbidden。即使能够读取 Pod，创建它时仍可能被配额或安全策略拒绝。这些结果分别来自身份认证、权限检查和准入控制，排障时需要先分清失败发生在哪一步。
 
-## 概述
+本文从账户和凭据开始，使用 ServiceAccount 与 RBAC 配置访问范围，再检查 kubeconfig 如何选择身份，最后通过日志读取、用户证书与资源配额实验串起完整流程。阅读前需要了解 Pod、Namespace 和 YAML；创建账户、绑定权限和签发凭据的操作需要相应管理权限，只应在获准的测试环境执行。
 
-### 认证
+## 一、认证、授权与准入分别回答什么
 
-kubernetes主要通过API server对外提供服务,那么就需要对访问apiserver的用户做认证,如果任何人都能访问apiserver,那么就可以随意在k8s集群部署资源,这是非常危险的,也容易被黑客攻击渗透,所以需要我们对访问k8s系统的apiserver的用户进行认证,确保是合法的符合要求的用户。
+| 阶段 | 检查内容 | 常见结果 |
+| --- | --- | --- |
+| 认证（Authentication） | 凭据对应哪个用户名和组 | 无效凭据通常得到 401；匿名访问行为取决于配置 |
+| 授权（Authorization） | 该身份能否对目标资源执行动作 | 无允许规则时通常得到 403 |
+| 准入（Admission） | 创建、更新、删除等请求是否满足对象与策略要求 | 可能被配额、字段约束或安全策略拒绝 |
 
-### 授权
+成功认证不会自动赋予任意资源操作权限；集群也可能通过默认绑定赋予已认证用户少量发现权限。读取资源主要经过认证和授权，创建或修改资源还要经过准入。下面先确定请求使用什么身份。
 
-认证通过后仅代表它是一个被apiserver信任的用户,能访问apiserver,但是用户是否拥有删除资源的权限,需要进行授权操作,常见的授权方式有rbac授权。
+## 二、区分人的身份与工作负载身份
 
-## Account
+Kubernetes 使用用户名和组表达身份，但没有用于创建普通人的内置 User、Group 资源。用户通常来自客户端证书、OIDC 或外部认证系统；ServiceAccount 则是 API 中真实存在、属于命名空间的资源。两类身份都可作为 RBAC 绑定主体，并不按“只能在集群外”或“只能在集群内”严格区分。
 
-kubernetes中账户分为:UserAccounts(用户账户)和 ServiceAccounts(服务账户)两种。
+### UserAccount：由认证系统提供用户与组
 
-### UserAccount
+kubectl 根据选中的 kubeconfig 用户项获取凭据。kubeadm 环境常见 `kubernetes-admin`，它来自管理员 kubeconfig，而不是 kubectl 在服务端创建出的 User 对象。kubeadm 通常生成 `/etc/kubernetes/admin.conf`，用户还需要按安装步骤将其放到自己的 kubeconfig 路径，不能假定所有用户家目录会自动出现管理员配置。
 
-1. UserAccount是给kubernetes集群外部用户使用的,如kubectl访问k8s集群要用useraccount用户,kubeadm安装的k8s,默认的useraccount用户是kubernetes-admin
-2. 使用kubeadm安装的K8s,会在用户家目录下创建一个认证配置文件 .kube/config 这里面保存了客户端访问API Server的密钥相关信息,当用kubectl访问k8s时,它就会自动读取该配置文件,向API Server发起认证,然后完成操作请求。
+### ServiceAccount：为程序分配可管理的身份
 
-### ServiceAccount
+[ServiceAccount](https://kubernetes.io/docs/concepts/security/service-accounts/) 通常供应用、控制器或自动化任务访问 API。它的身份字符串是 `system:serviceaccount:<namespace>:<name>`，还会属于 `system:serviceaccounts`、`system:serviceaccounts:<namespace>` 和 `system:authenticated` 等组。命名空间决定账户的归属，实际能访问哪些资源仍由绑定决定，因此也可以通过授权访问别的命名空间。
 
-由于k8s原生没有user、group的概念,serviceaccount可以充当权限验证和分配的主体。ServiceAccount是K8s种的一种资源,主要用于身份认证和授权,可以让**应用**或**用户**以特定身份访问集群内的其他资源和服务。主要用于以下场景:
+ServiceAccount token 也能用于外部自动化或某些 Dashboard 登录，但人的日常访问更适合带个人身份、可撤销且可审计的企业认证。下面用 SA 生成 kubeconfig 解释凭据与授权的关系，不能把共享机器人 token 当成每个人的长期登录方案。
 
-1. 生成首先得kubeconfig,供不同的用户使用。
-2. 生成临时或永久Token,可以登录k8s的dashboard
-3. 授权给应用程序特定的权限,让其可以访问集群中的其他资源
+短期 TokenRequest 与绑定 Pod 的投射 token 机制在 1.22 稳定；从 1.24 起，默认不再为每个 SA 自动生成旧式 token Secret。前者有有效期，Pod 中的投射 token 由 kubelet 轮换；手动保存到 kubeconfig 的 token 则需要调用方自行续期。
 
-K8s 1.24之前,在ns中创建了一个sa,就会自动生成一个secret叫sa-token-xxx,记录了sa的ns、token、ca等信息。
+#### 为外部测试客户端签发短期 token
 
-K8s 1.24之后,为了安全性起见,不会自动创建这个secret了。
+可以把实验账户放在专用的 `kube-users` 命名空间，便于盘点。这里先在 default 中创建 `hangx`，后续示例会演示跨命名空间绑定；账户命名空间与授权目标命名空间不要混淆。
 
-#### sa供用户使用
-
-可以专门创建一个namespace,比如叫kube-users,里面创建一些serviceAccount作为用户登录账号,分配好各种权限,创建kuneconfig文件。让这个用户通过分配给他的kubeconfig来登录集群。
-
-##### 基于命令行创建token
+##### 使用 TokenRequest 获取限时凭据
 
 ~~~sh
 # 先创建sa
 kubectl create sa hangx
 # 命令行创建token,指定有效期
-kubectl create token dukuan --duration=99999h
+kubectl create token hangx --duration=1h
 ~~~
 
-##### 基于secret创建token
+`--duration` 是请求的有效期，服务端可以按配置调整；不要用极长 duration 代替凭据轮换。创建 token 本身不增加 RBAC 权限。
 
-因为1.24之后已经默认不会去创建sa的secret了,需要手动创建secret保存token。token是secret自动生成出来的。这个token是永久有效的。
+##### 兼容旧客户端的长期 Secret token
+
+只有在必须兼容无法获取短期 token 的客户端时，才考虑手动创建此类 Secret。token 由控制平面的 token 控制器填入，通常没有显式到期时间，但会因 Secret/SA 删除、签名密钥变化等失效，不能称为永久有效。其泄露窗口更大，应单独控制读取权限、轮换与撤销。
 
 ~~~yaml
 apiVersion: v1
@@ -66,28 +66,29 @@ metadata:
   name: hangx-token-secret
   annotations:
     kubernetes.io/service-account.name: hangx
-
-# 直接get就能看到token
-kubectl get secret hangx-token-secret
 ~~~
 
-##### 基于sa生成kubeconfig给用户登录
+将上面的清单保存并应用后，可检查 Secret 是否已填充；普通 `get` 不会直接显示明文 token。
 
-基于ServiceAccount生成Kubeconfig,需要先为ServiceAccount生成一个Token,可以使 用保存在Secret中的Token。
+~~~sh
+kubectl get secret hangx-token-secret
+kubectl get secret hangx-token-secret -o jsonpath='{.data.token}' | base64 --decode
+~~~
 
-1. 获取api server地址
+##### 将集群地址、CA 与 token 组合成 kubeconfig
 
-   方法1:
+下面优先使用短期 token 构建独立 kubeconfig。需要从已有可信 kubeconfig 获取集群地址和 CA，并保护生成的文件；不要把包含 token 的配置提交到仓库。
+
+1. 获取 api server 地址
+
+   方法 1:
 
    ~~~sh
-   serverAddr=`kubectl cluster-info | grep --color=never \
-   -Eo -m 1 "https://.*" | \
-   sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"`
-
-   echo $serverAddr
+   serverAddr=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+   echo "$serverAddr"
    ~~~
 
-   方法2:
+   方法 2:
 
    ~~~sh
    kubectl cluster-info
@@ -95,18 +96,22 @@ kubectl get secret hangx-token-secret
    # https://192.168.40.180:6443
    ~~~
 
-2. 获取sa、sa token secret、ca
+2. 获取 SA 的短期 token 与可信 CA；需要兼容旧 Secret 时才使用注释中的替代方式
 
    ~~~sh
    serviceaccountName="hangx"
-   secretName="dukuan-token-secret"
-   ca=$(kubectl get secret/$secretName -o jsonpath='{.data.ca\.crt}')
-   token=$(kubectl get secret/$secretName -o jsonpath='{.data.token}' | base64 --decode)
+   ca=$(kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+   token=$(kubectl create token "$serviceaccountName" --duration=1h)
+   # 兼容旧Secret时：先确认该Secret确属这个SA且已填充
+   # secretName="hangx-token-secret"
+   # ca=$(kubectl get secret/"$secretName" -o jsonpath='{.data.ca\.crt}')
+   # token=$(kubectl get secret/"$secretName" -o jsonpath='{.data.token}' | base64 --decode)
    ~~~
 
-3. 生成kubeconfig
+3. 生成 kubeconfig
 
    ~~~sh
+   umask 077
    cat <<EOF > ${serviceaccountName}-kubeconfig.yaml
    apiVersion: v1
    kind: Config
@@ -129,30 +134,31 @@ kubectl get secret hangx-token-secret
    EOF
    ~~~
 
-   想要添加多集群,就在kubeconfig文件里面,分别在clusters、users、contexts字段下面进去就行。
+   多集群可以继续添加独立的 clusters、users 和 contexts 项，名称应互不混淆。context 引用的是这些本地配置名称，它不会创建服务端用户或授予权限。
 
-4. 生成之后就可以使用新的kubeconfig操作集群:
+4. 生成之后就可以使用新的 kubeconfig 操作集群:
 
    ~~~sh
-   kubectl get po --kubeconfig dukuan-kubeconfig.yaml
+   kubectl get po --kubeconfig hangx-kubeconfig.yaml
    # 如果没有权限,可以临时做一个授权
    kubectl create rolebinding hangx-view --clusterrole=view --serviceaccount=default:hangx
    ~~~
 
-#### sa供pod使用
+#### 把 ServiceAccount 分配给 Pod
 
-ServiceAccount是Pod使用的账号,Pod容器的进程需要访问API Server时用的就是ServiceAccount账户。
+Pod 通过 `spec.serviceAccountName` 选择一个同命名空间的 SA。默认启用自动挂载时，应用可从投射卷读取 token、CA 与 namespace。客户端库应在轮换后重新读取 token，不要把启动时读取的一份字符串永久缓存。
 
-ServiceAccount仅局限它所在的namespace,每个namespace创建时都会自动创建一个default ServiceAccount;创建Pod时,如果没有指定Service Account,Pod则会使用default ServiceAccount。
+每个命名空间通常都有名为 default 的 SA，Pod 未指定时使用它。SA 必须与 Pod 同命名空间，但它获得的权限可以通过绑定延伸到其他命名空间。应用不需要访问 API 时，可在 Pod 或 SA 上设置 `automountServiceAccountToken: false`。
 
-赋予Service Account "default"的权限会让所有没有指定serviceAccountName的Pod都具有这些权限。
+赋予 Service Account "default"的权限会让所有没有指定 serviceAccountName 的 Pod 都具有这些权限。
 
-sa使用案例:创建sa,绑定到pod
+先创建 SA，再创建使用该身份的测试 Pod。镜像需要同时包含 shell 与 curl，普通 BusyBox 镜像不能直接运行后面的 curl 命令。
 
 ~~~bash
 #创建sa
-k create sa sa-test
-#创建pod
+kubectl create sa sa-test
+# 创建Pod
+cat > pod-busybox.yaml <<'EOF'
 apiVersion: v1
 kind: Pod
 metadata:
@@ -161,82 +167,65 @@ spec:
   serviceAccountName: sa-test
   containers:
   - name: busybox
-    image: busybox:1.28
+    image: curlimages/curl:8.16.0
     command:
     - "/bin/sh"
     - "-c"
     - "sleep 36000"
-# 进入pod
-k exec -it pod-busybox -- /bin/sh
+EOF
+kubectl apply -f pod-busybox.yaml
+# 进入Pod
+kubectl exec -it pod-busybox -- /bin/sh
 cd /var/run/secrets/kubernetes.io/serviceaccount/
 # 手动请求apiserver接口,报403,是因为这个role还没有任何权限
-curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)" https://kubernetes/api/v1/namespaces/kube-system
+curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)" https://kubernetes.default.svc/api/v1/namespaces/kube-system
 
-# 给这个role通过clusterrolebinding授予cluster-admin权限
-kubectl create clusterrolebinding sa-test-admin --clusterrole=cluster-admin  --serviceaccount=default:sa-test
+# 在另一个管理员终端，仅授予default命名空间的读取权限
+kubectl create rolebinding sa-test-view --clusterrole=view --serviceaccount=default:sa-test -n default
 
-# 再去请求接口就成功了,请求pod信息可以看到所有namespace的信息。
-curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kubernetes/api/v1/pods
+# 回到Pod终端，读取default内Pod成功；跨空间访问仍然应被拒绝
+curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kubernetes.default.svc/api/v1/namespaces/default/pods
 ~~~
 
 > [!warning] 注意
-> pod中挂载了sa,会在`/var/run/secrets/kubernetes.io/serviceaccount/`路径下生成ca.crt, namesapce, token等信息。如果这个pod里面有kubectl命令或者sdk(比如client-go),就能直接用,他会自动找到这个路径下的这些文件。
+> 默认投射卷包含 ca.crt、namespace 和 token。client-go 的 InClusterConfig 会读取这些文件；kubectl 也支持集群内凭据，但容器内已有 kubeconfig 或环境配置可能改变实际选择，应核实当前身份与目标集群。
 
-#### 给ns中的所有sa同时授权
+#### 向命名空间 SA 组授权会影响现有和未来账户
 
-- 如果希望在一个命名空间中,任何Service Account应用都具有一个角色,则可以为这一命名空间的Service Account群组进行授权
+组授权能覆盖当前与以后创建的所有匹配 SA。只有确实需要共同基线时才采用；常规应用应优先绑定单独 SA。下面 RoleBinding 的有效资源范围仍是 my-namespace。
 
   ```bash
   kubectl create rolebinding sa-view --clusterrole=view --group=system:serviceaccounts:my-namespace --namespace=my-namespace
   ```
 
-#### 给集群中的sa同时授权
+#### 集群 SA 组授权的影响范围
 
-- 为集群范围内所有Service Account都授予一个低权限角色
+下面是组匹配语法示例，会把所有命名空间中的所有 SA 统一授予全局 view 读取权限。view 不是可以随意赋予所有工作负载的“低风险基线”，它仍能读取大量配置和业务元数据。生产环境一般不使用这种全局绑定，应缩小到专用 SA 与 RoleBinding。
 
   ~~~bash
   kubectl create clusterrolebinding sa-view --clusterrole=view --group=system:serviceaccounts
   #system:serviceaccounts指的是集群中所有SA这个组
   ~~~
 
-## 授权
+## 三、用 RBAC 表达动作与资源范围
 
-- 用户通过认证之后,什么权限都没有,需要一些后续的授权操作,如对资源的增删该查等,kubernetes1.6之后开始有RBAC(基于角色的访问控制机制)授权检查机制。
+身份确定以后，授权器检查这次请求的动词、目标 API 组、资源、子资源、命名空间和名称。常见授权器包括 Node（节点授权）、ABAC（属性授权）、RBAC（角色授权）和 Webhook，具体启用组合由 API Server 配置决定。
 
-- Kubernetes的授权是基于插件形成的,其常用的授权插件有以下几种:
-  1. Node(节点认证)
-  2. ABAC (基于属性的访问控制)
-  3. RBAC(基于角色的访问控制)
-  4. Webhook(基于http回调机制的访问控制)
+RBAC 的规则定义在 Role 或 ClusterRole 中，再通过绑定赋给 User、Group 或 SA。RoleBinding 只在其所在命名空间授权，ClusterRoleBinding 才能把相应规则授予整个集群。ClusterRole 表示规则定义可以被全局引用，不代表它天然拥有所有资源权限。
 
-在k8s的授权机制当中,采用RBAC的方式进行授权,其工作逻辑是,把对对象的操作权限定义到一个角色当中,再将用户绑定到该角色,从而使用户得到对应角色的权限。
+### 从实际操作清单开始写规则
 
-- 如果通过rolebinding绑定role,只能对**rolebinding所在的名称空间**的资源有权限,例如user1这个用户绑定到role1上,只对role1这个名称空间的资源有权限,对其他名称空间资源没有权限。
+规划 [RBAC 规则](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) 时，先列出实际需要的操作，再组合成角色。同一身份的多个允许规则会叠加，新增一个更窄的绑定不会收回旧绑定的权限。
 
-另外,k8s为此还有一种集群级别的授权机制,就是定义一个集群角色(ClusterRole),对集群内的所有资源都有可操作的权限,从而将User2通过ClusterRoleBinding到ClusterRole,从而使User2拥有集群的操作权限。
+RBAC 没有显式 deny。如果要减少权限，必须找到并调整提供该权限的已有绑定或角色，不能额外写一个“拒绝角色”。
 
-### RBAC
+例如，开发人员可能只需要查看日志与执行排障命令；运维人员可能还需要删除故障 Pod、修改工作负载或查看命名空间。先把这些操作分开，再按环境组合授权，比直接绑定管理员角色更容易检查。
 
-给一个用户(Users)赋予一个角色(Role),角色拥有权限,从而让用户拥有这样的权限。随后在授权机制当中,只需要将权限授予某个角色,此时用户将获取对应角色的权限,从而实现角色的访问控制。
-
-注意RBAC不能实现显式拒绝某种操作,只有添加某种操作。
-
-生产环境中常见权限需求:
-
-1. Namespace列表查看权限
-2. 日志查看权限
-3. 执行命令权限
-4. Pod删除权限(非生产环境可以给)
-5. 资源编辑权限
-6. 其它权限
-
-### Role和clusterRole
+### Role 与 ClusterRole：规则定义放在哪里
 
 #### Role
 
-- 命名空间级别的权限。只能定义在**某个命名空间**中,**对命名空间内的资源**进行授权。如果是集群级别的资源,则需要使用ClusterRole。
-
-- 举例:定义一个对pod有只读权限的role
+Role 定义在指定命名空间中，只能授权该范围内的资源。下面定义 rbac 命名空间中的 Pod 读取规则，使用前需先创建该命名空间。rules 的 `apiGroups` 填组名，版本号不写在这里。
 
   ~~~yaml
   apiVersion: rbac.authorization.k8s.io/v1
@@ -245,25 +234,17 @@ curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kuber
     name: pod-read
     namespace: rbac
   rules:
-  - apiGroups: [""]  # 支持的API组列表,例如:corev1, apps/v1等。空默认是核心组corev1
+  - apiGroups: [""]  # 填API组而非版本：核心组为空字符串，Deployment使用apps
     resources: ["pods"]  # 支持的资源对象列表,例如pods、deployments、jobs。也支持子资源比如["pods/log"]
     resourceNames: []  # 进一步细化,指定某种resource的名称
     verbs: ["get","watch","list"]  # 对资源对象的操作方法列表。
   ~~~
 
-#### clusterRole
+#### ClusterRole
 
-- 集群级别的权限。不指定命名空间,创建出来之后,任何命名空间内的account都可以绑定到clusterrole上去。
+ClusterRole 本身不属于命名空间，可定义 Node 等集群级资源、`/livez` 等非资源 URL，以及可复用于各命名空间的 Pod 规则。它是否跨命名空间生效，由引用它的绑定类型决定；创建绑定的操作者也需要相应授权。
 
-- 还可以用于以下特殊元素的授权:
-
-  1、集群范围的资源,例如Node
-
-  2、非资源型的路径,例如:/healthz
-
-  3、包含全部命名空间的资源,例如Pods
-
-- 举例:定义一个集群角色可让用户访问任意secrets
+下面定义读取 Secret 的规则。Secret 读取可能直接获得凭据，应只授予确有需要的主体，再用目标命名空间的 RoleBinding 或受控的 ClusterRoleBinding 指定范围。
 
   ~~~yaml
   apiVersion: rbac.authorization.k8s.io/v1
@@ -276,9 +257,11 @@ curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kuber
     verbs: ["get","watch","list"]
   ~~~
 
-#### 常见的role定义
+#### 将常见权限写成 rules 片段
 
-- 允许读取核心API组的Pod资源
+下面每个代码块都是 Role/ClusterRole 中的 rules 片段，不是完整资源。按业务需求选用，并补齐 apiVersion、kind、metadata 与绑定。读写资源时通常要包含 get/list/watch，读取日志与 exec 则是独立子资源。
+
+- 允许读取核心 API 组的 Pod 资源
 
   ~~~yaml
   rules:
@@ -287,7 +270,7 @@ curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kuber
     verbs: ["get","list","watch"]
   ~~~
 
-- 允许读写apps API组中的deployment资源
+- 允许读写 apps API 组中的 deployment 资源
 
   ~~~yaml
   rules:
@@ -296,7 +279,7 @@ curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kuber
     verbs: ["get","list","watch","create","update","patch","delete"]
   ~~~
 
-- 允许读取Pod以及读写job信息
+- 允许读取 Pod 以及读写 job 信息
 
   ~~~YAML
   rules:
@@ -308,7 +291,7 @@ curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kuber
     verbs: ["get","list","watch","create","update","patch","delete"]
   ~~~
 
-- 允许读取一个名为my-config的ConfigMap(必须绑定到一个RoleBinding来限制到一个Namespace下的ConfigMap)
+- 允许读取一个名为 my-configmap 的 ConfigMap(必须绑定到一个 RoleBinding 来限制到一个 Namespace 下的 ConfigMap)
 
   ~~~yaml
   rules:
@@ -318,7 +301,7 @@ curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kuber
     verbs: ["get"]
   ~~~
 
-- 读取核心组的Node资源(Node属于集群级的资源,所以必须存在于ClusterRole中,并使用ClusterRoleBinding进行绑定)
+- 读取核心组的 Node 资源(Node 属于集群级的资源，所以必须存在于 ClusterRole 中，并使用 ClusterRoleBinding 进行绑定)
 
   ~~~yaml
   rules:
@@ -327,7 +310,7 @@ curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kuber
     verbs: ["get","list","watch"]
   ~~~
 
-- 允许对非资源端点"/healthz"及其所有子路径进行GET和POST操作(必须使用ClusterRole和ClusterRoleBinding):
+- 允许对非资源端点"/healthz"及其所有子路径进行 GET 和 POST 操作(必须使用 ClusterRole 和 ClusterRoleBinding):
 
   ```yaml
   rules:
@@ -336,25 +319,26 @@ curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)"  https://kuber
   ```
 
   > [!info] 说明
-  > Kubernetes API 服务器提供 3 个 API 端点(`healthz`、`livez` 和 `readyz`)来表明 API 服务器的当前状态。 `healthz` 端点已被弃用(自 Kubernetes v1.16 起),你应该使用更为明确的 `livez` 和 `readyz` 端点。
+  > Kubernetes API 服务器提供 3 个 API 端点(`healthz`、`livez` 和 `readyz`)来表明 API 服务器的当前状态。 `healthz` 端点已被弃用(自 Kubernetes v1.16 起)，你应该使用更为明确的 `livez` 和 `readyz` 端点。
 
-#### k8s自带面向用户的role
+#### 使用内置角色前先检查权限边界
 
-[Using RBAC Authorization | Kubernetes](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
+内置面向用户的角色便于起步，但其权限可能包含聚合规则。使用前可以读取实际 ClusterRole，再结合业务需求决定是否改用自定义规则。
 
-1. clusterAdmin(最高权限,整个集群所有权限都有)
-2. admin
-3. edit(这个role对role和binding没权限)
-4. view
+| 内置 ClusterRole | 常见用途与边界 |
+| --- | --- |
+| `cluster-admin` | 全集群管理能力，保留给严格控制的管理或恢复身份 |
+| `admin` | 通过 RoleBinding 管理命名空间，包含许多权限管理能力 |
+| `edit` | 编辑多数业务对象，不管理 Role/Binding；可读 Secret 并运行使用其他 SA 的 Pod，需要评估提权边界 |
+| `view` | 读取多数业务对象，默认排除 Secret 与 RBAC 对象 |
 
-### RoleBinding和ClusterRoleBinding
+### RoleBinding 和 ClusterRoleBinding
 
-- RoleBinding和ClusterRoleBinding用于把一个角色绑定在一个目标上,可以是User,Group,Service Account。
-- 使用RoleBinding为某个命名空间授权,使用ClusterRoleBinding为集群范围内授权。
+RoleBinding 与 ClusterRoleBinding 把规则授予 subjects。主体可以是 User、Group 或 ServiceAccount，前两者的名称必须与认证器返回的值一致；SA 则需要同时指定 name 和 namespace。
 
-#### roleBinding
+#### RoleBinding
 
-将Role或者ClusterRole绑定到用户、组、或者ServiceAccount上,必须指定namespace。绑定后,用户只具备该namespace的权限。
+RoleBinding 引用本命名空间 Role，或引用一个 ClusterRole，只为绑定所在命名空间提供该项权限。其他已有绑定仍可能赋予更多权限，所以“新建一个 RoleBinding”不能单独证明用户只有这一范围。`roleRef` 是单个对象，创建后不可修改。
 
 ~~~yaml
 # 将在rbac命名空间中把pod-read角色授予用户es
@@ -367,22 +351,22 @@ subjects: # 被绑定对象,可以指定多个
 - kind: User # User、Group、ServiceAccount
   name: es
   apiGroup: rbac.authorization.k8s.io
-roleRef: # 指定需要绑定的权限
-- kind: Role
+roleRef: # 单个对象，不是列表；创建后不可修改
+  kind: Role
   name: pod-read
-  apiGroup: rbac.authorizatioin.k8s.io
+  apiGroup: rbac.authorization.k8s.io
 ~~~
 
 #### ClusterRoleBinding
 
-将ClusterRole绑定到用户、组或ServiceAccount,不用指定ns,绑定后用户具备集群范围内的权限。
+将 ClusterRole 绑定到用户、组或 ServiceAccount，不用指定 ns，绑定后用户具备集群范围内的权限。
 
 ~~~yaml
-#es这个user能获取到集群中所有的资源信息
+# es用户获得全局view读取权限，仍不包括Secret和任意管理动作
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: es-allresource
+  name: es-view
 subjects:
 - kind: User
   name: es
@@ -390,10 +374,10 @@ subjects:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: view
 ~~~
 
-### kubectl管理RBAC
+### kubectl 管理 RBAC
 
 ~~~sh
 # 创建一个可以查询Pod的Role:
@@ -405,7 +389,7 @@ kubectl create clusterrole pod-reader --verb=get,list,watch --resource=pods
 
 # 创建一个RoleBinding,把pod-reader 绑定至default 空间下的用户:
 kubectl create rolebinding hangx-pod-reader --clusterrole=pod-reader --serviceaccount=default:hangx
-# 创建一个ClusterRoleBinding,把 admin 权限绑定至default 空间下的用户:
+# 下面仍是RoleBinding，只把admin规则授予default内资源；仅用于管理身份演示:
 kubectl create rolebinding hangx-admin-binding --clusterrole=admin --serviceaccount=default:hangx
 
 # 验证某个用户是否具有某个权限:
@@ -413,11 +397,11 @@ kubectl auth can-i get configmaps -n default --as=system:serviceaccount:default:
 kubectl auth can-i get configmaps --as=system:serviceaccount:default:hangx -n kube-system
 ~~~
 
-### 常见的rolebinding示例
+### 从三个主体示例理解身份匹配
 
-#### 基于user、group、sa
+#### User、Group 与 ServiceAccount 的 subjects 写法
 
-- 用户名alice
+- 用户名 alice
 
   ```yaml
   subjects:
@@ -426,7 +410,7 @@ kubectl auth can-i get configmaps --as=system:serviceaccount:default:hangx -n ku
     apiGroup: rbac.authorization.k8s.io
   ```
 
-- 组名alice
+- 组名 alice
 
   ```yaml
   subjects:
@@ -447,29 +431,29 @@ kubectl auth can-i get configmaps --as=system:serviceaccount:default:hangx -n ku
     apiGroup: rbac.authorization.k8s.io
   ```
 
-#### user基于rolebinding绑定到role
+#### RoleBinding 引用同命名空间 Role
 
-- 用户基于rolebinding绑定到role:限定在rolebinding所在的名称空间。
+这张图把规则定义与绑定放在同一个命名空间，用户获得其中明确列出的动作。
 
   <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161359205.png" alt="image-20231116135923135" style="zoom: 67%;" />
 
-#### user基于rolebinding绑定到clusterrole
+#### RoleBinding 复用 ClusterRole
 
-- 假如有6个名称空间,每个名称空间的用户都需要对自己的名称空间有管理员权限,那么需要定义6个role和rolebinding,然后依次绑定,如果名称空间更多,我们需要定义更多的role,这个是很麻烦的。
-- 所以我们引入clusterrole,定义一个clusterrole,对clusterrole授予所有权限,然后用户通过rolebinding绑定到clusterrole,就会拥有**自己名称空间**的管理员权限了
-- 注:RoleBinding仅对当前名称空间有对应的权限。
+如果 6 个命名空间需要同一套权限，可以定义一个 ClusterRole，再在每个命名空间创建自己的 RoleBinding，复用规则而保留范围隔离。ClusterRole 应只写所需动作，不能因为要复用就授予所有权限；每个绑定引用的主体也可不同。
 
 ![image-20231116141540633](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161415689.png)
 
-#### user基于clusterrolebinding绑定到clusterrole
+#### ClusterRoleBinding 授权到全局
 
-- clusterrolebinding是集群范围的,没有namespace限制。这种方案是在整个集群内生效的。
+ClusterRoleBinding 不指定 namespace，会将 ClusterRole 中的相应规则应用到全局。用于 pods 规则时可覆盖全部命名空间，用于 nodes 等资源时则提供集群级访问；仍只允许规则列出的动作。
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161418465.png" alt="image-20231116141855404" style="zoom:67%;" />
 
-### 生产环境通用权限管理
+## 四、把常用运维动作拆成可组合角色
 
-#### ns查询权限
+下面按查看命名空间、指标、日志、exec、删除与编辑拆分角色。先创建规则，再按环境绑定；每份 YAML 是独立示例，实际需要先保存为文件并 apply。读取日志与执行命令都可能接触凭据或业务数据，生产授权应结合审计和职责范围评估。
+
+### 命名空间列表与 Pod 指标权限
 
 ~~~yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -485,6 +469,12 @@ rules:
   - get
   - list
   - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-metrics-reader
+rules:
 - apiGroups:
   - metrics.k8s.io
   resources:
@@ -495,7 +485,11 @@ rules:
   - watch
 ~~~
 
-#### pod删除权限
+命名空间列表是集群级读取；Pod 指标则可以只通过目标命名空间的 RoleBinding 授权。这里拆成两个角色，避免查看 Namespace 时顺带获得所有业务的指标。
+
+### Pod 删除权限
+
+删除权限会影响可用性，通常与读取权限分开绑定。下面只在 Pod 资源上保留 delete，读取状态不需要对子资源授予删除动作。
 
 ~~~yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -507,14 +501,15 @@ rules:
   - ""
   resources:
   - pods
-  - pods/status
   verbs:
   - get
   - list
   - delete
 ~~~
 
-#### 执行命令权限
+### 执行命令权限
+
+`pods/exec` 允许在业务容器内执行命令，可能读取容器中的密钥与数据。示例授予常见 POST 路径使用的 create；如客户端使用不同的连接方法，应核实所需动词，不能用全资源通配符处理连接失败。
 
 ~~~yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -538,7 +533,9 @@ rules:
   - create
 ~~~
 
-#### 查看日志权限
+### 查看日志权限
+
+日志读取需要 `pods/log`。下面将 pods 的发现权限与日志读取放在同一角色，方便先列出 Pod 再选择目标。
 
 ~~~yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -558,7 +555,9 @@ rules:
   - watch
 ~~~
 
-#### 资源编辑权限
+### 资源编辑权限
+
+这个角色允许创建和修改 ConfigMap 与 Deployment，不包含删除。修改 Deployment 仍可能改变容器运行身份，绑定前需要检查该命名空间允许使用的 SA 与准入约束。
 
 ~~~yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -574,7 +573,9 @@ rules:
   verbs: ["get", "list", "watch", "create", "update", "patch"]
 ~~~
 
-#### 用户授权
+### 创建实验身份与命名空间
+
+本节继续用 SA 模拟开发与运维身份，便于执行 `auth can-i`；真实人员访问应接入个人身份系统。下面的组绑定会影响 kube-users 内未来新增的账户，必须将该命名空间作为受控身份范围。
 
 ~~~sh
 # 创建一个专用于存储用户的Namespace
@@ -596,11 +597,11 @@ kubectl create ns project-a-test
 kubectl create ns project-a-prod
 ~~~
 
-#### 非生产环境管理
+### 非生产环境管理
 
-在非生产环境,可以针对开发和测试人员开放查看日志和执行命令的权限,方便排查问题等。
+在非生产环境，可以针对开发和测试人员开放查看日志和执行命令的权限，方便排查问题等。
 
-授权project-a-develop用户对project-a-dev和project-a-test两个空间可以有查看日志和执行命令的权限:
+授权 project-a-develop 用户对 project-a-dev 和 project-a-test 两个空间可以有查看日志和执行命令的权限:
 
 ~~~sh
 kubectl create rolebinding develop-pod-log \
@@ -628,9 +629,9 @@ kubectl create token project-a-develop -n kube-users
 # 之后可以登录到dashboard测试权限或者生成kubeconfig进行测试
 ~~~
 
-#### 生产环境管理
+### 生产环境管理
 
-在生产环境,通常不允许其他用户有特别大的权限,此时可以限制只能查看日志。
+生产环境可以从只读日志开始授权，确有排障需要时再开放更高权限。日志本身可能包含敏感数据，也应按项目范围控制。
 
 授权开发人员只能查看生产环境的日志权限:
 
@@ -641,9 +642,9 @@ kubectl create rolebinding develop-pod-log \
 -n project-a-prod
 ~~~
 
-#### 开发人员可以修改资源
+### 开发人员可以修改资源
 
-有时候开发人员需要修改程序的配置用来测试新功能或者排查故障,此时可以给开发人员授权可以编辑部分的资源,比如 ConfigMap(配置是cm注入的)或者 Deployment(配置是env注入的)。
+ConfigMap 与 Deployment 的修改可用于测试配置，但修改 Deployment 还可能改变镜像、挂载与 ServiceAccount。这是工作负载执行能力，不能仅当成“改配置”的低权限。下面只向开发环境开放该组合角色。
 
 ~~~sh
 kubectl create rolebinding develop-configmap-deployment-manager \
@@ -652,11 +653,11 @@ kubectl create rolebinding develop-configmap-deployment-manager \
 -n project-a-dev
 ~~~
 
-#### 多租户具备受限管理员权限
+### 多租户具备受限管理员权限
 
-如果集群中分配了多个租户和运维人员,此时租户和运维人员应当具备指定空间的所有权限,此时可以直接使用admin或者edit的ClusterRole进行授权。
+运维人员若确实需要管理指定命名空间的多数业务对象，可以评估 edit 或 admin。它们不代表所有动作都被允许，且 edit 的工作负载与 Secret 权限可能使用户获得该命名空间其他 SA 的能力。强多租户环境还需准入策略等额外约束。
 
-比如授权project-a-ops 用户可以操作project-a-dev、test、prod 空间下的所有资源:
+例如，分别向 project-a-dev、project-a-test、project-a-prod 绑定 edit，提供多数业务对象的编辑能力：
 
 ~~~sh
 kubectl create rolebinding ops-edit \
@@ -675,13 +676,11 @@ kubectl create rolebinding ops-edit \
 -n project-a-prod
 ~~~
 
-此时使用project-a-ops用户登录集群,即可操作上述空间的大部分资源。
+此时使用 project-a-ops 用户登录集群，即可操作上述空间的大部分资源。
 
-#### 应用程序访问集群资源
+### 应用程序访问集群资源
 
-有时候需要对部署在集群中的服务进行授权,使其可以访问资源的某些资源。比如获取集群中的 Pod 状态等,此时可以授权给某个 ServiceAccount,然后让 Pod 挂载该 ServiceAccount,此时该Pod内的程序即可具备相关的权限。
-
-比如要实现某个程序具备view的权限,可以用如下方式进行授权。首先创建一个用于该程序的ServiceAccount:
+应用与人的访问一样，需要明确读取哪些资源。下面为应用建立独立 app-view SA，再在本命名空间绑定 view；如果只需读取 Pod 状态，还可以继续缩小为自定义 Role。
 
 ~~~sh
 kubectl create sa app-view -n project-a-dev
@@ -692,37 +691,32 @@ kubectl create rolebinding app-view \
 -n project-a-dev
 ~~~
 
-而后创建pod的时候,在spec.serviceaccountname字段指定sa为app-view即可。
+创建 Pod 时，在 `spec.serviceAccountName` 指定 app-view。身份被赋予 Pod 后，客户端库仍需要正确读取凭据并调用 API。
 
 > [!info] 说明
-> ns中的默认sa名为default,不推荐直接授权给default,因为把所有要用到的权限都一股脑授权给default,所有ns中的pod都能用,不安全。安全的做法是每有一个授权需求,就创建一个新的sa单独授权。
+> 给 default SA 增加权限，会影响所有使用它的 Pod。为不同权限需求建立独立 SA，才能分别检查和撤销授权。
 
-## 访问apiserver的认证
+## 五、从 kubeconfig 找到请求真正使用的凭据
 
 ### 客户端认证
 
-- kubectl的认证步骤:
-  - 先去找环境变量KUBECONFIG。如果用这种方式配置,需要给这个环境变量配置成KUBECONFIG=/etc/kubernetes/admin.conf
-  - `echo $KUBECONFIG`看到这个环境变量是空的,下一步去找`$HOME/.kube/config`文件,根据其中的用户和集群信息去访问,可以通过`kubectl config view`来看
+kubectl 先处理显式的 `--kubeconfig` 参数；没有时使用 `KUBECONFIG` 指定的文件列表，否则读取 `$HOME/.kube/config`。路径随当前用户变化，不固定为 `/root/.kube/config`，也不要求把环境变量指向管理员配置。
 
-- 也称为双向TLS认证, kubectl在访问apiserver的时候,apiserver也要认证kubectl是否是合法的,他们都会通过ca根证书来进行验证,如下图:
+kubeconfig 决定访问的集群、CA 和用户凭据。使用客户端证书时，TLS 同时验证服务端证书与客户端证书；使用 token 或 exec 插件时，则不必存在客户端证书。下面的图用于说明证书认证的链路。
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161317269.png" alt="image-20231116131757137" style="zoom:67%;" />
 
-### Bearertoken
+### Bearer Token 如何发送身份凭据
 
-- 可以理解为apiserver将一个密码通过了非对称加密的方式告诉了kubectl,然后通过该密码进行相互访问
-- Kubectl访问k8s集群,要找一个kubeconfig文件($HOME/.kube/config),基于kubeconfig文件里的用户访问apiserver。
+Bearer token 放在 HTTP `Authorization: Bearer ...` 头中。持有有效 token 的请求方就能使用相应身份，因此必须通过 TLS 传输并保护存储。它不是 API Server 用非对称加密发送给 kubectl 的“密码”；JWT 等 token 可能使用签名验证，签名与内容加密是不同机制。
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161332166.png" alt="image-20231116133231124" style="zoom:67%;" />
 
-#### kubeconfig文件
+#### kubeconfig 文件
 
 多集群 kubeconfig 合并、context/namespace 切换及 kubectx/kubens 防误操作实践，见 [[Docker-Kubernetes/k8s-installation-management/k8s多集群kubeconfig管理]]。
 
-- [使用 kubeconfig 文件组织集群访问 | Kubernetes](https://kubernetes.io/zh-cn/docs/concepts/configuration/organize-cluster-access-kubeconfig/)
-
-- 在K8S集群当中,当我们使用kubectl操作k8s资源时候,需要确定我们用哪个用户访问哪个k8s集群,kubectl操作k8s集群资源会去/root/.kube目录下找config文件,可以通过kubectl查看config文件配置,如下:
+读取 kubeconfig 时，按 `current-context` 找到上下文，再查它引用的 cluster 和 user。官方 [kubeconfig 组织方式](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) 描述了这些本地配置之间的关系。下面先查看不含敏感值的结构：
 
   ```bash
   kubectl config view
@@ -750,39 +744,29 @@ kubectl create rolebinding app-view \
       client-key-data: REDACTED
   ~~~
 
-  - 首先看`current-context: kubernetes-admin@kubernetes`表示当前使用的context
-  - 然后找context下面,name是`kubernetes-admin@kubernetes`的这个context中,user是kubernetes-admin,集群是kubernetes。
-  - 然后网上找,在cluster里面,看到name是kubernetes的这个集群,apiserver的地址是https://192.168.40.4:6443
+这里的当前上下文是 `kubernetes-admin@kubernetes`，它引用名为 kubernetes 的集群和名为 kubernetes-admin 的用户。集群项给出 API 地址与 CA，用户项给出客户端证书和密钥。配置中的名字只是索引，真正的用户名仍由服务端对凭据的认证结果决定。
 
 ### ServiceAccount
 
-上面客户端证书认证和Bearertoken的两种认证方式,都是外部访问apiserver的时候使用的方式。这里的的Serviceaccount是**内部访问pod和apiserver交互**时候采用的一种方式。
-
-Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给予pod。当pod运行起来的时候,就会读取到这些信息,从而使用该方式和apiserver进行通信。如下图:
+Pod 中的 ServiceAccount 也使用 Bearer token 认证，并没有独立于 token 的另一种传输协议。默认投射卷同时提供 token、CA 和 namespace：token 证明身份，CA 用于验证服务端，namespace 表示当前 Pod 的命名空间。它们用途不同，不能用 namespace 文件决定实际权限。
 
 <img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161334673.png" alt="image-20231116133424621" style="zoom:67%;" />
 
-## 准入控制
+## 六、授权通过以后，准入还会检查对象
 
-### 准入控制器-admission controller
+### 哪些请求需要准入检查
 
-当用户经过认证和授权之后,最后一步就是准入控制了,k8s提供了多种准入控制机制,它有点类似"插件",为apiserver提供了很好的"可扩展性"。
+准入在认证与授权之后处理会变更对象的请求，例如 CREATE、UPDATE、DELETE，也可处理部分 CONNECT 操作。它可以修改对象（mutating）或拒绝不符合要求的对象（validating），但不会拦截普通 GET、LIST、WATCH 读取。
 
-请求apiserver时,通过认证、鉴权后、持久化(api对象保存到etcd)前,会经过"准入控制器",它可以做"变更和验证"(mutating, validating)。
+例如，一个身份可以被允许创建 Pod，但 Pod 的资源声明不满足 LimitRange 时仍会被拒绝。ServiceAccount、LimitRanger、ResourceQuota 等内置插件也参与这一过程；外部 Webhook 是扩展方式之一，并不是所有准入插件都需要网络回调。
 
-准入控制器限制**创建、删除、修改**对象的请求。准入控制器也可以阻止自定义动作,例如通过 API 服务器代理连接到 Pod 的请求。
+### 查看实际启用的插件与版本默认值
 
-准入控制器**不会**(也不能)阻止读取(**get**、**watch** 或 **list**)对象的请求。
+LimitRanger、ResourceQuota 和 ServiceAccount 是常见的默认插件。实际启用项取决于版本、默认列表及显式 enable/disable 参数，应查当前集群的配置。
 
-举例:如果我们创建pod时定义了资源上下限,但不满足LimitRange规则中定义的资源上下限,此时LimitRanger就会拒绝我们创建此pod
+`--enable-admission-plugins` 会在默认集合之外增加指定插件，`--disable-admission-plugins` 用于禁用项。因此 manifest 中只看到 NodeRestriction，不表示其他默认插件没启用。修改启动参数会重启相应控制平面实例，读取与变更应分开处理。
 
-### 准入控制器类型
-
-- 在k8s上准入控制器的模块有很多,其中比较常用的有LimitRanger、ResourceQuota、ServiceAccount。(这三种是默认开启的)
-
-- apiserver启用准入控制插件需要使用--enable-admission-plugins选项来指定,该选项可以使用多个值,用逗号隔开表示启用指定的准入控制插件;这里配置文件中显式启用了NodeRestrication这个插件;默认没有写在这上面的内置准入控制器,它也是启用了的,比如LimitRanger、ResourceQuota、ServiceAccount等等;对于不同的k8s版本,内置的准入控制器和启用与否请查看相关版本的官方文档;对于那些没有启动的准入控制器,我们可以在上面选项中直接启用,分别用逗号隔开即可。
-
-- 用kubeadm安装的集群,如何查看apiserver开启的准入控制器?
+- 用 kubeadm 安装的集群，如何查看 apiserver 开启的准入控制器?
 
   ~~~bash
   #kubeadm安装的集群,登录到master节点
@@ -814,18 +798,17 @@ Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给
   CertificateApproval, CertificateSigning, CertificateSubjectRestriction, DefaultIngressClass, DefaultStorageClass, DefaultTolerationSeconds, LimitRanger, MutatingAdmissionWebhook, NamespaceLifecycle, PersistentVolumeClaimResize, PodSecurity, Priority, ResourceQuota, RuntimeClass, ServiceAccount, StorageObjectInUseProtection, TaintNodesByCondition, ValidatingAdmissionPolicy, ValidatingAdmissionWebhook
   ~~~
 
-- 参考文档:[Kubernetes准入控制器文档](https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/admission-controllers/)
+上面的列表标明了 1.32 这个版本范围。查询其他版本时，以对应版本的 [准入控制器说明](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/) 和实际二进制帮助为准。
 
-## api接口访问k8s资源
+## 七、用日志读取实验理解资源与子资源
 
-- 多数资源可以用其名称的字符串表示,也就是Endpoint中的URL相对路径。
-  - 例如pod中的日志是:GET /api/v1/namaspaces/{namespace}/pods/{podname}/log
+API URL 中的资源名使用复数，例如 `/api/v1/namespaces/{namespace}/pods/{podname}`。日志则位于对象的 `/log` 子路径，在 RBAC 中写为 `pods/log`。HTTP URL、API 资源名和 YAML kind 不是相同字符串：Pod 的 kind 为 Pod，资源名却是 pods。
 
-- 如果需要在一个RBAC对象中体现上下级资源,就需要使用"/"分割资源和下级资源。
+### 创建只读日志身份并在 Pod 内验证
 
-### Lab:让user同时读取pod和pod log
+先创建 rbac 命名空间：`kubectl create namespace rbac`。下面按 Role、SA、RoleBinding、测试 Pod 的顺序操作；Role 的 rules 是授权规则，不会自动生成身份。日志接口使用 `pods/log` 子资源，单有 pods 的权限不一定能读取日志。
 
-- 定义role,权限是读取pod和pod log
+第一步，定义读取 Pod 与日志的 Role：
 
   ~~~yaml
   apiVersion: rbac.authorization.k8s.io/v1
@@ -839,19 +822,19 @@ Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给
     verbs: ["get","list","watch"]
   ~~~
 
-- 创建一个SA
+第二步，创建独立 SA：
 
   ~~~bash
   kubectl create sa sa-test -n rbac
   ~~~
 
-- 创建一个rolebinding,给sa赋予logs-reader role
+第三步，用 RoleBinding 把规则授予该 SA：
 
   ~~~bash
   kubectl create rolebinding rb-sa-test-logs-reader -n rbac --role=logs-reader --serviceaccount=rbac:sa-test
   ~~~
 
-- 创建pod,把sa挂载进去
+第四步，创建使用该 SA 的 Pod。下面 Nginx 镜像需包含 bash 与 curl，若所选标签缺少工具，应改用带工具的实验镜像或临时调试容器。
 
   ~~~yaml
   apiVersion: v1
@@ -871,7 +854,7 @@ Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给
       imagePullPolicy: IfNotPresent
   ~~~
 
-- 进pod模拟请求资源
+最后进入容器，通过投射 token 读取 Pod 与日志。请求成功说明这一资源与动词组合获得了授权，不表示 SA 有管理整个集群的权限。
 
   ~~~bash
   kubectl exec -it pod-sa-test -n rbac -- /bin/bash
@@ -883,11 +866,13 @@ Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给
   curl --cacert ./ca.crt  -H "Authorization: Bearer $(cat ./token)" https://kubernetes.default/api/v1/namespaces/rbac/pods/pod-sa-test/log
   ~~~
 
-## 限制kubectl用户的权限
+## 八、通过客户端证书演示命名空间范围
 
-### 限制kubectl用户仅能访问某命名空间
+下面只用于自建测试集群中理解证书 CN 与 RBAC 的映射，需要已获授权的签发环境。`ca.key` 是集群根私钥，不得复制给用户；托管集群或企业日常访问应使用平台提供的身份签发流程。证书有效期也应按组织策略控制，此处使用 30 天演示，不能把长期签发替代轮换。
 
-- SSL认证
+### 限制 kubectl 用户仅能访问某命名空间
+
+- SSL 认证
 
   ```bash
   #生成私钥
@@ -896,10 +881,10 @@ Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给
   #生成证书请求
   openssl req -new -key hangx.key -out hangx.csr -subj "/CN=hangx"
   #生成证书,表明这个用户被api server信任
-  openssl x509 -req -in hangx.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out hangx.crt -days 3650
+  openssl x509 -req -in hangx.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out hangx.crt -days 30
   ```
 
-- 配置k8s用户
+- 配置 k8s 用户
 
   ```bash
   #把hangx用户添加到集群中,可以用来认证apiserver的连接
@@ -912,32 +897,31 @@ Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给
   kubectl config use-context kubernetes-admin@kubernetes
   #给hangx用户rolebinding授权
   kubectl create ns hangx-test
-  kubectl create rolebinding hangx -n hangx-test --clusterrole=cluster-admin --user=hangx
+  kubectl create rolebinding hangx -n hangx-test --clusterrole=view --user=hangx
   #切换用户,测试权限
   kubectl config use-context hangx@kubernetes
   kubectl get pods -n hangx-test
   ```
 
-- 配置linux客户端的用户,让他能用hangx的config文件访问集群
+- 配置 linux 客户端的用户，让他能用 hangx 的 config 文件访问集群
 
   ```bash
   useradd hangx
-  #config文件的拷贝:得把/root/.kube/一整个目录拷贝过去
-  cp -ar /root/.kube/ /tmp/
-  #修改/tmp/.kube/config文件,把kubernetes-admin相关的删除,只留hangx用户;current context切换到hangx用户
-  #kubeconfig文件拷贝到这个用户的家目录
-  cp -ar /tmp/.kube/ /home/hangx/
-  #root用户下操作,修改.kube目录的属主、属组为hangx
-  chown -R hangx.hangx /home/hangx/.kube
+  # 只导出目标上下文，避免复制管理员证书与其他身份
+  umask 077
+  kubectl --context=hangx@kubernetes config view --minify --flatten --raw > /tmp/hangx-only.yaml
+  install -d -m 700 -o hangx -g hangx /home/hangx/.kube
+  install -m 600 -o hangx -g hangx /tmp/hangx-only.yaml /home/hangx/.kube/config
+  # 核对导出的users只有目标身份，并按凭据管理流程清理临时副本
   #切换用户
   su - hangx
   #验证权限
-  k get po -n hangx-test
+  kubectl get pods -n hangx-test
   ```
 
-### 授权kubectl用户查看所有pod的权限
+### 授权 kubectl 用户查看所有 pod 的权限
 
-- SSL认证
+- SSL 认证
 
   ```bash
   #生成私钥
@@ -946,26 +930,27 @@ Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给
   #生成证书请求
   openssl req -new -key hangx1.key -out hangx1.csr -subj "/CN=hangx1"
   #生成证书,表明这个用户被api server信任
-  openssl x509 -req -in hangx1.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out hangx1.crt -days 3650
+  openssl x509 -req -in hangx1.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out hangx1.crt -days 30
   ```
 
-- 配置k8s用户
+- 配置 k8s 用户
 
   ```bash
   #把hangx用户添加到集群中,可以用来认证apiserver的连接
-  kubectl config set-credentials hangx --client-certificate=./hangx.crt --client-key=./hangx.key --embed-certs=true
+  kubectl config set-credentials hangx1 --client-certificate=./hangx1.crt --client-key=./hangx1.key --embed-certs=true
   #在kubeconfig中新增hangx账号
-  kubectl config set-context hangx@kubernetes --cluster=kubernetes --user=hangx
+  kubectl config set-context hangx1@kubernetes --cluster=kubernetes --user=hangx1
   #切换到hangx用户
-  kubectl config use-context hangx@kubernetes
+  kubectl config use-context hangx1@kubernetes
   #切回cluster-admin
   kubectl config use-context kubernetes-admin@kubernetes
   ```
 
-- 创建role和rolebinding
+- 创建 role 和 rolebinding
 
   ~~~bash
-  #创建clusterrole:pod-reader
+  # 创建ClusterRole清单
+  cat > cr-pod-reader.yaml <<'EOF'
   apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRole
   metadata:
@@ -974,38 +959,40 @@ Serviceaccount包括了:namespace、token、ca,且通过目录挂载的方式给
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "watch"]
+  EOF
+  kubectl apply -f cr-pod-reader.yaml
 
   #给hangx用户clusterrolebinding授权
-  kubectl create ns hangx-test
-  kubectl create clusterrolebinding rb-hangx-cr --clusteerrole=cr-pod-reader --user=hangx
+  # hangx-test已在上一实验创建；这里只添加集群范围绑定
+  kubectl create clusterrolebinding rb-hangx-cr --clusterrole=cr-pod-reader --user=hangx1
   #切换用户,测试权限
-  kubectl config use-context hangx@kubernetes
-  kubectl get pods
+  kubectl config use-context hangx1@kubernetes
+  kubectl get pods --all-namespaces
   ~~~
 
-- 配置linux客户端的用户,让他能用hangx的config文件访问集群
+将 hangx1 的独立配置分发给对应 Linux 用户：
 
   ```bash
-  useradd hangx
-  #config文件的拷贝:得把/root/.kube/一整个目录拷贝过去
-  cp -ar /root/.kube/ /tmp/
-  #修改/tmp/.kube/config文件,把kubernetes-admin相关的删除,只留hangx用户;current context切换到hangx用户
-  #kubeconfig文件拷贝到这个用户的家目录
-  cp -ar /tmp/.kube/ /home/hangx/
-  #root用户下操作,修改.kube目录的属主、属组为hangx
-  chown -R hangx.hangx /home/hangx/.kube
+  useradd hangx1
+  # 只导出目标上下文，避免复制管理员证书与其他身份
+  umask 077
+  kubectl --context=hangx1@kubernetes config view --minify --flatten --raw > /tmp/hangx1-only.yaml
+  install -d -m 700 -o hangx1 -g hangx1 /home/hangx1/.kube
+  install -m 600 -o hangx1 -g hangx1 /tmp/hangx1-only.yaml /home/hangx1/.kube/config
+  # 核对导出的users只有目标身份，并按凭据管理流程清理临时副本
   #切换用户
-  su - hangx
+  su - hangx1
   #验证权限
-  k get po -n hangx-test
+  kubectl get pods --all-namespaces
   ```
 
-## resourcequota准入控制器
+## 九、用 ResourceQuota 限制命名空间总量
 
-- ResourceQuota准入控制器是k8s上内置的准入控制器,默认该控制器是启用的状态,它主要作用是用来限制一个名称空间下的资源的使用,它能防止在一个名称空间下的pod被过多创建时,导致过多占用k8s资源。简单讲它是用来在名称空间级别限制用户的资源使用。
-- resource quota也是一个资源,需要yaml定义创建。定义的规则中,只要有一个不满足,新pod就创建不出来。
+RBAC 只控制身份能否创建对象，不负责给团队计算资源预算。ResourceQuota 在命名空间层面检查声明总量与对象数量；下面先对 CPU、内存、Pod、Deployment 和 PVC 数量设置配额。需要先创建 quota 命名空间，再应用清单。
 
-### 限制CPU/memory/deploy等资源量
+超出限制时，新的对象可能被准入拒绝，但不会为满足新配额而自动终止已运行对象。若 CPU/内存配额要求容器有对应 requests/limits，可通过下一节的 LimitRange 补默认值。
+
+### 限制 CPU/memory/deploy 等资源量
 
 ~~~yaml
 #对ns做限制
@@ -1026,8 +1013,8 @@ spec:
 ~~~
 
 ~~~bash
-k get quota -n quota
-k get resourcequota -n quota
+kubectl get quota -n quota
+kubectl get resourcequota -n quota
 ~~~
 
 ### 限制存储空间大小
@@ -1041,17 +1028,16 @@ metadata:
 spec:
   hard:
     persistentvolumeclaims: "5"
-    requests.storage: "5Gi" #所有非停止的pod申请的存储不超过5Gi
+    requests.storage: "5Gi" # 所有PVC声明的存储请求总和不超过5Gi
     requests.ephemeral-storage: "1Gi" #限制本地临时存储
     limits.ephemeral-storage: "2Gi"
 ~~~
 
-## limitRange准入控制
+## 十、用 LimitRange 约束单个对象
 
-- LimitRange准入控制器是k8s上一个内置的准入控制器,LimitRange是k8s上的一个标准资源,它主要用来定义在某个名称空间下限制pod或pod里的容器对k8s上的cpu和内存资源使用;它能够定义我们在某个名称空间下创建pod时使用的cpu和内存的上限和下限以及默认cpu、内存的上下限。
+ResourceQuota 限制总量，LimitRange 则约束单个容器、Pod 或 PVC 的资源声明。它可以为未设置的 requests/limits 补默认值，也可以检查最小值、最大值和 limit/request 比例。检查的是准入时声明，实际 CPU 与内存使用由运行时和节点资源机制约束。
 
-- 如果我们创建pod时定义了资源上下限,但不满足LimitRange规则中定义的资源上下限,此时LimitRanger就会拒绝我们创建此pod;如果我们在LimitRange规则中定义了默认的资源上下限制,我们创建资源没有指定其资源限制,它默认会使用LimitRange规则中的默认资源限制;同样的逻辑LimitRanger可以限制一个pod使用资源的上下限,它还可以限制pod中的容器的资源上下限,比限制pod更加精准。
-- 不管是针对pod还是pod里的容器,它始终只是**限制单个pod资源使用**。
+下面使用 `type: Container`，表示逐容器检查。`default` 是 limit 默认值，`defaultRequest` 是 request 默认值，`maxLimitRequestRatio` 约束两者比例。已有字段不会被默认值覆盖，但补齐后的配置仍需同时满足 LimitRange 与 ResourceQuota。
 
 ~~~yaml
 apiVersion: v1
@@ -1078,3 +1064,6 @@ spec:
       memory: 4
     type: Container
 ~~~
+
+
+应用这些规则后，可以按请求路径验证：先用 `kubectl auth can-i` 检查身份是否允许创建，再创建满足或故意超出约束的测试 Pod，查看 API 错误、ReplicaSet 事件和实际 Pod 字段。这样能区分“没有创建权限”与“有权限但对象未通过准入”，也能避免为了修复配额错误而扩大用户权限。

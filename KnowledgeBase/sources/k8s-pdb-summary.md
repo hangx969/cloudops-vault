@@ -4,7 +4,7 @@ tags:
   - knowledgebase/source
   - docker-kubernetes/k8s
   - high-availability
-date: 2026-06-06
+date: 2026-10-24
 sources:
   - "[[Docker-Kubernetes/k8s-basic-resources/k8s-PodDisruptionBudget实战]]"
 aliases:
@@ -19,15 +19,15 @@ aliases:
 - **摄入日期**：2026-06-06
 
 ## 摘要
-系统讲解 PodDisruptionBudget（PDB）——K8s 自愿中断场景下的可用性保护机制。覆盖两种配置方式（minAvailable / maxUnavailable）、与 drain 和滚动更新的配合原理、三种生产配置模式（高可用服务/StatefulSet/批处理）、四大常见陷阱及验证方法。
+讲解 PodDisruptionBudget（PDB）如何约束 Eviction API 驱逐，并区分节点排空、控制器滚动更新与非自愿故障。覆盖两种预算配置、百分比取整、服务与 Worker 场景、常见陷阱，以及完整 Deployment/PDB 和驱逐验证示例。
 
 ## 关键知识点
-1. **PDB 只对自愿中断生效**（drain/滚动更新/集群升级），不防护非自愿中断（节点宕机/OOMKill）
-2. **两种配置二选一**：`minAvailable`（至少保持 N 个可用）或 `maxUnavailable`（最多允许 N 个不可用），均支持百分比（向下取整）
-3. **PDB 与 Deployment 策略的关系**：两者同时存在时 PDB 约束更严格，每步操作必须同时满足两者
-4. **四大陷阱**：① 单副本 + minAvailable:1 → drain 永久阻塞 ② minAvailable = replicas → 节点维护无法进行 ③ 空 selector 误保护所有 Pod ④ PDB 百分比 + HPA 最小副本数计算失误
-5. **最稳健配置**（支付类核心服务）：Deployment `maxUnavailable: 0` + `maxSurge: 1` + PDB `minAvailable: replicas-1` + `readinessProbe` + `terminationGracePeriodSeconds`
-6. **验证方法**：`kubectl get pdb`（看 ALLOWED DISRUPTIONS 列）、`kubectl get events --field-selector reason=DisruptionTarget`、eviction API 测试（PDB 阻止返回 429）
+1. PDB 约束经过 Eviction API 的驱逐；`kubectl drain` 默认使用该接口。直接删除、Deployment 滚动更新及节点故障不受它阻止，但这些操作造成的不健康副本会减少可用预算。
+2. `minAvailable` 与 `maxUnavailable` 二选一，百分比均向上取整。3 副本配置 `minAvailable: "80%"` 要求保留 3 个健康副本，`maxUnavailable: "20%"` 则允许 1 个不可用。
+3. Deployment 的 `maxUnavailable/maxSurge` 约束 rollout，PDB 约束 Eviction；两者分别设计，不能认为 PDB 会阻止控制器删除旧 Pod。
+4. 检查单副本或预算等于总副本数时能否维护、HPA 最小副本数下的取整结果，以及 selector 范围。`policy/v1` 中 `{}` 选择命名空间内所有 Pod，未设置或 null 则不选择 Pod。
+5. 文中三副本示例使用 Deployment `maxUnavailable: 0/maxSurge: 1` 与 PDB `minAvailable: 2`，还需就绪探针、优雅终止与可调度容量；这不是所有支付服务的通用保障。
+6. 查看 `ALLOWED DISRUPTIONS`、PDB 健康统计、Pod Ready 状态及实际维护错误；Eviction 测试会真实驱逐测试 Pod，被预算阻止时返回 429。`--force` 不绕过 PDB，`--disable-eviction` 改用直接删除。
 
 ## 涉及的概念与实体
 - [[KnowledgeBase/entities/Kubernetes]]

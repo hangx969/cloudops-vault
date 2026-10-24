@@ -328,7 +328,7 @@ spec:
 
 ### 配置示例与启用条件
 
-以下示例用于对照配置约束，其中 `Recreate` 与 `rollingUpdate.partition` 的组合会被当前 StatefulSet API 校验拒绝。它还省略了 Service、selector、Pod 标签、存储和 Redis 集群配置，不能作为完整部署清单使用。
+以下示例用于对照配置约束，其中 `Recreate` 与 `rollingUpdate.partition` 的组合会被当前 StatefulSet API 校验拒绝。它没有提供实际 Service、存储和 Redis 集群配置，不能作为完整部署清单使用。
 
 ```yaml
 apiVersion: apps/v1
@@ -336,13 +336,20 @@ kind: StatefulSet
 metadata:
   name: redis-cluster
 spec:
+  serviceName: redis-cluster
+  selector:
+    matchLabels:
+      app: redis-cluster
   replicas: 3
   podManagementPolicy: OrderedReady
   updateStrategy:
     type: Recreate
     rollingUpdate:
-      partition: 0   # 灰度时先设为 2，只重建序号 2 的 Pod 试水
+      partition: 0   # 反例：Recreate不允许配置rollingUpdate或partition
   template:
+    metadata:
+      labels:
+        app: redis-cluster
     spec:
       containers:
       - name: redis

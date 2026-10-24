@@ -115,7 +115,7 @@ type Foo struct {
     metav1.TypeMeta   `json:",inline"`
     metav1.ObjectMeta `json:"metadata,omitempty"`
 
-    Spec   FooSpec   `json:"spec,omitempty"`
+    Spec   FooSpec   `json:"spec"`
     Status FooStatus `json:"status,omitempty"`
 }
 
@@ -309,10 +309,10 @@ spec:
 
 - 为 `spec.name` 建立字段索引，避免每次 Pod 事件遍历命名空间内所有 Foo；不要依赖事件不会重复。
 - 在集群内使用专用 ServiceAccount，并按需要设置 namespace-scoped cache、Role 和 RoleBinding；生成的 ClusterRole 不代表必须全局绑定。
-- 改进日志记录系统
-- 当 Operator 更新资源时触发 Kubernetes 事件
-- 获取 Foo 自定义资源时添加自定义字段（如显示 happy 状态）
-- 编写单元测试和端到端测试
+- 在日志中记录 Foo 的命名空间、名称、generation 和查找结果，便于区分 Pod 不存在与 API 读取失败。
+- 为无法读取目标 Pod 等持续故障定义 status condition；如产生 Kubernetes Event，避免每轮重试都重复发送。
+- 添加 `additionalPrinterColumns`，让 `kubectl get foos` 直接显示目标 Pod、happy 和 observedGeneration。
+- 测试 Pod 与 Foo 同名但不同命名空间、读取错误、Pod 删除及状态未变化时不写回等分支，再用测试集群检查 watch 链路。
 
 ## Operator 开发工具对比
 
