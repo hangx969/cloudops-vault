@@ -39,7 +39,7 @@ class D:
   w=8+sum(12 if unicodedata.east_asian_width(c) in 'WF' else 7.5 for c in s);w=int((w+3)//4*4)
   self.l.append(f'<rect x="{x-w/2}" y="{y-14}" width="{w}" height="20" rx="2" fill="{P}"/>'+self.text(x,y,s,12,color=M,weight=500,mono=mono))
  def save(self,notes):
-  defs=''.join(f'<marker id="arrow{suffix}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="{col}"/></marker>' for suffix,col in [('',M),('-accent',A),('-link','#156273')])
+  defs='<marker id="arrow-back" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0,8 3,0 6" fill="#4b5d75"/></marker>'+''.join(f'<marker id="arrow{suffix}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="{col}"/></marker>' for suffix,col in [('',M),('-accent',A),('-link','#156273')])
   svg=f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="{self.slug}-title {self.slug}-desc" data-size-preset="slide-16x9" data-detail="faithful"><title id="{self.slug}-title">{E(self.title)}</title><desc id="{self.slug}-desc">{E(self.desc)}</desc><defs>{defs}</defs><rect width="1280" height="720" fill="{P}"/>'+self.text(40,72,self.title,40,'start',I,400,serif=True)+self.text(40,108,self.kind,12,'start',M,400)+''.join(self.z+self.e+self.l+self.n)+f'<line x1="40" y1="652" x2="1240" y2="652" stroke="{R}"/>'+self.text(40,680,self.note,12,'start',M,400)+'</svg>'
   html=f'<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{E(self.title)}</title><link href="{LINK}" rel="stylesheet"><style>body{{margin:0;background:{P}}}.diagram-container{{width:100%;overflow-x:auto}}svg{{width:100%;min-width:1280px;display:block}}@media print{{.diagram-container{{overflow-x:visible}}svg{{min-width:0}}}}</style></head><body><div class="diagram-container">{svg}</div></body></html>'
   h=OUT/(self.slug+'.html');p=OUT/(self.slug+'.png');h.write_text(html)
@@ -52,20 +52,22 @@ class D:
 
 def one():
  d=D('01-01','cluster-architecture','Kubernetes 集群组件与工作节点','Architecture · 历史 Docker 实现','控制平面通过 API Server 协作，两个工作节点运行 kubelet、kube-proxy、Docker 与多个 Pod。','历史图保留 Docker；现代 kubelet 通过 CRI 调用运行时。kube-proxy 配置转发规则，不启动容器。')
- d.zone(40,196,400,420,'CONTROL PLANE / MASTER');d.zone(552,152,688,216,'WORKER NODE 1');d.zone(552,408,688,216,'WORKER NODE 2')
+ d.zone(40,196,400,420,'CONTROL PLANE / MASTER');d.zone(552,152,688,224,'WORKER NODE 1');d.zone(552,408,688,224,'WORKER NODE 2')
  d.node(96,136,272,64,'Kubernetes control');d.node(152,260,176,64,'API Server',focal=True)
  d.node(64,396,168,80,'controller-manager',lines=['controller-','manager']);d.node(264,396,152,80,'scheduler');d.node(152,528,176,64,'etcd','cluster')
- d.arrow([(232,200),(232,260)]);d.arrow([(148,396),(148,348),(196,348),(196,324)]);d.arrow([(340,396),(340,360),(280,360),(280,324)]);d.arrow([(232,324),(232,528)])
+ d.arrow([(232,200),(232,260)]);d.arrow([(148,396),(148,348),(196,348),(196,324)]);d.arrow([(340,396),(340,360),(280,360),(280,324)]);d.arrow([(248,324),(248,528)])
  for j,y in enumerate([152,408]):
   d.node(592,y+48,168,64,'kubelet');d.node(1016,y+48,184,64,'kube-proxy')
-  d.zone(792,y+40,184,152,'DOCKER')
-  d.node(808,y+80,152,40,'Pod 1',sub='3 containers');d.node(808,y+140,152,40,'Pod 2',sub='3 containers')
+  d.zone(792,y+24,184,192,'DOCKER')
+  d.node(808,y+72,152,64,'Pod 1',sub='3 containers');d.node(808,y+144,152,64,'Pod 2',sub='3 containers')
   d.arrow([(328,280+j*24),(480+j*24,280+j*24),(480+j*24,y+80),(592,y+80)])
-  d.arrow([(760,y+64),(784,y+64),(784,y+100),(808,y+100)])
-  d.arrow([(760,y+96),(776,y+96),(776,y+160),(808,y+160)])
-  d.arrow([(1016,y+64),(992,y+64),(992,y+100),(960,y+100)])
-  d.arrow([(1016,y+96),(1004,y+96),(1004,y+160),(960,y+160)])
- d.node(1024,136,168,0,'') if False else None
+  d.e[-1]=d.e[-1].replace(' marker-end=', ' marker-start="url(#arrow-back)" marker-end=')
+  d.arrow([(760,y+64),(784,y+64),(784,y+104),(808,y+104)])
+  d.arrow([(760,y+96),(776,y+96),(776,y+176),(808,y+176)])
+  d.arrow([(1016,y+64),(992,y+64),(992,y+104),(960,y+104)])
+  d.arrow([(1016,y+96),(1004,y+96),(1004,y+176),(960,y+176)])
+ 
+ for k,caption in enumerate(['replication','namespace','serviceaccounts …']):d.n.append(d.text(148,492+k*16,caption,11,color=M,weight=400,mono=True))
  d.n.append(d.text(1108,136,'Internet',16));d.arrow([(1108,144),(1108,200)])
  d.save(['保留两个工作节点、每节点2个Pod且每Pod3个容器；重复容器以数量文字表达。','保留Docker历史运行时及控制组件职责；未将互联网到kube-proxy的线解释为进程流量经过kube-proxy。'])
 
@@ -76,12 +78,14 @@ def two():
  for x,name in [(48,'DaemonSet'),(312,'ReplicaSet'),(576,'Job'),(840,'StatefulSet')]:d.node(x,272,184,64,name)
  d.arrow([(300,248),(300,260),(404,260),(404,272)]);d.arrow([(700,248),(700,260),(668,260),(668,272)])
  d.zone(432,400,416,112,'POD');d.node(452,436,176,64,'Container 1');d.node(652,436,176,64,'Container 2')
- for k,x in enumerate([140,404,668,932]):d.arrow([(x,336),(x,352+k*12),(480+k*88,352+k*12),(480+k*88,400)])
+ for k,x in enumerate([140,404,668,932]):
+  d.arrow([(x,336),(x,352+k*12),(480+k*88,352+k*12),(480+k*88,400)])
+  if k==0:d.e[-1]=d.e[-1].replace('L 472.0,352.0','L 396,352 a 8,8 0 0,1 16,0 L 472.0,352.0')
  d.node(1000,428,216,64,'Service',focal=True);d.arrow([(1000,460),(848,460)],True)
  d.node(552,556,176,64,'Volume',focal=True);d.arrow([(640,512),(640,556)],True)
  for x,name in [(120,'ConfigMap'),(832,'PVC'),(1040,'Secret')]:
   d.node(x,556,160,64,name)
- d.arrow([(280,588),(552,588)],True);d.arrow([(832,576),(728,576)],True);d.arrow([(1040,604),(728,604)],True)
+ d.arrow([(280,588),(552,588)],True);d.arrow([(832,576),(728,576)],True);d.arrow([(1120,620),(1120,636),(688,636),(688,620)],True)
  d.save(['保留六种控制器、两个容器、Service、Volume、ConfigMap、PVC、Secret全部原图对象。','原图Volume到三类配置/申请的关系改为带说明的挂载/数据来源，未将ConfigMap和Secret称为持久存储。'])
 
 def pod_base():
@@ -101,7 +105,7 @@ def sync():
  d.node(224,264,304,96,'Go 业务容器','application');d.node(752,264,304,96,'定时同步 Git 代码','sidecar / git-sync',focal=True)
  d.node(468,456,344,88,'共享 Volume','explicit volumeMounts')
  d.arrow([(904,360),(904,500),(812,500)]);d.arrow([(468,500),(376,500),(376,360)])
- d.label(904,416,'写入文件');d.label(376,416,'读取文件')
+ d.label(940,416,'写入文件');d.label(340,416,'读取文件')
  d.save(['保留原图Pod内Go和Git同步两个组件。','共享卷来自紧邻正文；显式补出文件传递路径，并保留不等同于自动升级的限制。'])
 
 def logs():
@@ -115,22 +119,30 @@ def logs():
  d.save(['保留核心业务、日志收集服务、统一logging Server与4种日志文件。','原图未显式画卷，依据相邻正文把文件共享条件画成Volume。'])
 
 def seq():
- d=D('03-04','pod-create-sequence','Pod 创建：组件间的观察与更新','Sequence · 历史 Docker 调用链','Pod 定义经 API Server 写入 etcd，调度器绑定节点，kubelet 观察绑定并用 Docker 启动容器后更新状态。','历史图保留 Docker / docker run；现代 kubelet 经 CRI 调用运行时。实线为请求或观察结果，虚线为返回。')
- actors=[('用户',80),('API Server',284),('etcd',488),('Scheduler',692),('kubelet',896),('Docker',1100)]
- for name,x in actors:
-  d.node(x-72,152,144,64,name)
+ d=D('03-04','pod-create-sequence','Pod 创建：用户提交与 API 持久化','Sequence · 创建流程 1 / 3','用户提交 Pod 后，API Server 将对象写入 etcd，并返回请求已接受。','API 接受对象不代表容器已运行；调度与启动见下一张图。实线为请求，虚线为返回。')
+ for name,x in [('用户',256),('API Server',640),('etcd',1024)]:
+  d.node(x-100,176,200,64,name)
+  d.z.append(f'<line x1="{x}" y1="240" x2="{x}" y2="600" stroke="{R}" stroke-dasharray="3,3"/>')
+ for a,b,y,s,ds in [(256,640,304,'CREATE POD',False),(640,1024,380,'WRITE',False),(1024,640,456,'RETURN',True),(640,256,532,'ACCEPTED',True)]:
+  d.arrow([(a,y),(b,y)],ds);d.label((a+b)/2,y-14,s,True)
+ d.save(['保留原图用户提交、API写入etcd、etcd返回及API接受响应4条消息。','原图拆为3张连续时序图，每张不超过5条生命线。'])
+ d=D('03-04a','pod-scheduling-startup','Pod 创建：调度绑定与容器启动','Sequence · 创建流程 2 / 3','调度器观察未调度 Pod 并提交绑定，kubelet 观察绑定后用 Docker 启动容器。','历史图保留 Docker / docker run；现代 kubelet 经 CRI 调用运行时。观察变化经 API Server，不直接写 etcd。')
+ for name,x in [('API Server',128),('etcd',384),('Scheduler',640),('kubelet',896),('Docker',1152)]:
+  d.node(x-88,152,176,64,name)
   d.z.append(f'<line x1="{x}" y1="216" x2="{x}" y2="620" stroke="{R}" stroke-dasharray="3,3"/>')
- msgs=[(80,284,252,'CREATE POD',False),(284,488,284,'WRITE',False),(488,284,316,'RETURN',True),(284,80,348,'ACCEPTED',True),(284,692,380,'WATCH: NEW',False),(692,284,412,'BIND POD',False),(284,488,444,'WRITE',False),(488,692,476,'RETURN',True),(284,896,508,'WATCH: BOUND',False),(896,1100,540,'DOCKER RUN',False),(1100,896,572,'RETURN',True),(896,284,604,'UPDATE STATUS',False)]
- for a,b,y,s,dash in msgs:d.arrow([(a,y),(b,y)],dash);d.label((a+b)/2,y-14,s,True)
- # Etcd persistence of status is moved to a second panel to avoid violating the 12-message budget.
- d.save(['保留原图6个参与者与主要消息；faithful模式保留6条生命线。','原图最后一次状态写入etcd/返回由图2续接，防止单图消息过密。'])
- d=D('03-04b','pod-status-persistence','Pod 状态更新与持久化','Sequence · 创建流程续图','kubelet 将 Pod 状态更新提交 API Server，后者写入 etcd 并返回。','与上一张图的 UPDATE STATUS 衔接；组件通过 API Server 协作，不直接写 etcd。')
+ msgs=[(128,640,252,'WATCH: NEW',False,480),(640,128,300,'BIND POD',False,480),(128,384,348,'WRITE',False,256),(384,128,396,'RETURN',True,256),(128,640,444,'RETURN',True,480),(128,896,492,'WATCH: BOUND',False,512),(896,1152,540,'DOCKER RUN',False,1024),(1152,896,588,'RETURN',True,1024)]
+ for a,b,y,s,ds,lx in msgs:d.arrow([(a,y),(b,y)],ds);d.label(lx,y-14,s,True)
+ d.save(['保留调度器观察、绑定、etcd写入/返回、API向调度器返回、kubelet观察、Docker调用及返回8条消息。','保留原图Docker历史实现与顺序，5条生命线。'])
+ d=D('03-04b','pod-status-persistence','Pod 状态更新与持久化','Sequence · 创建流程 3 / 3','kubelet 将 Pod 状态更新提交 API Server，后者写入 etcd 并返回。','续接上一张图容器启动结果；组件通过 API Server 协作，不直接写 etcd。')
  for n,x in [('kubelet',256),('API Server',640),('etcd',1024)]:
   d.node(x-100,176,200,64,n);d.z.append(f'<line x1="{x}" y1="240" x2="{x}" y2="600" stroke="{R}" stroke-dasharray="3,3"/>')
  for a,b,y,s,ds in [(256,640,304,'UPDATE STATUS',False),(640,1024,380,'WRITE',False),(1024,640,456,'RETURN',True),(640,256,532,'RETURN',True)]:d.arrow([(a,y),(b,y)],ds);d.label((a+b)/2,y-14,s,True)
- d.save(['续接原图最后一次update pod status、etcd写入及双返回。'])
- # Consolidate two physical outputs under original inventory ID.
- state=json.loads(STATE.read_text());a=next(x for x in state if x['id']=='03-04');b=next(x for x in state if x['id']=='03-04b');a['outputs']+=b['outputs'];a['checks']+=b['checks'];state=[x for x in state if x['id']!='03-04b'];STATE.write_text(json.dumps(state,ensure_ascii=False,indent=2))
+ d.save(['保留原图update pod status、etcd写入及双返回4条消息。'])
+ state=json.loads(STATE.read_text());main=next(x for x in state if x['id']=='03-04')
+ main['title']='Pod 创建：提交、调度启动与状态持久化'
+ for sid in ['03-04a','03-04b']:
+  part=next(x for x in state if x['id']==sid);main['outputs']+=part['outputs'];main['checks']+=part['checks'];main['fidelity_notes']+=part['fidelity_notes']
+ state=[x for x in state if x['id'] not in ['03-04a','03-04b']];STATE.write_text(json.dumps(state,ensure_ascii=False,indent=2))
 
 def lifecycle():
  d=D('03-05','pod-lifecycle','Pod 生命周期：初始化、运行与终止','Timeline · 阶段示意（非严格时序）','普通初始化容器依次完成，应用容器启动后执行生命周期钩子与健康探针，终止时调用 PreStop。','PostStart 与入口程序无先后保证；Liveness / Readiness 无固定先后。横轴只表示阶段，不表示持续时间。')
@@ -166,8 +178,8 @@ def bluegreen(id,active):
   for xx,n in [(464,'App1'),(704,'App2'),(944,'App3')]:d.node(xx,y+56,200,64,n,ver)
   d.node(704,y+140,200,64,'DB','App2 database')
   d.arrow([(804,y+120),(804,y+140)])
-  if j+1==active:d.arrow([(264,372),(344,372),(344,y+88),(464,y+88)])
- d.label(344,328 if active==1 else 416,'当前流量')
+  if j+1==active:d.arrow([(264,372),(344,372),(344,y+88),(424,y+88)])
+ d.label(380,328 if active==1 else 416,'当前流量')
  d.save(['保留反向代理、两套环境的App1/App2/App3以及各自App2关联DB。','原图绿色/蓝色环境颜色以明确名称和v1/v2代替，遵守统一Kubernetes蓝色主题。'])
 
 def canary():
@@ -178,7 +190,7 @@ def canary():
   for xx,ns in [(600,['Web','Server']),(824,['Application','Server']),(1048,['Database','Server'])]:d.node(xx,y+64,160,80,'',lines=ns)
   d.arrow([(760,y+104),(824,y+104)]);d.arrow([(984,y+104),(1048,y+104)])
   d.arrow([(416,348+j*32),(488+j*24,348+j*32),(488+j*24,y+104),(600,y+104)])
-  d.label(504,y+76,pc,True)
+  d.label(504 if j==0 else 544,y+76,pc,True)
  d.save(['保留Users、Router、95%旧版本、5%新版本以及每套Web/Application/Database三层。'])
 
 def job():
@@ -198,8 +210,9 @@ def sts():
   d.node(456,y,184,80,'Pod',f'web-{j}');d.node(768,y,216,80,'PVC',f'web-{j}');d.node(1088,y,152,80,'PV',f'volume {j}')
   d.arrow([(640,y+40),(768,y+40)]);d.arrow([(984,y+40),(1088,y+40)])
  d.arrow([(320,272),(456,272)]);d.arrow([(320,304),(384,304),(384,480),(456,480)])
- d.arrow([(320,480),(408,480),(408,392),(876,392),(876,328)])
- d.arrow([(320,512),(384,512),(384,584),(876,584),(876,536)])
+ d.arrow([(320,504),(408,504),(408,392),(876,392),(876,328)])
+ d.e[-1]=d.e[-1].replace('L 408.0,400.0','L 408,488 a 8,8 0 0,1 0,-16 L 408.0,400.0')
+ d.arrow([(320,524),(384,524),(384,584),(876,584),(876,536)])
  d.label(1028,260,'绑定');d.label(1028,468,'绑定')
  d.save(['保留StatefulSet、Pod template、volumeClaimTemplates以及两组Pod/PVC/PV对应关系。','保留原图web-0/web-1简写，脚注对应正文sts-web与完整PVC名称。'])
 
