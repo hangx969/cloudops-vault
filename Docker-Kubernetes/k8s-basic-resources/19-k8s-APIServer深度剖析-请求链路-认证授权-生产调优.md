@@ -48,45 +48,7 @@ kube-apiserver 为 Kubernetes 资源提供统一 API。kubelet、调度器和控
 
 下图省略了 TLS、审计、API Priority and Fairness（APF）排队以及解码/默认值等细节，重点展示写入的逻辑阶段。GET、LIST、WATCH 不经过对象变更准入；`apply` 也可能产生读取与 PATCH 等多次请求。
 
-~~~
-kubectl apply -f deployment.yaml
-       │
-       ▼
-  HTTP/HTTPS 请求
-       │
-       ▼
-┌─────────────────────────────────────────────────────┐
-│                  kube-apiserver                      │
-│                                                     │
-│  1. 认证（Authentication）                           │
-│     ├── X.509 证书                                  │
-│     ├── Bearer Token（ServiceAccount/OIDC/Bootstrap）│
-│     └── 认证失败 → 401 Unauthorized                 │
-│                                                     │
-│  2. 授权（Authorization）                            │
-│     ├── RBAC（主流）                                 │
-│     ├── ABAC / Webhook / Node Authorizer            │
-│     └── 无权限 → 403 Forbidden                      │
-│                                                     │
-│  3. 变更准入（Mutating Admission）                   │
-│     ├── 内置 MutatingAdmissionWebhook               │
-│     ├── 注入 sidecar、设置默认值                     │
-│     └── 修改对象后传入下一阶段                       │
-│                                                     │
-│  4. 对象校验（Schema Validation）                    │
-│     └── 严格校验字段合法性                           │
-│                                                     │
-│  5. 验证准入（Validating Admission）                 │
-│     ├── 内置 ValidatingAdmissionWebhook             │
-│     └── 策略违反 → 403/422                          │
-│                                                     │
-│  6. 持久化到 etcd                                   │
-│     └── 写入成功 → 200/201/202                      │
-│                                                     │
-│  7. Watch 通知下游（异步）                           │
-│     └── Scheduler/Controller/kubelet 感知变更        │
-└─────────────────────────────────────────────────────┘
-~~~
+![API Server 写入请求主链路](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-01-api-write-lifecycle-95b96cab302f.png)
 
 ### 3.2 认证：你是谁？
 
@@ -241,17 +203,7 @@ Watch 使用长连接传递资源变更。客户端通常先获取列表与 reso
 
 实际工作方式：
 
-~~~
-客户端 ---Watch 请求（?watch=true&resourceVersion=12345）---> API Server
-                                                              │
-                                                              │ 订阅 etcd Watch
-                                                              │
-etcd ---(变更事件：ADDED/MODIFIED/DELETED)-----------------> API Server
-                                                              │
-                                                              │ 过滤/格式转换
-                                                              ▼
-客户端 <------- 流式 HTTP 响应（chunked transfer）-------------
-~~~
+![API Watch 的事件流](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-02-api-watch-05d8b3bad46c.png)
 
 关键点：
 
@@ -397,22 +349,7 @@ spec:
 
 需要容忍控制平面实例故障时，可部署多个 API Server 并通过负载均衡提供入口。下图以 3 个实例、3 节点 etcd 为例；API Server 无 leader 选举式的单主请求入口，etcd 则需要满足多数派。还需确认负载均衡健康检查、跨故障域分布以及维护期间的剩余容量。
 
-~~~
-                ┌──────────────┐
-                │ Load Balancer│  (haproxy / kube-vip / cloud LB)
-                │  VIP:6443   │
-                └──────┬───────┘
-       ┌───────────────┼───────────────┐
-       ▼               ▼               ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│ API Server 1│ │ API Server 2│ │ API Server 3│
-└──────┬──────┘ └──────┬──────┘ └──────┬──────┘
-       └───────────────┼───────────────┘
-                       ▼
-                ┌─────────────┐
-                │  etcd 集群  │  (3节点Raft)
-                └─────────────┘
-~~~
+![API Server 高可用拓扑](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-03-api-ha-17971815c5ad.png)
 
 ### 6.3 审计日志配置
 

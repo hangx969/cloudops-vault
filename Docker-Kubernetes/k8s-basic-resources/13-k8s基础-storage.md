@@ -66,7 +66,7 @@ spec:
 
 默认介质来自节点上 kubelet 根目录所在的文件系统，常见是磁盘；也可以显式使用内存。不要把它用作需要跨 Pod 重建保存的唯一数据副本。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141720686.png" alt="image-20231114172051513" style="zoom:50%;" />
+![emptyDir：同一 Pod 内共享日志](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-01-emptydir-shared-volume-4403c232d896.png)
 
 #### 让两个容器共享文件
 
@@ -180,7 +180,7 @@ volumes:
 
 `hostPath` 把宿主机目录、文件或设备挂到容器中。Pod 删除后，该路径的数据通常仍存在，但新 Pod 调度到其他节点时，看到的是另一台机器的同名路径。它适合确实需要节点文件的代理或受控实验，不能提供跨节点的数据恢复。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141722615.png" alt="image-20231114172218560" style="zoom:50%;" />
+![hostPath：共享卷映射到节点目录](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-02-hostpath-node-volume-592fb0a63309.png)
 
 ```yaml
 apiVersion: v1
@@ -334,7 +334,7 @@ spec:
 
 下面先准备一台 NFS 服务器，再让节点挂载、最后让 Pod 挂载。Pod 迁到其他节点时，只要网络、权限与服务端可用，就能访问同一个共享目录；服务端本身仍需要高可用与备份设计。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141723114.png" alt="image-20231114172333052" style="zoom:50%;" />
+![NFS：卷连接到节点外的文件系统](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-03-nfs-shared-volume-365217acf300.png)
 
 #### 先理解 UID、GID 与导出权限
 
@@ -449,7 +449,7 @@ Downward API 可以通过环境变量或卷文件，把部分 Pod 元数据暴�
 
 ### PV 是集群范围的存储资源
 
-![image-20231114172731738](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141727818.png)
+![PV / PVC：使用者与存储提供者分工](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-04-pv-pvc-storage-binding-e4d000e1dd84.png)
 
 PersistentVolume（PV）描述一份存储及其能力，可以是本地卷、共享文件系统或块存储。PV 的生命周期独立于单个 Pod。它是集群范围资源，不属于 Namespace，也不等于“Node 级别资源”；例如一个 NFS PV 可供不同节点访问。
 

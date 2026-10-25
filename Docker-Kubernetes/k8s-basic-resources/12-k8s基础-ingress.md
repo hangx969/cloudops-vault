@@ -41,7 +41,7 @@ Service 用 selector 关联一组 Pod，由 EndpointSlice 描述实际后端，�
 
 Ingress 是 Kubernetes API 资源，主要描述 HTTP/HTTPS 的域名、路径和后端 Service。例如，把 `shop.example.com/api` 路由到同一 Namespace 中名为 `api` 的 Service。它还可以引用 TLS Secret，但资源本身不会监听端口或转发请求。
 
-![image-20240725225555680](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252255843.png)
+![Ingress 按域名关联不同应用](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-02-ingress-host-resource-map-772b34203a71.png)
 
 ### Ingress Controller：运行代理并协调配置
 
@@ -69,14 +69,14 @@ Ingress 的 `spec.ingressClassName` 引用集群级的 IngressClass，由它的 
 
 客户端先连接入口控制器，再由它把请求交给匹配的后端。下图以 ingress-nginx 的常见路径为例：
 
-![image-20231209111616791](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091116867.png)
+![Ingress：路由声明与实际后端](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-03-ingress-routing-and-backends-b736ac191912.png)
 
 > [!warning] 注意
 > ingress-nginx 通常通过 Service 对应的后端记录获取 Pod IP，默认可以直接代理到这些地址，而不是先访问 ClusterIP。它并非仅凭标签绕过 Service；`service-upstream` 等配置还可能改变路径。其他控制器的数据路径需按实现确认。
 
 ## 入口高可用：先选择暴露方式
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172346336.png" alt="image-20250717234628958" style="zoom:50%;" />
+![Ingress Controller：多节点入口高可用](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-04-ingress-high-availability-82f0fe21df17.png)
 
 入口通常至少需要多个副本和跨节点部署，避免单个 Pod 或节点故障使所有应用不可达。上图是一种“前置负载均衡器 → 专用入口节点 → 应用后端”的架构。具体副本数应由容量和故障域决定，两到三个节点只是常见起点。
 
@@ -413,7 +413,7 @@ spec:
 
 例如，调用方请求 `/api-a/users`，入口可将它改写为后端的 `/users`；若后端要求 `/api/users`，则保留所需的 `/api` 前缀。目标路径应与应用真实接口一致。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507181955304.png" alt="image-20250718195507023" style="zoom:50%;" />
+![按路径路由，并重写后端 URI](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-05-ingress-path-rewrite-f9d773d2ecce.png)
 
 创建一个应用模拟后端服务：
 
@@ -1186,13 +1186,13 @@ HTTP 连接复用减少重建开销，但也可能让四层分流集中到少数
 
 这个时候就可以利用 Nginx Ingress 基于 Header 或 Cookie 进行流量切分的策略来发布，业务使用 Header 或 Cookie 来标识不同类型的用户，我们通过配置 Ingress 来实现让带有指定 Header 或 Cookie 的请求被转发到新版本，其它的仍然转发到旧版本，从而实现将新版本灰度给部分用户。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281017402.png" alt="image-20231228101712175" style="zoom:50%;" />
+![灰度发布：按 Header / Cookie 分流](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-06-canary-header-cookie-bfb97858c76c.png)
 
 ### 场景二：按比例随机分配请求
 
 假设线上运行了一套对外提供 7 层服务的 Service B 服务，后来修复了一些问题，需要灰度上线一个新版本 Service B’，但又不想直接替换掉原来的 Service B，而是让先切 10% 的流量到新版本，等观察一段时间稳定后再逐渐加大新版本的流量比例直至完全替换旧版本，最后再平滑下线旧版本，从而实现切一定比例的流量给新版本。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281018356.png" alt="image-20231228101848227" style="zoom:50%;" />
+![灰度发布：按权重分流](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-07-canary-weight-c555a965be1c.png)
 
 
 ### 分流规则及优先级
@@ -1533,7 +1533,7 @@ VIP 漂移要求节点网络允许 VRRP、地址通告及相应的二层邻居�
 
 两个工作节点分别运行一个入口 Pod，通过 Deployment、nodeSelector 和 Pod 反亲和性保证分开部署。入口 Pod 使用 hostNetwork，直接监听节点的 80/443。两台节点另外运行前置 Nginx，Keepalived 让其中一台持有 VIP，前置 Nginx 再把请求分发给两台入口。
 
-![image-20231209114749417](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091147480.png)
+![历史入口高可用：Nginx + Keepalived](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-08-nginx-keepalived-ha-7a8fd7a47150.png)
 
 ### 搭建高可用入口的五个步骤
 

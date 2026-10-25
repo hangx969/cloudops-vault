@@ -500,14 +500,7 @@ livenessProbe:
 
 故障按下面的路径不断放大：
 
-```text
-数据库短暂抖动
-  → Liveness 超时
-  → Pod 内的容器被重启
-  → 剩余 Pod 流量和连接压力上升
-  → 更多健康检查超时
-  → 更多 Pod 内的容器被重启
-```
+![Liveness 如何放大外部依赖故障](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-04-text-01-liveness-cascade-a58e79b9673a.png)
 
 ### Readiness 为什么没有留下恢复窗口
 

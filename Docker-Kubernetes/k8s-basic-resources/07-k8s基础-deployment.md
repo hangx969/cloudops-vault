@@ -60,7 +60,7 @@ Deployment 声明副本数、选择器和 Pod 模板。控制器为对应模板�
 
 滚动过程中，新旧 ReplicaSet 可以同时拥有运行中的 Pod。例如旧 ReplicaSet 原来有三个副本，控制器逐步增加新版本、缩减旧版本，直到旧 ReplicaSet 降为 0。旧 ReplicaSet 保留模板后，才有机会按历史版本回滚。不能把这个过程理解为“任何时候只有一个 ReplicaSet 活跃”。
 
-![image-20231029220956699](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310292209817.png)
+![Deployment 滚动更新：旧副本逐步替换](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-01-rolling-update-9238fcfbf490.png)
 
 ### 用更新预算控制替换节奏
 
@@ -252,11 +252,11 @@ kubectl rollout resume deployment/dep-myapp-blue
 
 蓝绿部署同时保留旧版和新版两套运行环境。这里把当前服务用户的旧版称为绿色，把准备上线的新版称为蓝色；颜色本身没有版本高低之分。蓝色环境先接受验证，确认后把入口切过去，旧版保留一段观察时间以便回退。
 
-![image-20231111095318581](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110953730.png)
+![蓝绿部署：切换前流量进入旧版](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-02-blue-green-before-6fa04cca0ff6.png)
 
 测试环境与线上环境仍可能共享数据库、队列或存储。即使入口没有切换，新版本也可能产生写入或消费，因此测试账号、消息消费和数据兼容都需要设计。新版通过验证后，再修改入口路由：
 
-![image-20231111095615746](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110956844.png)
+![蓝绿部署：切换后流量进入新版](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-03-blue-green-after-edb34d7014c6.png)
 
 切换后需要观察错误率、延迟和业务结果，出现问题时把入口切回旧版。确认新版本稳定后，才按计划释放旧环境资源。切回入口只能恢复流量去向，不能自动撤销新版本已执行的数据写入。
 
@@ -380,7 +380,7 @@ Service 清单也需要在使用前提交；NodePort `30062` 应未被其他 Ser
 
 金丝雀发布先把少量实例或流量交给新版本，观察错误率、延迟和业务指标，再决定继续放量或回退。名称源自矿井中用金丝雀预警有害气体的做法；在发布中，承担预警作用的是可观测的运行结果。
 
-![image-20231111103236653](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111032729.png)
+![金丝雀发布：按比例验证新版本](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-04-canary-release-4c68ddd8eb68.png)
 
 ### 暂停 rollout 可以观察，但不能精确锁定一份新副本
 

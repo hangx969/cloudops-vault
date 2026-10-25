@@ -43,7 +43,7 @@ Pod 中的容器可以独立退出和重启。容器重启时，Pod 对象通常
 
 `kubectl get pods` 中的 `READY 1/1` 通常表示该行统计的一个容器已经就绪，pause 容器不计入其中。pause 也不负责检测业务健康；健康探针由 kubelet 执行，存储共享则依赖 Volume 的声明和挂载。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310252236935.png" alt="image-20231025223642872" style="zoom:50%;" />
+![Pod：共享网络与独立应用容器](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-01-pod-sandbox-ccd76e7f0c56.png)
 
 ### 用两个场景理解容器协作
 
@@ -51,13 +51,13 @@ Pod 中的容器可以独立退出和重启。容器重启时，Pod 对象通常
 
 需要区分“文件已更新”和“程序已升级”：同步源码或配置，并不会自动让正在运行的 Go 二进制或 Java 进程加载新代码。是否能直接生效，要看应用的加载方式；应用版本发布仍需相应的构建、替换和重启机制。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310261900543.png" alt="image-20231026190044415" style="zoom:50%;" />
+![同一 Pod 内协作：文件同步](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-02-git-sync-sidecar-de0f032d28ea.png)
 
 **日志收集。** 假设业务已经把日志写入某个目录，包含 `error.log`、`access.log`、`warning.log`、`info.log`。为了把它们发送到统一的日志服务，可以让业务容器和日志收集容器挂载同一个卷，由后者读取并发送文件。
 
 这样可以把日志采集逻辑从业务代码中分离出来，也便于在遵循同一日志规范的服务之间复用采集配置。业务容器仍需把日志写入约定的共享目录；仅仅把两个容器放进同一个 Pod，并不会让它们自动看到对方的文件。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310261902236.png" alt="image-20231026190227168" style="zoom:50%;" />
+![同一 Pod 内协作：日志采集](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-03-logging-sidecar-b88720578558.png)
 
 ## 写一个 Pod：从最小清单理解常用字段
 
@@ -183,11 +183,15 @@ spec:
 
 组件通过 API Server 的 watch 等机制观察变化，而不是由 API Server 逐条向所有组件下发执行命令。
 
-![image-20231026203326085](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310262033218.png)
+![Pod 创建：用户提交与 API 持久化](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04-pod-create-sequence-97b0b653d8d4.png)
+
+![Pod 创建：调度绑定与容器启动](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04a-pod-scheduling-startup-9601960f2d08.png)
+
+![Pod 状态更新与持久化](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04b-pod-status-persistence-3b5677a47d3d.png)
 
 把视角切到 Pod 内部，启动主线则是：准备 sandbox 和卷，执行普通 Init Container，再启动应用容器；如果配置了 Startup Probe，等待它成功后才执行 Liveness 和 Readiness。只有满足就绪条件，Pod 才能作为通常意义上的 Service 就绪后端。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310252254552.png" alt="image-20231025225409474" style="zoom:50%;" />
+![Pod 生命周期：初始化、运行与终止](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-05-pod-lifecycle-a4fd4162549d.png)
 
 图示适合帮助理解各阶段，但不是所有事件的严格时序图。例如，`PostStart` 与容器入口程序之间没有先后保证，Liveness 与 Readiness 也没有固定的执行顺序。
 

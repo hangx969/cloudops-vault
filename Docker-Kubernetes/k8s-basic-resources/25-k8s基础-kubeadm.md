@@ -15,7 +15,11 @@ kubeadm 是集群引导与生命周期工具，负责把 Kubernetes 组件按一
 
 ## 先认识初始化流程
 
-![image-20231024122121237](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310241221337.png)
+![kubeadm init：历史流程总览](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-overview-17e77702d5e9.png)
+
+![kubeadm 历史流程：配置、预检与本地启动](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-bootstrap-7efe0ba6199f.png)
+
+![kubeadm 历史流程：清单与收尾配置](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-completion-2b573f15dba9.png)
 
 这张历史流程图可用于理解各阶段的关系，部分名称和特性已经改变。按当前的常见默认配置，`init` 会先检查环境，再准备证书、kubeconfig 和静态 Pod 清单，等待控制平面健康，最后写入引导配置并安装基础插件。各阶段也可以用 `kubeadm init phase` 单独调用，具体职责见[kubeadm 实现说明](https://kubernetes.io/docs/reference/setup-tools/kubeadm/implementation-details/)。
 

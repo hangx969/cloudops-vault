@@ -44,7 +44,7 @@ Pod 允许多个容器共享网络命名空间，并按需挂载同一组卷。�
 
 主容器负责核心业务，辅助容器负责日志、代理或配置同步。两者在同一个 Pod 中运行，可以通过 `localhost` 通信；文件共享需要显式挂载同一个卷，各容器镜像内的根文件系统不会自动共享。
 
-![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094057298.png)
+![Sidecar：业务与日志采集分工](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-01-sidecar-logging-pattern-02dcaa9d5a82.png)
 
 ### 日志与配置同步等常见用途
 
@@ -55,7 +55,7 @@ Pod 允许多个容器共享网络命名空间，并按需挂载同一组卷。�
 
 ### 实战配置：Web 应用 + 日志收集
 
-![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094125199.png)
+![日志 Sidecar：共享日志与独立配置](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-02-sidecar-nginx-fluentd-dccd4360e7a3.png)
 
 
 ```yaml
@@ -143,7 +143,7 @@ initContainers:
 
 普通 Init Container 在应用容器启动前执行准备任务，必须成功结束后才能继续下一个初始化步骤。它退出后不再消耗运行时 CPU，但调度时仍会计入有效资源需求；不能把高配 Init Container 理解为调度结束后自动归还全部 Pod 资源预算。具体计算见官方[初始化容器资源说明](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/#resource-sharing-within-containers)。
 
-![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094143398.png)
+![Init Container：初始化完成后启动应用](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-03-init-container-sequence-f5a04ac35491.png)
 
 ### 初始化任务需要能重复执行
 
@@ -202,7 +202,7 @@ spec:
 
 Ambassador 为主应用提供本地网络入口，把远端地址、连接策略和认证配置放到代理容器中。应用只需连接本地端口，代理再访问外部系统。
 
-![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094201087.png)
+![Ambassador：通过本地代理访问外部系统](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-04-ambassador-outbound-proxy-31a95f0e5dbe.png)
 
 ### 数据库与外部 API 的代理用途
 
@@ -213,7 +213,7 @@ Ambassador 为主应用提供本地网络入口，把远端地址、连接策略
 
 ### 实战配置：数据库代理
 
-![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094222030.png)
+![Ambassador：数据库代理的职责与选择](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-05-ambassador-database-concept-ea6128697fb8.png)
 
 Deployment：
 
@@ -302,7 +302,7 @@ Adapter 读取主应用输出，并转换成外部系统可以接受的格式或
 - 监控指标转换：将各种监控指标转换为统一的数据格式（如 Prometheus 格式）
 - 协议转换：实现不同协议间的转换，如 HTTP 到 gRPC
 - 数据格式适配：调整数据格式以满足不同系统的需求
-![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094236515.png)
+![Adapter：把应用输出转换为监控格式](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-06-adapter-metrics-pattern-117853ea532e.png)
 
 ### 实战配置：遗留系统监控数据转 Prometheus
 

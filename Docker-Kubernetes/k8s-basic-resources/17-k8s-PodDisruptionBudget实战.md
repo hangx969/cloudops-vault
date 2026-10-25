@@ -75,14 +75,7 @@ spec:
 
 drain 过程中，K8s 的 eviction API 会检查目标 Pod 对应的 PDB：
 
-```
-检查 PDB → 驱逐 pod-A 是否会违反 minAvailable?
-  当前可用: 3/3
-  驱逐后剩余: 2/3
-  minAvailable: 2 → 满足 → 允许驱逐
-  
-等待 pod-A 在其他节点就绪后，再尝试驱逐 pod-B...
-```
+![Drain 中的 PDB 预算检查](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-17-text-01-pdb-eviction-63cb38c7b62f.png)
 
 如果服务只有 2 个健康副本且 `minAvailable: 2`，第一个副本的驱逐就会被阻止。即使只维护一个节点也一样；需要先增加并确认额外副本就绪，或由应用负责人接受中断并调整预算。
 

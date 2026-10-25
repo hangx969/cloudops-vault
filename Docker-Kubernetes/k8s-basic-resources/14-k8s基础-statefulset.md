@@ -149,7 +149,7 @@ dig -t A svc-sts-nginx.default.svc.cluster.local @10.0.0.10
 
 例如数据库主从成员通常要使用独立数据目录。`volumeClaimTemplates` 按 `<模板名>-<StatefulSet名>-<序号>` 生成 PVC：本例对应 `www-sts-web-0` 和 `www-sts-web-1`，各自绑定一个 PV。删除并重建同一序号的 Pod 时，它会继续使用相应 PVC。
 
-![image-20240324095254313](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202403240952473.png)
+![StatefulSet：每个序号持有自己的卷](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-14-01-statefulset-storage-053477c394d2.png)
 
 Deployment 也可以挂 PVC，多个 Pod 是否共享一个卷，取决于模板引用和访问模式；它不会自动让数据同步。StatefulSet 同样允许 Pod 共享额外卷，但存储模板的常见用途，是让每个序号各持有一份稳定存储。访问模式和回收策略可结合 [[Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage]] 阅读。
 

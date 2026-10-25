@@ -34,7 +34,7 @@ containerd 管理镜像传输与存储、快照以及容器生命周期。它最
 
 Docker 提供镜像构建、CLI、网络等面向用户的完整体验。containerd 更侧重节点运行时能力；在 Linux 上，它通常通过 shim 和 OCI runtime（常见为 runc）创建容器进程。runc 负责使用 namespace、cgroup 等内核机制启动进程，持续的生命周期管理由 containerd 与 shim 配合完成。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507152134702.png" alt="image-20250715213449459" style="zoom:33%;" />
+![Docker 调用链：containerd 与 runc 的分工](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-24-01-docker-containerd-runc-773d524af793.png)
 
 图中的 Docker 调用链可以读作 Docker Engine → containerd → shim/runc。Kubernetes 使用 containerd 时，入口通常是 kubelet → CRI → containerd。Docker Engine 自身不直接实现 CRI，现代 Kubernetes 如需接入 Docker Engine，要使用 cri-dockerd 适配层。
 

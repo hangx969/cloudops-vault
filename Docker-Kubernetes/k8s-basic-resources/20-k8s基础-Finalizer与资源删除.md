@@ -28,18 +28,7 @@ Finalizer 记录在资源对象的 `metadata.finalizers` 字符串列表中。�
 
 整个删除流程如下：
 
-```
-1. 用户执行 kubectl delete pvc my-pvc
-2. apiserver收到DELETE请求
-3. 检查 metadata.finalizers 是否为空
-   ├── 为空 → 按资源的宽限期、删除策略完成后删除对象
-   └── 非空 → 进入Terminating状态，不删除对象
-4. 设置 deletionTimestamp（标记为正在删除）
-5. 对应的Controller观察到deletionTimestamp
-6. Controller执行自己的清理逻辑（PVC保护需等待Pod不再使用；外部资源由相应控制器处理）
-7. Controller清理完成后，从finalizers列表中移除自己的Finalizer
-8. 当finalizers列表变为空 → apiserver从etcd中删除对象
-```
+![Finalizer 与异步资源删除](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-20-text-01-finalizer-delete-a5084cb0f1c4.png)
 
 下面是正在删除中的 PVC 状态示意。`deletionTimestamp` 由服务端设置，不能把这个片段当作新建 PVC 的 manifest。
 

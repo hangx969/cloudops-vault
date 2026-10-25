@@ -21,7 +21,7 @@ Job 控制器创建一个或多个 Pod，记录成功完成的数量，达到目
 
 以备份为例，可以把包含 `mysqldump` 的镜像放进 Job，命令成功完成后退出。控制器保留任务状态，运维人员能够查看失败原因与日志，而无需让备份进程一直运行。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202403231953816.png" alt="image-20240323195342683" style="zoom:67%;" />
+![Job：进程退出与失败重试](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-09-01-job-restart-policy-ef574ba1a1dc.png)
 
 与直接在 Linux 上运行脚本相比，Job 能使用独立镜像隔离不同版本的工具，追踪任务状态，按策略重试失败任务，也能把独立工作项分给多个 Pod。但这些能力不保证业务操作只执行一次，任务仍需处理重复执行、临时文件和未完成输出。官方[Job 说明](https://kubernetes.io/docs/concepts/workloads/controllers/job/)明确指出，即使并发数与完成数都为 1，同一程序仍可能被启动多次。
 

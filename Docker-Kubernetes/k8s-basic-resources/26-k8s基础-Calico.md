@@ -21,7 +21,7 @@ Calico 是开源的网络和安全方案，可用于 Kubernetes、容器、虚�
 
 ### 组件及其分工
 
-![image-20231023152017200](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310241222817.png)
+![Calico 传统架构：路由控制与 Pod 数据路径](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-26-01-calico-traditional-etcd-bgp-6aa5cd33cf6e.png)
 
 这张图描述传统的 Calico 架构。部署方式和数据平面不同，实际启用的组件也会变化：
 

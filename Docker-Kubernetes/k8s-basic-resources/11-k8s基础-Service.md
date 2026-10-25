@@ -21,19 +21,19 @@ aliases:
 
 没有注册中心时，外部用户和服务间调用往往通过 Nginx、SLB 等代理到达后端；数据库等基础组件则常以固定 IP 和端口写入配置。后端地址改变后，配置或代理规则也要随之更新。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172057914.png" alt="image-20250717205717693" style="zoom:50%;" />
+![传统服务发布：无注册中心](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-01-traditional-without-registry-fee2a96d7ad5.png)
 
 引入注册中心后，服务可以先查询目标实例的 IP 和端口，再建立连接。外部请求仍可能经过 Nginx 或 SLB 到达应用网关，再由网关路由到各个服务。注册中心解决实例发现，入口代理承担外部接入，两者的职责不同。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172055211.png" alt="image-20250717205553958" style="zoom: 50%;" />
+![传统服务发布：有注册中心](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-02-traditional-with-registry-80e65b32496b.png)
 
 在 Kubernetes 中继续使用 Eureka 等注册中心时，要先确认客户端怎样注册和发现实例。StatefulSet 可借助 Headless Service 获得稳定的 Pod DNS 名称；Deployment 也可以通过 Service 提供稳定入口。究竟注册 Pod 地址、Pod DNS 还是 Service 地址，取决于注册中心客户端的实例模型，不能按工作负载类型一概决定。HTTP 网关可通过 Ingress 或其他入口暴露。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172058901.png" alt="image-20250717205802735" style="zoom:50%;" />
+![Kubernetes 服务发布：保留应用注册中心](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-04-kubernetes-with-registry-ccb945c78e67.png)
 
 没有单独的应用注册中心时，集群内服务和基础组件常通过 Service DNS 发现彼此；HTTP 外部访问可以使用 Ingress。图中的 `Ingress → Service → Pod` 表示资源关联关系，实际数据路径取决于入口实现，某些控制器会直接转发到 Service 对应的后端地址。
 
-<img src="https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172058270.png" alt="image-20250717205834038" style="zoom:50%;" />
+![Kubernetes 服务发布：无应用注册中心](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-03-kubernetes-without-registry-75db25e8319e.png)
 
 ### 直接访问 Pod IP 的限制
 
@@ -330,7 +330,7 @@ Azure 的两种常见入口可分别对照官方部署说明：
 
 流量可能经由 NodePort，也可能由具体实现直接送到 Pod，取决于云平台、网络和 LB 配置，不能统一假设直连 Pod。
 
-![image-20231112160812381](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311121608561.png)
+![LoadBalancer：经 NodePort 接入后端](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-05-loadbalancer-nodeport-2c54ad6541fd.png)
 
 ## 无 selector 的 Service：接入外部后端
 
@@ -424,7 +424,7 @@ Service 是 API 资源。传统集群由各节点的 `kube-proxy` 将 Service �
 
 创建 Service 的请求先经过 API Server 并持久化；kube-proxy 通过 watch 观察 Service 和 EndpointSlice 的变化，将它们转换为节点转发规则。在 iptables、IPVS 或 nftables 模式下，实际请求主要由内核处理，通常不经过 kube-proxy 用户态进程逐个转发。
 
-![image-20231111110951734](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111109863.png)
+![从 API 对象到节点转发规则](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-06-service-rule-sync-2249fc9edb3f.png)
 
 ### kube-proxy 的工作模式
 
@@ -432,7 +432,7 @@ Service 是 API 资源。传统集群由各节点的 `kube-proxy` 将 Service �
 
 早期的 userspace 模式会为 Service 创建监听端口。发往 ClusterIP 的请求先由 iptables 重定向到 kube-proxy，再由它选择后端并转发。此时 kube-proxy 本身承担四层代理，每条连接都增加了用户态处理和数据拷贝开销。
 
-![image-20231111111348557](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111113677.png)
+![kube-proxy：Userspace 模式](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-07-userspace-proxy-historical-8fd788240cc8.png)
 
 这一模式已退出当前 Kubernetes 的实现，了解它有助于看懂旧架构图。
 
@@ -454,7 +454,7 @@ iptables 不负责应用层失败重试。连接失败、HTTP 错误码与业务
 
 现代 Linux 集群还可以使用 nftables 后端。它在 Kubernetes v1.29 引入，并在 v1.33 达到稳定状态；iptables、IPVS 和 nftables 的兼容性与行为差异应对照[官方代理模式说明](https://kubernetes.io/docs/reference/networking/virtual-ips/)。不要仅根据一段旧版本压测就切换集群数据平面。
 
-![image-20231111111411881](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114959.png)
+![kube-proxy：iptables 模式](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-08-iptables-proxy-ad1582745176.png)
 
 #### IPVS（存量集群）
 
@@ -487,7 +487,7 @@ IPVS 算法用于选择连接后端，排查存量集群时常见以下名称：
 
 IPVS 模式从 Kubernetes v1.35 起弃用。新部署或迁移应评估 nftables；旧内核不满足要求时也可考虑已改善的 iptables。下面的 IPVS 配置操作用于存量系统实验，不能视为当前生产默认推荐。
 
-![image-20231111111435638](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114753.png)
+![kube-proxy：IPVS 模式](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-09-ipvs-proxy-8c9d0cb14828.png)
 
 #### nftables
 

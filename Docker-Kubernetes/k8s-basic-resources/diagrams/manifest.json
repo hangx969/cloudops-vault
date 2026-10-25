@@ -1,0 +1,2371 @@
+{
+  "schema_version": 1,
+  "task": "k8s-basic-resources architecture diagram redraw",
+  "requested_date": "2026-10-24",
+  "completed_date": "2026-10-25",
+  "theme": "Kubernetes blue",
+  "skill": "Diagram Design 2.6.120",
+  "agents": {
+    "count": 3,
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high"
+  },
+  "summary": {
+    "articles_audited": 26,
+    "articles_changed": 17,
+    "original_image_references": 52,
+    "raster_diagrams_replaced": 48,
+    "text_diagrams_replaced": 6,
+    "screenshots_preserved": 4,
+    "png_delivered": 58,
+    "editable_html_delivered": 58
+  },
+  "validation": {
+    "skill_self_check": {
+      "passed": 58,
+      "failed": 0
+    },
+    "browser_geometry": {
+      "checked": 58,
+      "out_of_viewbox": 0,
+      "overlapping_text": 0,
+      "connectors_crossing_nonendpoint_nodes": 0,
+      "diagonal_line_connectors": 0
+    },
+    "visual_review": "All diagrams reviewed by producing agents; primary agent reviewed contact sheets and dense or corrected figures.",
+    "fonts": "Geist / Geist Mono / Instrument Serif loaded; Chinese glyphs use macOS PingFang / Songti fallback.",
+    "remote_png_hashes": {
+      "checked": 58,
+      "http_200": 58,
+      "png_signature_valid": 58,
+      "sha256_matches_local": 58
+    },
+    "article_integrity": {
+      "articles_audited": 26,
+      "articles_changed": 17,
+      "new_image_links": 58,
+      "original_screenshots_preserved": 4,
+      "changes_outside_diagram_substitutions": 0,
+      "git_diff_check": "passed",
+      "baseline_commit": "b4efc1f48f43c56b8f3bc220fcaebfab3982a0f7"
+    },
+    "remote_details_file": "manifest.json output.remote_validation",
+    "secret_scan": "No PicGo credentials in delivered text/source files."
+  },
+  "notes": [
+    "11-03/11-04 images are inserted at swapped anchors to correct the pre-existing paragraph/image mismatch.",
+    "03-04 is split into submission, scheduling/startup and status persistence diagrams.",
+    "25-01 is split into a historical overview and two detailed panels.",
+    "Original image URLs and text diagrams are preserved below for provenance."
+  ],
+  "articles": [
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源.md",
+      "changed": true,
+      "raster_diagrams_replaced": 2,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 2,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": [
+        "02-01",
+        "02-02"
+      ]
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础.md",
+      "changed": true,
+      "raster_diagrams_replaced": 5,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 7,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/04-k8s基础-pod-健康探针.md",
+      "changed": true,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 1,
+      "new_png_count": 1,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/05-k8s基础-pod调度-标签与选择器实战.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/06-K8s基础-pod调度-亲和力.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment.md",
+      "changed": true,
+      "raster_diagrams_replaced": 4,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 4,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/08-k8s基础-daemonset.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob.md",
+      "changed": true,
+      "raster_diagrams_replaced": 1,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 1,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/10-k8s基础-namespace-资源分配.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "changed": true,
+      "raster_diagrams_replaced": 9,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 9,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "changed": true,
+      "raster_diagrams_replaced": 7,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 7,
+      "excluded_screenshot_ids": [
+        "12-01"
+      ]
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage.md",
+      "changed": true,
+      "raster_diagrams_replaced": 4,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 4,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset.md",
+      "changed": true,
+      "raster_diagrams_replaced": 1,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 1,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter.md",
+      "changed": true,
+      "raster_diagrams_replaced": 6,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 6,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/16-k8s基础-临时容器ephemeral.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战.md",
+      "changed": true,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 1,
+      "new_png_count": 1,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入.md",
+      "changed": true,
+      "raster_diagrams_replaced": 6,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 6,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/19-k8s-APIServer深度剖析-请求链路-认证授权-生产调优.md",
+      "changed": true,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 3,
+      "new_png_count": 3,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/20-k8s基础-Finalizer与资源删除.md",
+      "changed": true,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 1,
+      "new_png_count": 1,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/21-k8s基础-自定义CRD资源.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/22-Python调用k8s-api实现资源管理.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/23-k8s基础-Operator开发实战-Kubebuilder.md",
+      "changed": false,
+      "raster_diagrams_replaced": 0,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 0,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd.md",
+      "changed": true,
+      "raster_diagrams_replaced": 1,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 1,
+      "excluded_screenshot_ids": [
+        "24-02"
+      ]
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/25-k8s基础-kubeadm.md",
+      "changed": true,
+      "raster_diagrams_replaced": 1,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 3,
+      "excluded_screenshot_ids": []
+    },
+    {
+      "article": "Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico.md",
+      "changed": true,
+      "raster_diagrams_replaced": 1,
+      "text_diagrams_replaced": 0,
+      "new_png_count": 1,
+      "excluded_screenshot_ids": []
+    }
+  ],
+  "items": [
+    {
+      "id": "01-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源.md",
+      "line": 115,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252238859.png",
+      "original_markup": "![image-20240725223852759](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252238859.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Kubernetes 集群组件与工作节点",
+      "visual_type": "Architecture · 历史 Docker 实现",
+      "fidelity_notes": [
+        "保留两个工作节点、每节点2个Pod且每Pod3个容器；重复容器以数量文字表达。",
+        "保留Docker历史运行时及控制组件职责；未将互联网到kube-proxy的线解释为进程流量经过kube-proxy。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-01-01-cluster-architecture.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-01-01-cluster-architecture.png",
+          "title": "Kubernetes 集群组件与工作节点",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-01-01-cluster-architecture-19f5c3144f50.png",
+          "sha256": "19f5c3144f5076e59c7aa87b7193191e6f8246884a1065acd425d8eff8b44ddb",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 191664,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "01-01",
+      "new_markup": "![Kubernetes 集群组件与工作节点](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-01-01-cluster-architecture-19f5c3144f50.png)"
+    },
+    {
+      "id": "01-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/01-k8s基础-架构-组件-资源.md",
+      "line": 137,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252253954.png",
+      "original_markup": "![image-20240725225330810](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252253954.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "围绕 Pod 的 Kubernetes 资源关系",
+      "visual_type": "Architecture · 资源与所有权",
+      "fidelity_notes": [
+        "保留六种控制器、两个容器、Service、Volume、ConfigMap、PVC、Secret全部原图对象。",
+        "原图Volume到三类配置/申请的关系改为带说明的挂载/数据来源，未将ConfigMap和Secret称为持久存储。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-01-02-resource-relations.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-01-02-resource-relations.png",
+          "title": "围绕 Pod 的 Kubernetes 资源关系",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-01-02-resource-relations-d0ec0137a93b.png",
+          "sha256": "d0ec0137a93be39ddd9d40cab0ee8c8e3816831d489723229342f587ded1ed00",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 145906,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "01-02",
+      "new_markup": "![围绕 Pod 的 Kubernetes 资源关系](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-01-02-resource-relations-d0ec0137a93b.png)"
+    },
+    {
+      "id": "02-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply.md",
+      "line": 97,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310262054540.png",
+      "original_markup": "![image-20231026205427484](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310262054540.png)",
+      "classification": "screenshot",
+      "status": "excluded",
+      "title": "字段说明截图",
+      "visual_type": null,
+      "fidelity_notes": [],
+      "excluded_reason": "kubectl explain pod.spec.containers 的CLI输出与字段注释截图，非示意图。",
+      "outputs": []
+    },
+    {
+      "id": "02-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/02-k8s基础-yaml-apply.md",
+      "line": 132,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252241732.png",
+      "original_markup": "![image-20240725224115645](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252241732.png)",
+      "classification": "screenshot",
+      "status": "excluded",
+      "title": "字段说明截图",
+      "visual_type": null,
+      "fidelity_notes": [],
+      "excluded_reason": "YAML字段名与中文含义的纯表格截图，没有架构、流程或资源关系。",
+      "outputs": []
+    },
+    {
+      "id": "03-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础.md",
+      "line": 46,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310252236935.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310252236935.png\" alt=\"image-20231025223642872\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Pod：共享网络与独立应用容器",
+      "visual_type": "Architecture · Pod sandbox",
+      "fidelity_notes": [
+        "保留原图应用容器1到N、示例nginx 80、tomcat 8080、Pause镜像与示例IP。",
+        "保留历史镜像名作为示例，补入正文对sandbox及卷共享的边界说明。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-01-pod-sandbox.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-01-pod-sandbox.png",
+          "title": "Pod：共享网络与独立应用容器",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-01-pod-sandbox-ccd76e7f0c56.png",
+          "sha256": "ccd76e7f0c566996360c858dfcb6484b6af01923396d6a0bd577398339f584af",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 130840,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "03-01",
+      "new_markup": "![Pod：共享网络与独立应用容器](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-01-pod-sandbox-ccd76e7f0c56.png)"
+    },
+    {
+      "id": "03-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础.md",
+      "line": 54,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310261900543.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310261900543.png\" alt=\"image-20231026190044415\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "同一 Pod 内协作：文件同步",
+      "visual_type": "Architecture · Sidecar",
+      "fidelity_notes": [
+        "保留原图Pod内Go和Git同步两个组件。",
+        "共享卷来自紧邻正文；显式补出文件传递路径，并保留不等同于自动升级的限制。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-02-git-sync-sidecar.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-02-git-sync-sidecar.png",
+          "title": "同一 Pod 内协作：文件同步",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-02-git-sync-sidecar-de0f032d28ea.png",
+          "sha256": "de0f032d28ea6b13bac67b1a6d48e56849a1a362f6b2de5e17c171017df8ee18",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 105118,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "03-02",
+      "new_markup": "![同一 Pod 内协作：文件同步](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-02-git-sync-sidecar-de0f032d28ea.png)"
+    },
+    {
+      "id": "03-03",
+      "article": "Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础.md",
+      "line": 60,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310261902236.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310261902236.png\" alt=\"image-20231026190227168\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "同一 Pod 内协作：日志采集",
+      "visual_type": "Architecture · Sidecar",
+      "fidelity_notes": [
+        "保留核心业务、日志收集服务、统一logging Server与4种日志文件。",
+        "原图未显式画卷，依据相邻正文把文件共享条件画成Volume。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-03-logging-sidecar.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-03-logging-sidecar.png",
+          "title": "同一 Pod 内协作：日志采集",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-03-logging-sidecar-b88720578558.png",
+          "sha256": "b8872057855854ac9f1fb757e680669b37df736f0b799d58bcaa013eec38c826",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 116612,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "03-03",
+      "new_markup": "![同一 Pod 内协作：日志采集](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-03-logging-sidecar-b88720578558.png)"
+    },
+    {
+      "id": "03-04",
+      "article": "Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础.md",
+      "line": 186,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310262033218.png",
+      "original_markup": "![image-20231026203326085](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310262033218.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Pod 创建：提交、调度启动与状态持久化",
+      "visual_type": "Sequence · 创建流程 1 / 3",
+      "fidelity_notes": [
+        "保留原图用户提交、API写入etcd、etcd返回及API接受响应4条消息。",
+        "原图拆为3张连续时序图，每张不超过5条生命线。",
+        "保留调度器观察、绑定、etcd写入/返回、API向调度器返回、kubelet观察、Docker调用及返回8条消息。",
+        "保留原图Docker历史实现与顺序，5条生命线。",
+        "保留原图update pod status、etcd写入及双返回4条消息。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-04-pod-create-sequence.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-04-pod-create-sequence.png",
+          "title": "Pod 创建：用户提交与 API 持久化",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04-pod-create-sequence-97b0b653d8d4.png",
+          "sha256": "97b0b653d8d45bef2f245c28e7b69cdd22385853d48625df261e9abfd9a27ec2",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 89668,
+            "sha256_matches_local": true
+          }
+        },
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-04a-pod-scheduling-startup.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-04a-pod-scheduling-startup.png",
+          "title": "Pod 创建：调度绑定与容器启动",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04a-pod-scheduling-startup-9601960f2d08.png",
+          "sha256": "9601960f2d08c66599186a460b8f85a61c3b173d044425bd63bfdd245cde1586",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 112620,
+            "sha256_matches_local": true
+          }
+        },
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-04b-pod-status-persistence.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-04b-pod-status-persistence.png",
+          "title": "Pod 状态更新与持久化",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04b-pod-status-persistence-3b5677a47d3d.png",
+          "sha256": "3b5677a47d3d5d18d37d08005c5c48ea9cfe7a2ecdc28ad45c8c4b5e062ae301",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 82817,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "03-04",
+      "new_markup": "![Pod 创建：用户提交与 API 持久化](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04-pod-create-sequence-97b0b653d8d4.png)\n\n![Pod 创建：调度绑定与容器启动](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04a-pod-scheduling-startup-9601960f2d08.png)\n\n![Pod 状态更新与持久化](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-04b-pod-status-persistence-3b5677a47d3d.png)"
+    },
+    {
+      "id": "03-05",
+      "article": "Docker-Kubernetes/k8s-basic-resources/03-k8s基础-pod基础.md",
+      "line": 190,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310252254552.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310252254552.png\" alt=\"image-20231025225409474\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Pod 生命周期：初始化、运行与终止",
+      "visual_type": "Timeline · 阶段示意（非严格时序）",
+      "fidelity_notes": [
+        "保留原图3个普通Init、PostStart、main container、liveness、readiness、PreStop全部阶段。",
+        "采用阶段条形而非精确时间比例；根据相邻正文加入Startup Probe和非严格先后注释。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-05-pod-lifecycle.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-03-05-pod-lifecycle.png",
+          "title": "Pod 生命周期：初始化、运行与终止",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-05-pod-lifecycle-a4fd4162549d.png",
+          "sha256": "a4fd4162549d9c70eb5e715cda2b79f42900f514c43b686c8ee7827741544758",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 138309,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "03-05",
+      "new_markup": "![Pod 生命周期：初始化、运行与终止](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-03-05-pod-lifecycle-a4fd4162549d.png)"
+    },
+    {
+      "id": "07-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment.md",
+      "line": 63,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310292209817.png",
+      "original_markup": "![image-20231029220956699](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310292209817.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Deployment 滚动更新：旧副本逐步替换",
+      "visual_type": "Architecture · 四个连续快照",
+      "fidelity_notes": [
+        "保留四个快照、每快照Deployment及新旧ReplicaSet、3个Pod槽位，合计24主节点。",
+        "原图带叉的终止Pod以单斜杠标记；保留新旧副本增减方向。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-07-01-rolling-update.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-07-01-rolling-update.png",
+          "title": "Deployment 滚动更新：旧副本逐步替换",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-01-rolling-update-9238fcfbf490.png",
+          "sha256": "9238fcfbf49080b3aab0f940bab06ab6d288512cf6c31188f7a66fdd1631ba3f",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 141491,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "07-01",
+      "new_markup": "![Deployment 滚动更新：旧副本逐步替换](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-01-rolling-update-9238fcfbf490.png)"
+    },
+    {
+      "id": "07-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment.md",
+      "line": 255,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110953730.png",
+      "original_markup": "![image-20231111095318581](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110953730.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "蓝绿部署：切换前流量进入旧版",
+      "visual_type": "Architecture · 两套运行环境",
+      "fidelity_notes": [
+        "保留反向代理、两套环境的App1/App2/App3以及各自App2关联DB。",
+        "原图绿色/蓝色环境颜色以明确名称和v1/v2代替，遵守统一Kubernetes蓝色主题。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-07-02-blue-green-before.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-07-02-blue-green-before.png",
+          "title": "蓝绿部署：切换前流量进入旧版",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-02-blue-green-before-6fa04cca0ff6.png",
+          "sha256": "6fa04cca0ff6dfcec7a87476b278b6f51d5c987a2b3c46cc093db921ce5812a1",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 136434,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "07-02",
+      "new_markup": "![蓝绿部署：切换前流量进入旧版](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-02-blue-green-before-6fa04cca0ff6.png)"
+    },
+    {
+      "id": "07-03",
+      "article": "Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment.md",
+      "line": 259,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110956844.png",
+      "original_markup": "![image-20231111095615746](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311110956844.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "蓝绿部署：切换后流量进入新版",
+      "visual_type": "Architecture · 两套运行环境",
+      "fidelity_notes": [
+        "保留反向代理、两套环境的App1/App2/App3以及各自App2关联DB。",
+        "原图绿色/蓝色环境颜色以明确名称和v1/v2代替，遵守统一Kubernetes蓝色主题。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-07-03-blue-green-after.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-07-03-blue-green-after.png",
+          "title": "蓝绿部署：切换后流量进入新版",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-03-blue-green-after-edb34d7014c6.png",
+          "sha256": "edb34d7014c6bd776b383df72161fa1564188104f943e0ce060a899b7b9e5a3f",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 138550,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "07-03",
+      "new_markup": "![蓝绿部署：切换后流量进入新版](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-03-blue-green-after-edb34d7014c6.png)"
+    },
+    {
+      "id": "07-04",
+      "article": "Docker-Kubernetes/k8s-basic-resources/07-k8s基础-deployment.md",
+      "line": 383,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111032729.png",
+      "original_markup": "![image-20231111103236653](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111032729.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "金丝雀发布：按比例验证新版本",
+      "visual_type": "Architecture · 流量分配示例",
+      "fidelity_notes": [
+        "保留Users、Router、95%旧版本、5%新版本以及每套Web/Application/Database三层。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-07-04-canary-release.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-07-04-canary-release.png",
+          "title": "金丝雀发布：按比例验证新版本",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-04-canary-release-4c68ddd8eb68.png",
+          "sha256": "4c68ddd8eb6899e66c5035a531aad93a950d7ca54239b93a3c1b142758b88b5c",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 126972,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "07-04",
+      "new_markup": "![金丝雀发布：按比例验证新版本](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-07-04-canary-release-4c68ddd8eb68.png)"
+    },
+    {
+      "id": "09-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/09-k8s基础-job-cronjob.md",
+      "line": 24,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202403231953816.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202403231953816.png\" alt=\"image-20240323195342683\" style=\"zoom:67%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Job：进程退出与失败重试",
+      "visual_type": "State machine · 三条任务执行路径",
+      "fidelity_notes": [
+        "保留原图exit0、Never失败、OnFailure失败后重启并成功三条路径。",
+        "原图Failure可能被误读为Job立即失败，按相邻正文明确为Pod失败，并保留Job重试边界提示。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-09-01-job-restart-policy.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-09-01-job-restart-policy.png",
+          "title": "Job：进程退出与失败重试",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-09-01-job-restart-policy-ef574ba1a1dc.png",
+          "sha256": "ef574ba1a1dc29fcc0c6cb55cc55713972ef9a2eb2d2e00ee2993c11f1025a6d",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 142143,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "09-01",
+      "new_markup": "![Job：进程退出与失败重试](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-09-01-job-restart-policy-ef574ba1a1dc.png)"
+    },
+    {
+      "id": "14-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/14-k8s基础-statefulset.md",
+      "line": 152,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202403240952473.png",
+      "original_markup": "![image-20240324095254313](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202403240952473.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "StatefulSet：每个序号持有自己的卷",
+      "visual_type": "Architecture · Pod / PVC / PV",
+      "fidelity_notes": [
+        "保留StatefulSet、Pod template、volumeClaimTemplates以及两组Pod/PVC/PV对应关系。",
+        "保留原图web-0/web-1简写，脚注对应正文sts-web与完整PVC名称。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-14-01-statefulset-storage.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-14-01-statefulset-storage.png",
+          "title": "StatefulSet：每个序号持有自己的卷",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-14-01-statefulset-storage-053477c394d2.png",
+          "sha256": "053477c394d2dcf8de9ad25160cc9ccf6a71533f92ea5a9e99ae8b4319795fb0",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 116362,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "14-01",
+      "new_markup": "![StatefulSet：每个序号持有自己的卷](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-14-01-statefulset-storage-053477c394d2.png)"
+    },
+    {
+      "id": "11-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 24,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172057914.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172057914.png\" alt=\"image-20250717205717693\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "传统服务发布：无注册中心",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留用户、前端 / 与 /admin、Nginx/SLB、3个购物车、订单、MySQL、Redis及原图地址。",
+        "去除授课手写批注、平台水印与装饰；服务层到数据库的组级依赖以代表性虚线展示。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-01-traditional-without-registry.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-01-traditional-without-registry.png",
+          "title": "传统服务发布：无注册中心",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-01-traditional-without-registry-fee2a96d7ad5.png",
+          "sha256": "fee2a96d7ad5c1260442edb48bb1e68bb496f48798146954e1922db59494634c",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 147157,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-01",
+      "new_markup": "![传统服务发布：无注册中心](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-01-traditional-without-registry-fee2a96d7ad5.png)"
+    },
+    {
+      "id": "11-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 28,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172055211.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172055211.png\" alt=\"image-20250717205553958\" style=\"zoom: 50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "传统服务发布：有注册中心",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留入口层Nginx/SLB、网关、前端、2个购物车实例、订单服务和2个注册中心。",
+        "注册/发现使用虚线，避免把注册中心误画成业务流量中继；Gateway和注册中心重复IP/端口按原图保留。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-02-traditional-with-registry.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-02-traditional-with-registry.png",
+          "title": "传统服务发布：有注册中心",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-02-traditional-with-registry-80e65b32496b.png",
+          "sha256": "80e65b32496be2f183595913ebc39c40d24a988e6d8612231345ad718eb65ce7",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 145692,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-02",
+      "new_markup": "![传统服务发布：有注册中心](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-02-traditional-with-registry-80e65b32496b.png)"
+    },
+    {
+      "id": "11-03",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 32,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172058901.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172058901.png\" alt=\"image-20250717205802735\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Kubernetes 服务发布：无应用注册中心",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留原图paycenter/ordercenter两个Service、两个Deployment及各2个Pod。",
+        "将Ingress→Service→Pod标为资源关联；保留paycenter Pod通过http://ordercenter调用订单服务的业务路径。",
+        "该图原始标题为无注册中心；原文章相邻段落次序待主agent调整。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-03-kubernetes-without-registry.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-03-kubernetes-without-registry.png",
+          "title": "Kubernetes 服务发布：无应用注册中心",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-03-kubernetes-without-registry-75db25e8319e.png",
+          "sha256": "75db25e8319e2372439a3b2ad0fe0ed2b4faae26262fb30642bb54b983bc348a",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 145528,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-04",
+      "new_markup": "![Kubernetes 服务发布：无应用注册中心](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-03-kubernetes-without-registry-75db25e8319e.png)"
+    },
+    {
+      "id": "11-04",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 36,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172058270.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172058270.png\" alt=\"image-20250717205834038\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Kubernetes 服务发布：保留应用注册中心",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留用户、Ingress、两个前端Service、Gateway、两个购物车、订单及两个注册中心。",
+        "Headless Service绘为注册中心实例边界，保留原图注册发现关系；没有把Headless Service画成代理中继。",
+        "原始标题为有注册中心；原文章相邻介绍段落次序待主agent调整。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-04-kubernetes-with-registry.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-04-kubernetes-with-registry.png",
+          "title": "Kubernetes 服务发布：保留应用注册中心",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-04-kubernetes-with-registry-ccb945c78e67.png",
+          "sha256": "ccb945c78e677aa08d82b66877fd75d9a87737dc123d840e74d3341089efef9e",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 174109,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-03",
+      "new_markup": "![Kubernetes 服务发布：保留应用注册中心](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-04-kubernetes-with-registry-ccb945c78e67.png)"
+    },
+    {
+      "id": "11-05",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 333,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311121608561.png",
+      "original_markup": "![image-20231112160812381](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311121608561.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "LoadBalancer：经 NodePort 接入后端",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留外部LB/VIP、两节点、每节点NodePort、Service port与2个targetPort Pod。",
+        "取消原图将Service边界包在节点里的歧义，标明它是逻辑资源；未改变本图的NodePort示例数据路径。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-05-loadbalancer-nodeport.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-05-loadbalancer-nodeport.png",
+          "title": "LoadBalancer：经 NodePort 接入后端",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-05-loadbalancer-nodeport-2c54ad6541fd.png",
+          "sha256": "2c54ad6541fd103bd204c4ab37264b343ce4373e35641f30a10065b90888ab26",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 121023,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-05",
+      "new_markup": "![LoadBalancer：经 NodePort 接入后端](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-05-loadbalancer-nodeport-2c54ad6541fd.png)"
+    },
+    {
+      "id": "11-06",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 427,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111109863.png",
+      "original_markup": "![image-20231111110951734](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111109863.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "从 API 对象到节点转发规则",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留控制平面API Server/etcd、节点kube-proxy、访问规则和3个Pod。",
+        "用虚线区分watch/配置与内核数据路径，避免把现代模式请求误画成由kube-proxy用户态逐个代理。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-06-service-rule-sync.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-06-service-rule-sync.png",
+          "title": "从 API 对象到节点转发规则",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-06-service-rule-sync-2249fc9edb3f.png",
+          "sha256": "2249fc9edb3f0110b9aba53c92d2650f539e1b01db80ed1d5a228c8961942d23",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 131511,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-06",
+      "new_markup": "![从 API 对象到节点转发规则](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-06-service-rule-sync-2249fc9edb3f.png)"
+    },
+    {
+      "id": "11-07",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 435,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111113677.png",
+      "original_markup": "![image-20231111111348557](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111113677.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "kube-proxy：Userspace 模式",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留Client、API Server、kube-proxy、ClusterIP与3个后端Pod。",
+        "Userspace保持iptables→用户态kube-proxy→Pod历史转发；iptables/IPVS保持规则配置与内核转发分离。",
+        "iptables/userspace后端保留app=MyApp、9376端口；IPVS保留Virtual Server/Real Server语义。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-07-userspace-proxy-historical.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-07-userspace-proxy-historical.png",
+          "title": "kube-proxy：Userspace 模式",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-07-userspace-proxy-historical-8fd788240cc8.png",
+          "sha256": "8fd788240cc8c891749b3742df2f63c12fe3c30e82a8a91f26443de32f5b5a05",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 117333,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-07",
+      "new_markup": "![kube-proxy：Userspace 模式](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-07-userspace-proxy-historical-8fd788240cc8.png)"
+    },
+    {
+      "id": "11-08",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 457,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114959.png",
+      "original_markup": "![image-20231111111411881](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114959.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "kube-proxy：iptables 模式",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留Client、API Server、kube-proxy、ClusterIP与3个后端Pod。",
+        "Userspace保持iptables→用户态kube-proxy→Pod历史转发；iptables/IPVS保持规则配置与内核转发分离。",
+        "iptables/userspace后端保留app=MyApp、9376端口；IPVS保留Virtual Server/Real Server语义。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-08-iptables-proxy.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-08-iptables-proxy.png",
+          "title": "kube-proxy：iptables 模式",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-08-iptables-proxy-ad1582745176.png",
+          "sha256": "ad1582745176aef09a4ff9832049f51de982afd649fbaa1b7f1d9b100c38b988",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 114607,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-08",
+      "new_markup": "![kube-proxy：iptables 模式](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-08-iptables-proxy-ad1582745176.png)"
+    },
+    {
+      "id": "11-09",
+      "article": "Docker-Kubernetes/k8s-basic-resources/11-k8s基础-Service.md",
+      "line": 490,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114753.png",
+      "original_markup": "![image-20231111111435638](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311111114753.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "kube-proxy：IPVS 模式",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留Client、API Server、kube-proxy、ClusterIP与3个后端Pod。",
+        "Userspace保持iptables→用户态kube-proxy→Pod历史转发；iptables/IPVS保持规则配置与内核转发分离。",
+        "iptables/userspace后端保留app=MyApp、9376端口；IPVS保留Virtual Server/Real Server语义。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-09-ipvs-proxy.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-11-09-ipvs-proxy.png",
+          "title": "kube-proxy：IPVS 模式",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-09-ipvs-proxy-8c9d0cb14828.png",
+          "sha256": "8c9d0cb148280ad8640dc67975165c516ef129f2556103d70630f5d51cbb4ce2",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 109788,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "11-09",
+      "new_markup": "![kube-proxy：IPVS 模式](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-11-09-ipvs-proxy-8c9d0cb14828.png)"
+    },
+    {
+      "id": "12-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "line": 24,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091046041.png",
+      "original_markup": "![image-20231209104609983](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091046041.png)",
+      "classification": "text-screenshot",
+      "status": "excluded",
+      "title": "OSI 七层模型文字列表",
+      "visual_type": null,
+      "fidelity_notes": [
+        "保留原始截图，不改画成架构图。"
+      ],
+      "excluded_reason": "纯技术文字列表截图，列出OSI各层功能与协议；无架构、流程或资源关系图形。",
+      "outputs": []
+    },
+    {
+      "id": "12-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "line": 44,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252255843.png",
+      "original_markup": "![image-20240725225555680](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202407252255843.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Ingress 按域名关联不同应用",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留3个Host：web/mail/oa.itheima.com，3个Service和每个Service的3个Pod。",
+        "Ingress/Service/Pod连线明确为资源关系；未凭空增加数据平面中继。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-02-ingress-host-resource-map.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-02-ingress-host-resource-map.png",
+          "title": "Ingress 按域名关联不同应用",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-02-ingress-host-resource-map-772b34203a71.png",
+          "sha256": "772b34203a71f820858402e83b16490c1037b17883d4f5c8a28a4c3be989da2d",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 131259,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "12-02",
+      "new_markup": "![Ingress 按域名关联不同应用](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-02-ingress-host-resource-map-772b34203a71.png)"
+    },
+    {
+      "id": "12-03",
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "line": 72,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091116867.png",
+      "original_markup": "![image-20231209111616791](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091116867.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Ingress：路由声明与实际后端",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留原图Ingress YAML的apiVersion/kind/name/namespace/class/TLS域名/Secret/双Host及Service端口80和81。",
+        "Pod 1/2合在一个明确标号节点，Pod 3/4合在一个明确标号节点；原图同组标签完整保留。",
+        "区分Service后端发现关系与控制器可直接代理Pod的实际数据路径；原图旧注解class保持展示，不误改成现代字段。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-03-ingress-routing-and-backends.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-03-ingress-routing-and-backends.png",
+          "title": "Ingress：路由声明与实际后端",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-03-ingress-routing-and-backends-b736ac191912.png",
+          "sha256": "b736ac191912c59de6d3946b67987f7e6b32ca4b65a4739f7408566f2bdae677",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 195709,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "12-03",
+      "new_markup": "![Ingress：路由声明与实际后端](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-03-ingress-routing-and-backends-b736ac191912.png)"
+    },
+    {
+      "id": "12-04",
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "line": 79,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172346336.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507172346336.png\" alt=\"image-20250717234628958\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "Ingress Controller：多节点入口高可用",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留Internet、DMZ网关F5/SLB/LVS/HAProxy、3个Gateway Node Controller、80/443与HostNetwork。",
+        "保留2个Real Server、每台Web/Backend及Services关系，以明确命名组合节点表达其共置。",
+        "将Services关系用虚线标为逻辑后端关系，避免暗示所有控制器必须转发ClusterIP。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-04-ingress-high-availability.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-04-ingress-high-availability.png",
+          "title": "Ingress Controller：多节点入口高可用",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-04-ingress-high-availability-82f0fe21df17.png",
+          "sha256": "82f0fe21df177aad750d33e83273cf73d4fa00ee97b2d2ad9dfba1178dc71cfe",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 149395,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "12-04",
+      "new_markup": "![Ingress Controller：多节点入口高可用](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-04-ingress-high-availability-82f0fe21df17.png)"
+    },
+    {
+      "id": "12-05",
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "line": 416,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507181955304.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507181955304.png\" alt=\"image-20250718195507023\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "按路径路由，并重写后端 URI",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留www.baidu.com、Web根路径、Backend-A和Backend-B的后端/api。",
+        "用/api-a→/api与/api-b→/api明确原图弯箭头所示重写；没有新增应用组件。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-05-ingress-path-rewrite.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-05-ingress-path-rewrite.png",
+          "title": "按路径路由，并重写后端 URI",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-05-ingress-path-rewrite-f9d773d2ecce.png",
+          "sha256": "f9d773d2ecced594ce9d8978c20698314712dc65ed9510b2d80af4e4280e4295",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 105329,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "12-05",
+      "new_markup": "![按路径路由，并重写后端 URI](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-05-ingress-path-rewrite-f9d773d2ecce.png)"
+    },
+    {
+      "id": "12-06",
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "line": 1189,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281017402.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281017402.png\" alt=\"image-20231228101712175\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "灰度发布：按 Header / Cookie 分流",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留Ingress、稳定Service A/B、灰度Service A′/B′以及各自Pod。",
+        "按原图保留Header/Cookie特征或10%权重；图底增加正文已有Header→Cookie→Weight优先级，避免相反理解。",
+        "图中Ingress统一标为实际处理请求的Controller；Service边界表示后端分组，非强制ClusterIP中继。",
+        "按主agent批准，修正原图Cookie foo=bar与正文always/never行为矛盾：图内改为foo=always且注明canary-by-cookie: foo；Header foo=bar注明按注解配置匹配。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-06-canary-header-cookie.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-06-canary-header-cookie.png",
+          "title": "灰度发布：按 Header / Cookie 分流",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-06-canary-header-cookie-bfb97858c76c.png",
+          "sha256": "bfb97858c76c481c8c7831c394962e51003a83a0bffb72fc96023052b444fbfd",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 139168,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "12-06",
+      "new_markup": "![灰度发布：按 Header / Cookie 分流](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-06-canary-header-cookie-bfb97858c76c.png)"
+    },
+    {
+      "id": "12-07",
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "line": 1195,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281018356.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312281018356.png\" alt=\"image-20231228101848227\" style=\"zoom:50%;\" />",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "灰度发布：按权重分流",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留Ingress、稳定Service A/B、灰度Service A′/B′以及各自Pod。",
+        "按原图保留Header/Cookie特征或10%权重；图底增加正文已有Header→Cookie→Weight优先级，避免相反理解。",
+        "图中Ingress统一标为实际处理请求的Controller；Service边界表示后端分组，非强制ClusterIP中继。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-07-canary-weight.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-07-canary-weight.png",
+          "title": "灰度发布：按权重分流",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-07-canary-weight-c555a965be1c.png",
+          "sha256": "c555a965be1c74a504fdbc2162852c90b414d89775cccf316832c93041d7c978",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 118294,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "12-07",
+      "new_markup": "![灰度发布：按权重分流](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-07-canary-weight-c555a965be1c.png)"
+    },
+    {
+      "id": "12-08",
+      "article": "Docker-Kubernetes/k8s-basic-resources/12-k8s基础-ingress.md",
+      "line": 1536,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091147480.png",
+      "original_markup": "![image-20231209114749417](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202312091147480.png)",
+      "classification": "diagram",
+      "status": "replaced",
+      "title": "历史入口高可用：Nginx + Keepalived",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "按主agent明确要求，将原图VIP 192.168.40.199:30080和xianchaonode1/2统一为正文VIP 192.168.40.8、节点192.168.40.5/6；保留Keepalived/Nginx/ingress-nginx-controller角色。",
+        "正文解释的跨入口节点分发以交叉连接展示；keepalived备机/VIP漂移用虚线。",
+        "图内明确标为历史实验，并保留正文hostNetwork与80/443语义；地址统一记录在此忠实度账本。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-08-nginx-keepalived-ha.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-12-08-nginx-keepalived-ha.png",
+          "title": "历史入口高可用：Nginx + Keepalived",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-08-nginx-keepalived-ha-7a8fd7a47150.png",
+          "sha256": "7a8fd7a4715023421d1a25ca0b66b1e49916c35e1d93af735d72f2919027e784",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 130067,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "12-08",
+      "new_markup": "![历史入口高可用：Nginx + Keepalived](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-12-08-nginx-keepalived-ha-7a8fd7a47150.png)"
+    },
+    {
+      "id": "13-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage.md",
+      "line": 69,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141720686.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141720686.png\" alt=\"image-20231114172051513\" style=\"zoom:50%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "emptyDir：同一 Pod 内共享日志",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留 nginx /var/log/nginx 与 busybox /log 对 logs-volume 的共享关系。",
+        "保留 Pod 范围，不把 emptyDir 表述为跨 Pod 持久存储。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-13-01-emptydir-shared-volume.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-13-01-emptydir-shared-volume.png",
+          "title": "emptyDir：同一 Pod 内共享日志",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-01-emptydir-shared-volume-4403c232d896.png",
+          "sha256": "4403c232d89669c2a89101940105aa375d09829413294170a5e921fdc7527733",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 103222,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "13-01",
+      "new_markup": "![emptyDir：同一 Pod 内共享日志](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-01-emptydir-shared-volume-4403c232d896.png)"
+    },
+    {
+      "id": "13-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage.md",
+      "line": 183,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141722615.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141722615.png\" alt=\"image-20231114172218560\" style=\"zoom:50%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "hostPath：共享卷映射到节点目录",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留 nginx /var/log/nginx 与 busybox /log 对 logs-volume 的共享关系。",
+        "保留原图 Pod、Node 与后端存储边界。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-13-02-hostpath-node-volume.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-13-02-hostpath-node-volume.png",
+          "title": "hostPath：共享卷映射到节点目录",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-02-hostpath-node-volume-592fb0a63309.png",
+          "sha256": "592fb0a633092e769333eaa539167114c77305f891199410122a1ee25a821d83",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 122301,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "13-02",
+      "new_markup": "![hostPath：共享卷映射到节点目录](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-02-hostpath-node-volume-592fb0a63309.png)"
+    },
+    {
+      "id": "13-03",
+      "article": "Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage.md",
+      "line": 337,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141723114.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141723114.png\" alt=\"image-20231114172333052\" style=\"zoom:50%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "NFS：卷连接到节点外的文件系统",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留 nginx /var/log/nginx 与 busybox /log 对 logs-volume 的共享关系。",
+        "保留原图 Pod、Node 与后端存储边界。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-13-03-nfs-shared-volume.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-13-03-nfs-shared-volume.png",
+          "title": "NFS：卷连接到节点外的文件系统",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-03-nfs-shared-volume-365217acf300.png",
+          "sha256": "365217acf300d88b371c32ca21dba8eb0a94abf7379fd1fa2485b674fec65c6a",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 131854,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "13-03",
+      "new_markup": "![NFS：卷连接到节点外的文件系统](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-03-nfs-shared-volume-365217acf300.png)"
+    },
+    {
+      "id": "13-04",
+      "article": "Docker-Kubernetes/k8s-basic-resources/13-k8s基础-storage.md",
+      "line": 452,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141727818.png",
+      "original_markup": "![image-20231114172731738](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311141727818.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "PV / PVC：使用者与存储提供者分工",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留3个Pod、原图pvc1/pvc2/pvc2名称、5个PV和3种后端。",
+        "保留 pvc1→pv1、pvc2→pv3、右列pvc2→pv5 的绑定，以及 pv1/pv2→NFS、pv3→CIFS、pv4/pv5→GlusterFS。",
+        "第三列PVC名称原图疑似重复笔误，未擅自改为pvc3；图注明示。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-13-04-pv-pvc-storage-binding.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-13-04-pv-pvc-storage-binding.png",
+          "title": "PV / PVC：使用者与存储提供者分工",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-04-pv-pvc-storage-binding-e4d000e1dd84.png",
+          "sha256": "e4d000e1dd8410353cadf3d6b224babf715f400be5c61f9c929ae46c8b4dad52",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 125240,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "13-04",
+      "new_markup": "![PV / PVC：使用者与存储提供者分工](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-13-04-pv-pvc-storage-binding-e4d000e1dd84.png)"
+    },
+    {
+      "id": "15-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter.md",
+      "line": 47,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094057298.png",
+      "original_markup": "![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094057298.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "Sidecar：业务与日志采集分工",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留4个组件及Pod边界、日志数据处理方向；删除水印和装饰图标。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-01-sidecar-logging-pattern.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-01-sidecar-logging-pattern.png",
+          "title": "Sidecar：业务与日志采集分工",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-01-sidecar-logging-pattern-02dcaa9d5a82.png",
+          "sha256": "02dcaa9d5a82877a58c1e7fd42845393d40a69404f6639cc5d5206256f761e81",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 112813,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "15-01",
+      "new_markup": "![Sidecar：业务与日志采集分工](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-01-sidecar-logging-pattern-02dcaa9d5a82.png)"
+    },
+    {
+      "id": "15-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter.md",
+      "line": 58,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094125199.png",
+      "original_markup": "![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094125199.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "日志 Sidecar：共享日志与独立配置",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "将原图重复出现的log-collector圆柱与Fluentd容器合为同一采集组件，保留日志读取和ES输出关系。",
+        "按相邻YAML明确ConfigMap挂载/fluentd/etc、日志卷/var/log/nginx。",
+        "原图ES与正文stdout不一致：保留ES作为架构目标，同时显式注明最小示例未配置ES。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-02-sidecar-nginx-fluentd.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-02-sidecar-nginx-fluentd.png",
+          "title": "日志 Sidecar：共享日志与独立配置",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-02-sidecar-nginx-fluentd-dccd4360e7a3.png",
+          "sha256": "dccd4360e7a3ef94bb43e6014cf6a8f0f7c7064221bde369b43f8aaa237e3fa9",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 153607,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "15-02",
+      "new_markup": "![日志 Sidecar：共享日志与独立配置](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-02-sidecar-nginx-fluentd-dccd4360e7a3.png)"
+    },
+    {
+      "id": "15-03",
+      "article": "Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter.md",
+      "line": 146,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094143398.png",
+      "original_markup": "![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094143398.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "Init Container：初始化完成后启动应用",
+      "visual_type": "sequence",
+      "fidelity_notes": [
+        "保留5个参与者、6条消息、初始化完成返回和两阶段顺序；删除重复的底部参与者框与水印。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-03-init-container-sequence.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-03-init-container-sequence.png",
+          "title": "Init Container：初始化完成后启动应用",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-03-init-container-sequence-f5a04ac35491.png",
+          "sha256": "f5a04ac354911eb941cafbed679d43c981a27f6e117454445a972bfcb654eb2e",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 134794,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "15-03",
+      "new_markup": "![Init Container：初始化完成后启动应用](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-03-init-container-sequence-f5a04ac35491.png)"
+    },
+    {
+      "id": "15-04",
+      "article": "Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter.md",
+      "line": 205,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094201087.png",
+      "original_markup": "![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094201087.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "Ambassador：通过本地代理访问外部系统",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留主容器→代理→MySQL/第三方API两分支及Pod边界。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-04-ambassador-outbound-proxy.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-04-ambassador-outbound-proxy.png",
+          "title": "Ambassador：通过本地代理访问外部系统",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-04-ambassador-outbound-proxy-31a95f0e5dbe.png",
+          "sha256": "31a95f0e5dbe51c8812f33c7c125ef90fcd97fc4c495bb604b51b7534b70c839",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 130143,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "15-04",
+      "new_markup": "![Ambassador：通过本地代理访问外部系统](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-04-ambassador-outbound-proxy-31a95f0e5dbe.png)"
+    },
+    {
+      "id": "15-05",
+      "article": "Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter.md",
+      "line": 216,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094222030.png",
+      "original_markup": "![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094222030.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "Ambassador：数据库代理的职责与选择",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留App、Ambassador职责、Primary、Replica、主从方向、roundrobin及Response概念。",
+        "纠正原图Ambessor拼写为Ambassador，保留其概念含义。",
+        "明确通用原图与正文HAProxy primary+backup、无数据库连接池的实现差异，避免误导。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-05-ambassador-database-concept.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-05-ambassador-database-concept.png",
+          "title": "Ambassador：数据库代理的职责与选择",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-05-ambassador-database-concept-ea6128697fb8.png",
+          "sha256": "ea6128697fb8dfdfe8f04c824e757f9631c91bf9ed8b48f5786f6e912f48362c",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 195283,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "15-05",
+      "new_markup": "![Ambassador：数据库代理的职责与选择](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-05-ambassador-database-concept-ea6128697fb8.png)"
+    },
+    {
+      "id": "15-06",
+      "article": "Docker-Kubernetes/k8s-basic-resources/15-k8s基础-容器设计模式-Sidecar-Init-Ambassador-Adapter.md",
+      "line": 305,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094236515.png",
+      "original_markup": "![image.png](https://raw.githubusercontent.com/hangx969/upload-images-md/main/20260628094236515.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "Adapter：把应用输出转换为监控格式",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留4个组件、Pod边界、原始数据与转换关系；注明Prometheus为拉取模式，箭头仅表示数据方向。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-06-adapter-metrics-pattern.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-15-06-adapter-metrics-pattern.png",
+          "title": "Adapter：把应用输出转换为监控格式",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-06-adapter-metrics-pattern-117853ea532e.png",
+          "sha256": "117853ea532ef6a6dd9005f3bfb59890ccbc38813481fffada3a4b78d2fc3444",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 153271,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "15-06",
+      "new_markup": "![Adapter：把应用输出转换为监控格式](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-15-06-adapter-metrics-pattern-117853ea532e.png)"
+    },
+    {
+      "id": "18-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入.md",
+      "line": 445,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161359205.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161359205.png\" alt=\"image-20231116135923135\" style=\"zoom: 67%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "RoleBinding：在一个命名空间授予规则",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留主体、RoleBinding、Role与权限说明；以显式命名空间边界呈现原图说明。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-01-rolebinding-namespaced-role.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-01-rolebinding-namespaced-role.png",
+          "title": "RoleBinding：在一个命名空间授予规则",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-01-rolebinding-namespaced-role-a234e46e428c.png",
+          "sha256": "a234e46e428cd23a8236b295e169aa4d4303ac43f762dcf1bed0b864ddb931ae",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 140220,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "18-01",
+      "new_markup": "![RoleBinding：在一个命名空间授予规则](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-01-rolebinding-namespaced-role-a234e46e428c.png)"
+    },
+    {
+      "id": "18-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入.md",
+      "line": 451,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161415689.png",
+      "original_markup": "![image-20231116141540633](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161415689.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "RoleBinding：复用 ClusterRole，保留范围隔离",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留user1/namespace a与user2/namespace b各自RoleBinding共享一个ClusterRole的两路结构。",
+        "未把ClusterRole复用表述为所有权限；正文强调最小动作规则。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-02-rolebinding-shared-clusterrole.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-02-rolebinding-shared-clusterrole.png",
+          "title": "RoleBinding：复用 ClusterRole，保留范围隔离",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-02-rolebinding-shared-clusterrole-46360ed927d3.png",
+          "sha256": "46360ed927d3fe97de3be4457f324aafd8d350faf256536457d6dd3379ea64ed",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 135415,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "18-02",
+      "new_markup": "![RoleBinding：复用 ClusterRole，保留范围隔离](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-02-rolebinding-shared-clusterrole-46360ed927d3.png)"
+    },
+    {
+      "id": "18-03",
+      "article": "Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入.md",
+      "line": 457,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161418465.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161418465.png\" alt=\"image-20231116141855404\" style=\"zoom:67%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "ClusterRoleBinding：将规则应用到全局",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留主体→ClusterRoleBinding→ClusterRole全局授权；补足正文已有资源范围限制，未推导无限权限。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-03-clusterrolebinding-global-scope.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-03-clusterrolebinding-global-scope.png",
+          "title": "ClusterRoleBinding：将规则应用到全局",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-03-clusterrolebinding-global-scope-51433b6a7169.png",
+          "sha256": "51433b6a7169e8eaeec5ba293821b04dfea343f8ac55b4d9c65b6ceb79b6291f",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 149682,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "18-03",
+      "new_markup": "![ClusterRoleBinding：将规则应用到全局](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-03-clusterrolebinding-global-scope-51433b6a7169.png)"
+    },
+    {
+      "id": "18-04",
+      "article": "Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入.md",
+      "line": 714,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161317269.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161317269.png\" alt=\"image-20231116131757137\" style=\"zoom:67%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "客户端证书：kubectl 与 API Server 的信任",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留kubectl、API Server、CA及请求/响应与信任关系。",
+        "依据相邻正文解释双向证书验证；不把CA画成在线请求转发节点。",
+        "图注明示两端CA可不同，原图单一CA属于简化表示。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-04-kubectl-client-cert-tls.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-04-kubectl-client-cert-tls.png",
+          "title": "客户端证书：kubectl 与 API Server 的信任",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-04-kubectl-client-cert-tls-3249f09ec0c8.png",
+          "sha256": "3249f09ec0c85f5f939395ec86bd3f61b30bafa87ee10bc3ddf6f8adbc70fc9c",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 138076,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "18-04",
+      "new_markup": "![客户端证书：kubectl 与 API Server 的信任](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-04-kubectl-client-cert-tls-3249f09ec0c8.png)"
+    },
+    {
+      "id": "18-05",
+      "article": "Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入.md",
+      "line": 720,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161332166.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161332166.png\" alt=\"image-20231116133231124\" style=\"zoom:67%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "Bearer Token：身份凭据随请求发送",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留kubectl→API Server请求和返回链路；依正文明确token由客户端请求头发送。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-05-bearer-token-request.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-05-bearer-token-request.png",
+          "title": "Bearer Token：身份凭据随请求发送",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-05-bearer-token-request-5d6ac0a157ca.png",
+          "sha256": "5d6ac0a157cab52e9c7f1f2c9e8faf4b7c6fa9e0287322dcff0aa766125671f9",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 150880,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "18-05",
+      "new_markup": "![Bearer Token：身份凭据随请求发送](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-05-bearer-token-request-5d6ac0a157ca.png)"
+    },
+    {
+      "id": "18-06",
+      "article": "Docker-Kubernetes/k8s-basic-resources/18-k8s基础-认证-授权-准入.md",
+      "line": 760,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161334673.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202311161334673.png\" alt=\"image-20231116133424621\" style=\"zoom:67%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "ServiceAccount：Pod 内凭据各司其职",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留Pod、投射卷token/namespace/CA及API访问关系。",
+        "按正文拆分三类文件用途，明确namespace不是授权来源。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-06-serviceaccount-projected-credentials.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-18-06-serviceaccount-projected-credentials.png",
+          "title": "ServiceAccount：Pod 内凭据各司其职",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-06-serviceaccount-projected-credentials-02c1a150a40e.png",
+          "sha256": "02c1a150a40e1ae2fb4652dfa58fdbb5f5e2cd073c6638a3b4654f33be748545",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 146662,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "18-06",
+      "new_markup": "![ServiceAccount：Pod 内凭据各司其职](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-18-06-serviceaccount-projected-credentials-02c1a150a40e.png)"
+    },
+    {
+      "id": "24-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd.md",
+      "line": 37,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507152134702.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507152134702.png\" alt=\"image-20250715213449459\" style=\"zoom:33%;\" />",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "Docker 调用链：containerd 与 runc 的分工",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留Docker CLI→Docker Engine→containerd与4个runc→Container分支。",
+        "依据正文标明这是Docker调用链；Kubernetes入口为kubelet→CRI→containerd，不暗改原图入口。",
+        "原图未画shim，图注说明其为正文补充层而不是另造第五条分支。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-24-01-docker-containerd-runc.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-24-01-docker-containerd-runc.png",
+          "title": "Docker 调用链：containerd 与 runc 的分工",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-24-01-docker-containerd-runc-773d524af793.png",
+          "sha256": "773d524af7930baee2188fe02f9dfdb84bbfb40f8d9d66bd14c380db051d0edf",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 129169,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "24-01",
+      "new_markup": "![Docker 调用链：containerd 与 runc 的分工](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-24-01-docker-containerd-runc-773d524af793.png)"
+    },
+    {
+      "id": "24-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/24-k8s基础-容器运行时-containerd.md",
+      "line": 79,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507152141594.png",
+      "original_markup": "<img src=\"https://raw.githubusercontent.com/hangx969/upload-images-md/main/202507152141594.png\" alt=\"image-20250715214142382\" style=\"zoom:50%;\" />",
+      "classification": "cli_command_comparison_table",
+      "status": "excluded",
+      "title": "Docker / ctr / nerdctl / crictl 命令对照",
+      "visual_type": "table screenshot",
+      "fidelity_notes": [
+        "原图是纯CLI命令对照表，非架构、流程或资源关系图。"
+      ],
+      "excluded_reason": "按用户排除范围：CLI命令对照截图不重绘，也不据此编造流程。",
+      "outputs": []
+    },
+    {
+      "id": "25-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/25-k8s基础-kubeadm.md",
+      "line": 18,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310241221337.png",
+      "original_markup": "![image-20231024122121237](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310241221337.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "kubeadm init：历史流程总览",
+      "visual_type": "flowchart",
+      "fidelity_notes": [
+        "原图9阶段拆为总览和2张详情，保留全部预检、镜像、文件路径与11项收尾动作。",
+        "保留历史 k8s.gcr.io、kube-dns/CoreDNS二选一、master标签、版本化kubelet ConfigMap。",
+        "audit、DynamicKubeletConfig和self-hosted均明确标记为历史/可选，不改写成现代默认流程。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-25-01-kubeadm-historical-overview.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-25-01-kubeadm-historical-overview.png",
+          "title": "kubeadm init：历史流程总览",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-overview-17e77702d5e9.png",
+          "sha256": "17e77702d5e9aabd6a2ba86291a4e88ca0f8bb9ea9475c00650e717b951793fa",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 161351,
+            "sha256_matches_local": true
+          }
+        },
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-25-01-kubeadm-historical-bootstrap.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-25-01-kubeadm-historical-bootstrap.png",
+          "title": "kubeadm 历史流程：配置、预检与本地启动",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-bootstrap-7efe0ba6199f.png",
+          "sha256": "7efe0ba6199fbe7611dcf85437e0409d244a9524db2a8380476e803a8713dfae",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 324708,
+            "sha256_matches_local": true
+          }
+        },
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-25-01-kubeadm-historical-completion.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-25-01-kubeadm-historical-completion.png",
+          "title": "kubeadm 历史流程：清单与收尾配置",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-completion-2b573f15dba9.png",
+          "sha256": "2b573f15dba9e6351856ba4173046d43b9752bf37bca091ab1bf68194fcbddfc",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 285526,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "25-01",
+      "new_markup": "![kubeadm init：历史流程总览](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-overview-17e77702d5e9.png)\n\n![kubeadm 历史流程：配置、预检与本地启动](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-bootstrap-7efe0ba6199f.png)\n\n![kubeadm 历史流程：清单与收尾配置](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-25-01-kubeadm-historical-completion-2b573f15dba9.png)"
+    },
+    {
+      "id": "26-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/26-k8s基础-Calico.md",
+      "line": 24,
+      "original_url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310241222817.png",
+      "original_markup": "![image-20231023152017200](https://raw.githubusercontent.com/hangx969/upload-images-md/main/202310241222817.png)",
+      "classification": "technical_diagram",
+      "status": "replaced",
+      "title": "Calico 传统架构：路由控制与 Pod 数据路径",
+      "visual_type": "architecture",
+      "fidelity_notes": [
+        "保留etcd向两个节点Felix下发状态、双向BIRD路由交换、Felix配置数据平面及本机路由至BIRD关系。",
+        "保留两个节点Pods经iptables/route至eth0、双向eth0跨节点数据路径；本机数据平面框保留原图iptables与route两层语义。",
+        "明确这是传统独立etcd架构；图注与正文区分Kubernetes datastore、eBPF和VXLAN-only，未悄悄改换实现。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-26-01-calico-traditional-etcd-bgp.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-26-01-calico-traditional-etcd-bgp.png",
+          "title": "Calico 传统架构：路由控制与 Pod 数据路径",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-26-01-calico-traditional-etcd-bgp-6aa5cd33cf6e.png",
+          "sha256": "6aa5cd33cf6e9a3f2ee42149bdcae58399704d202ee75b14a4d977ceebe9a626",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 162509,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "26-01",
+      "new_markup": "![Calico 传统架构：路由控制与 Pod 数据路径](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-26-01-calico-traditional-etcd-bgp-6aa5cd33cf6e.png)"
+    },
+    {
+      "id": "04-text-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/04-k8s基础-pod-健康探针.md",
+      "line": 503,
+      "original_markup": "```text\n数据库短暂抖动\n  → Liveness 超时\n  → Pod 内的容器被重启\n  → 剩余 Pod 流量和连接压力上升\n  → 更多健康检查超时\n  → 更多 Pod 内的容器被重启\n```\n",
+      "classification": "text-diagram",
+      "status": "replaced",
+      "title": "Liveness 如何放大外部依赖故障",
+      "visual_type": "Flowchart",
+      "fidelity_notes": [
+        "原有六步箭头文本转换为六步图；保留容器重启而非 Pod 重建的区别。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-04-text-01-liveness-cascade.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-04-text-01-liveness-cascade.png",
+          "title": "Liveness 如何放大外部依赖故障",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-04-text-01-liveness-cascade-a58e79b9673a.png",
+          "sha256": "a58e79b9673aa2a4be789e7d6581708b87772f72c15653048bc4e93baa2d204a",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 168304,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "04-text-01",
+      "new_markup": "![Liveness 如何放大外部依赖故障](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-04-text-01-liveness-cascade-a58e79b9673a.png)\n"
+    },
+    {
+      "id": "17-text-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/17-k8s-PodDisruptionBudget实战.md",
+      "line": 78,
+      "original_markup": "```\n检查 PDB → 驱逐 pod-A 是否会违反 minAvailable?\n  当前可用: 3/3\n  驱逐后剩余: 2/3\n  minAvailable: 2 → 满足 → 允许驱逐\n  \n等待 pod-A 在其他节点就绪后，再尝试驱逐 pod-B...\n```\n",
+      "classification": "text-diagram",
+      "status": "replaced",
+      "title": "Drain 中的 PDB 预算检查",
+      "visual_type": "Flowchart",
+      "fidelity_notes": [
+        "原文把替代副本写作“pod-A在其他节点就绪”；图中明确为替代副本，避免暗示同一Pod迁移。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-17-text-01-pdb-eviction.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-17-text-01-pdb-eviction.png",
+          "title": "Drain 中的 PDB 预算检查",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-17-text-01-pdb-eviction-63cb38c7b62f.png",
+          "sha256": "63cb38c7b62ff0b05e70c633d2c7d6ab7b5b96c245a1b5169ac93c89424f96ec",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 136611,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "17-text-01",
+      "new_markup": "![Drain 中的 PDB 预算检查](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-17-text-01-pdb-eviction-63cb38c7b62f.png)\n"
+    },
+    {
+      "id": "19-text-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/19-k8s-APIServer深度剖析-请求链路-认证授权-生产调优.md",
+      "line": 51,
+      "original_markup": "~~~\nkubectl apply -f deployment.yaml\n       │\n       ▼\n  HTTP/HTTPS 请求\n       │\n       ▼\n┌─────────────────────────────────────────────────────┐\n│                  kube-apiserver                      │\n│                                                     │\n│  1. 认证（Authentication）                           │\n│     ├── X.509 证书                                  │\n│     ├── Bearer Token（ServiceAccount/OIDC/Bootstrap）│\n│     └── 认证失败 → 401 Unauthorized                 │\n│                                                     │\n│  2. 授权（Authorization）                            │\n│     ├── RBAC（主流）                                 │\n│     ├── ABAC / Webhook / Node Authorizer            │\n│     └── 无权限 → 403 Forbidden                      │\n│                                                     │\n│  3. 变更准入（Mutating Admission）                   │\n│     ├── 内置 MutatingAdmissionWebhook               │\n│     ├── 注入 sidecar、设置默认值                     │\n│     └── 修改对象后传入下一阶段                       │\n│                                                     │\n│  4. 对象校验（Schema Validation）                    │\n│     └── 严格校验字段合法性                           │\n│                                                     │\n│  5. 验证准入（Validating Admission）                 │\n│     ├── 内置 ValidatingAdmissionWebhook             │\n│     └── 策略违反 → 403/422                          │\n│                                                     │\n│  6. 持久化到 etcd                                   │\n│     └── 写入成功 → 200/201/202                      │\n│                                                     │\n│  7. Watch 通知下游（异步）                           │\n│     └── Scheduler/Controller/kubelet 感知变更        │\n└─────────────────────────────────────────────────────┘\n~~~\n",
+      "classification": "text-diagram",
+      "status": "replaced",
+      "title": "API Server 写入请求主链路",
+      "visual_type": "Flowchart",
+      "fidelity_notes": [
+        "保留原文七个服务端阶段、认证方式、授权方式、准入行为与返回码；未新增错误路径。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-19-text-01-api-write-lifecycle.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-19-text-01-api-write-lifecycle.png",
+          "title": "API Server 写入请求主链路",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-01-api-write-lifecycle-95b96cab302f.png",
+          "sha256": "95b96cab302f30f490133b63494f57afeff2094acfdda75f3dbf5d7b2bdf889e",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 205557,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "19-text-01",
+      "new_markup": "![API Server 写入请求主链路](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-01-api-write-lifecycle-95b96cab302f.png)\n"
+    },
+    {
+      "id": "19-text-02",
+      "article": "Docker-Kubernetes/k8s-basic-resources/19-k8s-APIServer深度剖析-请求链路-认证授权-生产调优.md",
+      "line": 244,
+      "original_markup": "~~~\n客户端 ---Watch 请求（?watch=true&resourceVersion=12345）---> API Server\n                                                              │\n                                                              │ 订阅 etcd Watch\n                                                              │\netcd ---(变更事件：ADDED/MODIFIED/DELETED)-----------------> API Server\n                                                              │\n                                                              │ 过滤/格式转换\n                                                              ▼\n客户端 <------- 流式 HTTP 响应（chunked transfer）-------------\n~~~\n",
+      "classification": "text-diagram",
+      "status": "replaced",
+      "title": "API Watch 的事件流",
+      "visual_type": "Sequence",
+      "fidelity_notes": [
+        "将原ASCII中的ADDED/MODIFIED/DELETED从etcd原始通知移至API Server→客户端；这是Kubernetes API事件类型。",
+        "保留流式HTTP响应与HTTP/1.1 chunked transfer，事件在同一长连接持续传递。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-19-text-02-api-watch.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-19-text-02-api-watch.png",
+          "title": "API Watch 的事件流",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-02-api-watch-05d8b3bad46c.png",
+          "sha256": "05d8b3bad46cda639e564430cb439e28c251d42435c869f40d6bc4c32c08c606",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 141259,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "19-text-02",
+      "new_markup": "![API Watch 的事件流](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-02-api-watch-05d8b3bad46c.png)\n"
+    },
+    {
+      "id": "19-text-03",
+      "article": "Docker-Kubernetes/k8s-basic-resources/19-k8s-APIServer深度剖析-请求链路-认证授权-生产调优.md",
+      "line": 400,
+      "original_markup": "~~~\n                ┌──────────────┐\n                │ Load Balancer│  (haproxy / kube-vip / cloud LB)\n                │  VIP:6443   │\n                └──────┬───────┘\n       ┌───────────────┼───────────────┐\n       ▼               ▼               ▼\n┌─────────────┐ ┌─────────────┐ ┌─────────────┐\n│ API Server 1│ │ API Server 2│ │ API Server 3│\n└──────┬──────┘ └──────┬──────┘ └──────┬──────┘\n       └───────────────┼───────────────┘\n                       ▼\n                ┌─────────────┐\n                │  etcd 集群  │  (3节点Raft)\n                └─────────────┘\n~~~\n",
+      "classification": "text-diagram",
+      "status": "replaced",
+      "title": "API Server 高可用拓扑",
+      "visual_type": "Architecture",
+      "fidelity_notes": [
+        "保留负载均衡入口、三个独立API Server和三节点Raft etcd集群。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-19-text-03-api-ha.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-19-text-03-api-ha.png",
+          "title": "API Server 高可用拓扑",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-03-api-ha-17971815c5ad.png",
+          "sha256": "17971815c5add5172f19cdc689b47c871186801484c722884bbb80c0fb0217f0",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 108586,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "19-text-03",
+      "new_markup": "![API Server 高可用拓扑](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-19-text-03-api-ha-17971815c5ad.png)\n"
+    },
+    {
+      "id": "20-text-01",
+      "article": "Docker-Kubernetes/k8s-basic-resources/20-k8s基础-Finalizer与资源删除.md",
+      "line": 31,
+      "original_markup": "```\n1. 用户执行 kubectl delete pvc my-pvc\n2. apiserver收到DELETE请求\n3. 检查 metadata.finalizers 是否为空\n   ├── 为空 → 按资源的宽限期、删除策略完成后删除对象\n   └── 非空 → 进入Terminating状态，不删除对象\n4. 设置 deletionTimestamp（标记为正在删除）\n5. 对应的Controller观察到deletionTimestamp\n6. Controller执行自己的清理逻辑（PVC保护需等待Pod不再使用；外部资源由相应控制器处理）\n7. Controller清理完成后，从finalizers列表中移除自己的Finalizer\n8. 当finalizers列表变为空 → apiserver从etcd中删除对象\n```\n",
+      "classification": "text-diagram",
+      "status": "replaced",
+      "title": "Finalizer 与异步资源删除",
+      "visual_type": "Flowchart",
+      "fidelity_notes": [
+        "保留原文空列表/非空列表分支、deletionTimestamp、Controller清理及移除条目；不把Terminating画成所有资源统一的status字段。"
+      ],
+      "outputs": [
+        {
+          "html": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-20-text-01-finalizer-delete.html",
+          "png": "Docker-Kubernetes/k8s-basic-resources/diagrams/k8s-20-text-01-finalizer-delete.png",
+          "title": "Finalizer 与异步资源删除",
+          "url": "https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-20-text-01-finalizer-delete-a5084cb0f1c4.png",
+          "sha256": "a5084cb0f1c43a98ead03d1ca9a604eddbb178935d1aaefe0c35f788aa7ff408",
+          "dimensions": [
+            2560,
+            1440
+          ],
+          "uploader": "githubPlus",
+          "remote_validation": {
+            "http_status": 200,
+            "bytes": 190917,
+            "sha256_matches_local": true
+          }
+        }
+      ],
+      "replacement_anchor_id": "20-text-01",
+      "new_markup": "![Finalizer 与异步资源删除](https://raw.githubusercontent.com/hangx969/upload-images-md/main/k8s-basic-resources/2026-10-25/k8s-20-text-01-finalizer-delete-a5084cb0f1c4.png)\n"
+    }
+  ],
+  "completed_at": "2026-10-25T15:11:37.467385+08:00",
+  "sources_for_technical_corrections": [
+    {
+      "topic": "Watch event types and streamed response",
+      "url": "https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes"
+    },
+    {
+      "topic": "Finalizer deletion protocol",
+      "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/"
+    }
+  ],
+  "operations": {
+    "quota_monitor": "Sampled every 60 seconds while active.",
+    "heartbeat": "Deleted on completion.",
+    "task_sleep_assertions": "Released on completion.",
+    "temporary_picgo_credentials": "Removed on completion."
+  }
+}
